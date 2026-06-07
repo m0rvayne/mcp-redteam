@@ -16,6 +16,10 @@
 6. [Exfiltration via Tool Responses](#6-exfiltration-via-tool-responses)
 7. [Known CVEs and Published Exploits](#7-known-cves-and-published-exploits)
 8. [Specific Test Cases](#8-specific-test-cases)
+9. [Cross-Tool Context Attacks](#9-cross-tool-context-attacks)
+10. [TOCTOU / Temporal Attacks](#10-toctou--temporal-attacks)
+11. [Supply Chain Attacks](#11-supply-chain-attacks)
+12. [Multi-Step Attack Chains](#12-multi-step-attack-chains)
 
 ---
 

@@ -52,6 +52,44 @@ Before spawning agents, discover ALL MCP servers from both Claude Code and Claud
 
 **For each server found:** note name, command, args, env vars, and locate source code path from the command field
 
+### Zero Servers
+
+If NO servers are found in any location:
+- Report: "No MCP servers detected. Ensure at least one server is connected via Claude Code or Claude Desktop."
+- Do NOT spawn agents. Do NOT generate a report.
+- Suggest: run `claude mcp list` to verify connections.
+
+### Source Availability Classification
+
+For each server, determine source access level:
+
+| Level | When | Audit scope |
+|-------|------|-------------|
+| **LOCAL** | Command points to a local .py/.ts/.js file | Full source audit + live tool testing |
+| **PACKAGE** | Command is uvx/npx/python -m | Locate in site-packages/node_modules, read if accessible |
+| **CLOUD** | No local command (mcp__claude_ai_* servers, remote endpoints) | Black-box only: tool descriptions + live tool testing |
+
+For CLOUD/inaccessible servers:
+- Skip: source-dependent checks (signal handling, blocking calls, HTTP client reuse)
+- Keep: tool-level security testing (path traversal, SSRF, type confusion)
+- Keep: tool poisoning detection (description analysis)
+- Keep: completeness checks (input schemas)
+- Note in report: "Source unavailable — black-box audit only"
+
+### Error Handling
+
+If a Phase 1 agent fails (returns empty, errors out, or exceeds context):
+1. Log: server name + error reason
+2. Do NOT retry automatically (wastes tokens)
+3. In the report, add: "Servers with incomplete audit" section listing what failed and why
+4. The coordinator MUST still generate the report from available results
+5. If >50% of agents fail, warn the user before generating the report
+
+Context overflow prevention:
+- If source code exceeds 3000 lines: include only entry point + tool handlers + auth modules
+- Skip: test files, documentation, generated code, node_modules
+- Note in findings: "Partial source analysis — {X} of {Y} files read"
+
 ### Server Type Classification
 
 Classify each server to prioritize attack categories:
@@ -63,6 +101,15 @@ Classify each server to prioritize attack categories:
 | **Browser automation** (Instagram) | SSRF via page.goto(), credential storage, resource cleanup | Command injection, timeouts |
 | **Native/OS** (Reminders, MindNode) | Command injection (AppleScript/shell), blocking calls | Credential storage, JSON issues |
 | **Database/query** (Sheets) | Query injection, credential storage, blocking calls | Path traversal in exports |
+| **General/Other** | Balanced across all categories | Use when server doesn't fit above types |
+
+If a server spans multiple categories, classify by its PRIMARY data flow (where user data enters/exits). For hybrid servers (file + API), use the category with higher risk surface.
+
+### Context Budget
+
+- If source code exceeds 50K tokens — include only tool handler functions and security-relevant code (auth, file ops, subprocess calls, HTTP requests). Skip tests, configs, comments.
+- If a server has >40 tools — split into 2 agents by tool groups.
+- Priority for source inclusion: tool handlers > route definitions > auth code > utility functions > everything else.
 
 ### Agent Prompt Template
 
@@ -310,6 +357,31 @@ After presenting the report, user may say "fix it" or "fix [server]".
 4. **P2** — Hygiene (deps, dead code, schemas)
 
 After fixes: re-run affected checks, show before/after.
+
+### Timeout values
+
+When adding timeouts, use these defaults:
+- HTTP requests: 30s
+- Subprocess calls: 60s
+- Browser navigation: 120s
+- ML inference (Whisper etc): 120s
+- File downloads: 120s
+
+### Before fixing
+
+1. Suggest the user commit current state: "Run `git add -A && git commit -m 'pre-audit'` so you can revert if anything breaks"
+2. Apply fixes in priority order (P0 → P1 → P2)
+3. After each fix: re-run the specific check to verify it passes
+4. If a fix breaks functionality: revert the change and move it to "requires explanation" — let the user decide
+
+### "Fix all" flow
+
+When user says "fix everything" or "fix it":
+1. List ALL planned fixes grouped by priority
+2. Get ONE confirmation for the batch
+3. Apply in order, reporting each fix as done
+4. Run verification checks on everything fixed
+5. Present summary: X fixed, Y need your decision, Z can't be auto-fixed
 
 ---
 

@@ -16,7 +16,14 @@ Before anything else, ask the user which language they want the report in. Use A
 - Русский
 - Українська
 
-Store the answer. All findings, executive summary, remediation roadmap, and HTML report must be written in the selected language. Agent prompts stay in English (internal), but all user-facing output uses the selected language.
+Store the answer. Default: **English** (if user skips, says "go", or requests unsupported language).
+If user requests a language not listed — respond: "Currently supported: English, Русский, Українська. Which one?" and wait for answer.
+
+All findings, executive summary, remediation roadmap, and HTML report must be written in the selected language. Agent prompts stay in English (internal), but all user-facing output uses the selected language.
+
+**Translation rules:**
+- TRANSLATE: section headers, finding descriptions, remediation text, executive summary
+- KEEP IN ENGLISH: severity levels (CRITICAL, HIGH, MEDIUM, LOW), technical terms (SSRF, Path Traversal, OAuth, RCE), tool names, file paths, code snippets
 
 ## Step 1 — Read instructions
 
