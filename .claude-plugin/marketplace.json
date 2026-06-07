@@ -10,7 +10,7 @@
     {
       "name": "mcp-redteam",
       "description": "Full audit and penetration testing of MCP servers",
-      "source": "."
+      "source": "./"
     }
   ]
 }
