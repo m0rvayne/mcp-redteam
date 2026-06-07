@@ -1,0 +1,11 @@
+{
+  "name": "m0rvayne",
+  "displayName": "m0rvayne plugins",
+  "description": "AI security tools by m0rvayne",
+  "plugins": [
+    {
+      "name": "mcp-redteam",
+      "path": "."
+    }
+  ]
+}
