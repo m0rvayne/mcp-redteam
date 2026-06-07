@@ -2,7 +2,7 @@
 
 # mcp-redteam
 
-**We don't tell you where your walls are thin. We walk through them.**
+**It doesn't tell you where your walls are thin. It walks through them.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![OWASP MCP Top 10](https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange)](https://owasp.org/www-project-mcp-top-10/)

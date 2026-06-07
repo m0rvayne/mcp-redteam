@@ -223,6 +223,11 @@ Use the CSS and structure from the examples/sample-report.html reference.
 Structure: per-server sections (sorted by risk score), then cross-server chains section.
 Save to reports/mcp-redteam-YYYY-MM-DD.html
 
+**CRITICAL RULES:**
+- ALL `<details>` elements must be CLOSED by default — NEVER add the `open` attribute
+- Write the report in the language selected by the user at the start (English, Russian, or Ukrainian)
+- Agent prompts stay in English internally, but all user-facing content (findings, executive summary, remediation, HTML report) uses the selected language
+
 Risk score per server:
 - CRITICAL finding: +25 points
 - HIGH: +15
