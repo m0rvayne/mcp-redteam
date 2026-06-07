@@ -19,7 +19,8 @@ Not a static scanner. Not a config checker. An active red team that isolates eac
 ## Install
 
 ```bash
-claude plugin add m0rvayne/mcp-redteam
+claude plugin marketplace add m0rvayne/mcp-redteam
+claude plugin install mcp-redteam
 ```
 
 Works globally — run from any project:
@@ -28,7 +29,7 @@ Works globally — run from any project:
 /mcp-redteam
 ```
 
-No dependencies. No API keys. No build step.
+No dependencies. No API keys. No build step. The marketplace is added once — future updates are just `claude plugin update mcp-redteam`.
 
 ## What happens when you run it
 

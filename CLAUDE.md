@@ -37,11 +37,20 @@ After all Phase 1 agents complete, spawn ONE coordinator agent that:
 
 ### Discovery
 
-Before spawning agents, discover all MCP servers:
+Before spawning agents, discover ALL MCP servers from both Claude Code and Claude Desktop:
+
+**Claude Code:**
 - Read `~/.claude/settings.json` and `~/.claude/settings.local.json` — look for `mcpServers`
 - Check `.mcp.json` in current project
 - List all `mcp__*` permissions in settings
-- For each server: note name, command, args, and likely source code path
+- Run `claude mcp list` to see connected servers and their status
+
+**Claude Desktop:**
+- Read `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
+- Read `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
+- This file contains `mcpServers` with command, args, env for each server
+
+**For each server found:** note name, command, args, env vars, and locate source code path from the command field
 
 ### Server Type Classification
 
