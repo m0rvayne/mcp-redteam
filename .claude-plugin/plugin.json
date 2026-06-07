@@ -1,0 +1,14 @@
+{
+  "name": "mcp-redteam",
+  "displayName": "MCP Red Team",
+  "version": "1.0.0",
+  "description": "Full audit and penetration testing of MCP servers — health, architecture, completeness, security",
+  "author": {
+    "name": "m0rvayne",
+    "url": "https://github.com/m0rvayne"
+  },
+  "homepage": "https://github.com/m0rvayne/mcp-redteam",
+  "repository": "https://github.com/m0rvayne/mcp-redteam",
+  "license": "MIT",
+  "keywords": ["mcp", "security", "audit", "pentest", "red-team", "claude-code"]
+}

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Audit Report — m0rvayne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #222222;
+    --border-heavy: #333333;
+    --text: #b0b0b8;
+    --text-dim: #606068;
+    --heading: #e0e0e8;
+    --white: #f0f0f5;
+    --critical: #ff4455;
+    --high: #ff8833;
+    --medium: #ddaa22;
+    --low: #44bb66;
+    --prompt: #44aa66;
+    --mono: 'JetBrains Mono', 'SF Mono', 'Consolas', 'Courier New', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.7;
+    font-size: 13px;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem;
+    min-height: 100vh;
+  }
+
+  a { color: var(--text); text-decoration: none; }
+  a:hover { color: var(--white); }
+  p { margin-bottom: 0.75rem; font-size: 0.85rem; color: var(--text); }
+  strong { color: var(--heading); font-weight: 600; }
+  code { font-family: var(--mono); font-size: 0.8em; background: var(--surface); padding: 0.1em 0.35em; border: 1px solid var(--border); }
+
+  /* ── Cover ── */
+  .cover { padding-bottom: 2.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); }
+  .cover-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    margin-bottom: 0.25rem;
+  }
+  .cover-title a { color: var(--white); transition: text-shadow 0.2s; }
+  .cover-title a:hover { text-shadow: 0 0 20px rgba(240,240,245,0.4); }
+  .cover-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 2rem;
+  }
+  .cover-meta {
+    font-size: 0.8rem;
+    line-height: 2;
+  }
+  .cover-meta .key { color: var(--text-dim); }
+  .cover-meta .val { color: var(--text); }
+  .sev-strip {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .sev-chip { font-size: 0.75rem; font-weight: 600; }
+  .sev-chip.critical { color: var(--critical); }
+  .sev-chip.high { color: var(--high); }
+  .sev-chip.medium { color: var(--medium); }
+  .sev-chip.low { color: var(--low); }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 2.5rem; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 400;
+    min-width: 2rem;
+  }
+  .section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--heading);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Category dividers ── */
+  .category {
+    border: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+    background: var(--bg);
+  }
+  .category > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--heading);
+  }
+  .category > summary::-webkit-details-marker { display: none; }
+  .category > summary::before {
+    content: "+";
+    color: var(--text-dim);
+    font-weight: 400;
+    width: 1ch;
+    flex-shrink: 0;
+  }
+  .category[open] > summary::before { content: "-"; }
+  .category > summary:hover { background: var(--surface); }
+  .cat-num { font-size: 1rem; color: var(--white); font-weight: 600; flex: 1; }
+  .cat-label { flex: 1; }
+  .cat-count { font-size: 0.7rem; margin-left: auto; }
+  .cat-count.has-issues { color: var(--critical); }
+  .cat-count.warn { color: var(--high); }
+  .cat-count.clean { color: var(--low); }
+  .category-body {
+    padding: 0 1rem 1rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  /* ── Findings ── */
+  .finding {
+    border: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    background: var(--surface);
+  }
+  .finding summary {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.85rem;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    font-size: 0.8rem;
+  }
+  .finding summary::-webkit-details-marker { display: none; }
+  .finding summary::before {
+    content: ">";
+    color: var(--text-dim);
+    font-weight: 400;
+    flex-shrink: 0;
+  }
+  .finding[open] summary::before { content: "v"; }
+  .f-id { font-size: 0.7rem; color: var(--text-dim); min-width: 2.5rem; }
+  .f-sev {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .f-sev.critical { color: var(--critical); }
+  .f-sev.critical::before { content: "[CRITICAL]"; }
+  .f-sev.high { color: var(--high); }
+  .f-sev.high::before { content: "[HIGH]"; }
+  .f-sev.medium { color: var(--medium); }
+  .f-sev.medium::before { content: "[MEDIUM]"; }
+  .f-sev.low { color: var(--low); }
+  .f-sev.low::before { content: "[LOW]"; }
+  .f-title { flex: 1; font-weight: 500; color: var(--heading); }
+  .f-server { font-size: 0.7rem; color: var(--text-dim); }
+  .f-body {
+    padding: 0 0.85rem 0.85rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.85rem;
+    margin-left: 1.2rem;
+  }
+  .f-field { margin-bottom: 0.75rem; }
+  .f-field:last-child { margin-bottom: 0; }
+  .f-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 0.2rem;
+  }
+  .f-value { font-size: 0.8rem; color: var(--text); line-height: 1.65; }
+
+  /* ── Pre/code blocks — terminal output style ── */
+  pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--text);
+    margin-top: 0.3rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  pre::before {
+    content: "";
+  }
+
+  /* ── Tables — box-drawing style ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-heavy);
+  }
+  th {
+    text-align: left;
+    padding: 0.5rem 0.6rem;
+    background: var(--surface);
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid var(--border-heavy);
+  }
+  td {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .td-pass { color: var(--low); }
+  .td-fail { color: var(--critical); }
+  .td-warn { color: var(--medium); }
+  .td-high { color: var(--high); }
+
+  /* ── Pass list ── */
+  .pass-list { list-style: none; }
+  .pass-list li {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding: 0.25rem 0;
+    padding-left: 3.5rem;
+    position: relative;
+    line-height: 1.65;
+  }
+  .pass-list li::before {
+    content: "[PASS]";
+    position: absolute;
+    left: 0;
+    color: var(--low);
+    font-size: 0.6rem;
+    font-weight: 600;
+    top: 0.35rem;
+  }
+
+  /* ── Risk Score ── */
+  .risk-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.75rem;
+  }
+  .risk-name {
+    color: var(--text-dim);
+    min-width: 140px;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .risk-track {
+    flex: 1;
+    height: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .risk-fill {
+    height: 100%;
+  }
+  .risk-score {
+    font-weight: 600;
+    min-width: 24px;
+    text-align: right;
+  }
+
+  /* ── Author ── */
+  .author-section, .author-section * { text-align: center; }
+  .author-section .author-cta { display: inline-flex; }
+  .author-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .author-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.3rem;
+  }
+  .author-desc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+    line-height: 1.65;
+  }
+  .author-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--heading);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .author-cta:hover { border-color: var(--border-heavy); background: var(--surface); }
+
+  .footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+  .footer a { color: var(--text-dim); }
+  .footer a:hover { color: var(--text); }
+
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+    .page { padding: 1rem; }
+    .cover-title { font-size: 2rem; }
+    .risk-name { min-width: 80px; font-size: 0.65rem; }
+    .finding summary { flex-wrap: wrap; gap: 0.35rem; }
+    .f-server { width: 100%; order: 10; }
+    table { font-size: 0.65rem; }
+    th, td { padding: 0.3rem 0.4rem; }
+    .sev-strip { gap: 0.4rem; }
+  }
+
+  @media (max-width: 380px) {
+    .page { padding: 0.75rem; }
+    .cover-title { font-size: 1.5rem; }
+    .category > summary { font-size: 0.7rem; padding: 0.6rem 0.6rem; }
+    .finding summary { font-size: 0.7rem; padding: 0.5rem 0.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══ COVER ═══ -->
+<div class="cover">
+  <div class="cover-title"><a href="https://github.com/m0rvayne">m0rvayne</a></div>
+  <div class="cover-subtitle">MCP Infrastructure Audit</div>
+  <div class="cover-meta">
+    <div><span class="key">type:</span> <span class="val">Health / Architecture / Completeness / Penetration Test</span></div>
+    <div><span class="key">date:</span> <span class="val">June 7, 2026</span></div>
+    <div><span class="key">scope:</span> <span class="val">11 servers, 287 tools</span></div>
+    <div><span class="key">methodology:</span> <span class="val">11 isolated agents, full audit per server</span></div>
+    <div><span class="key">classification:</span> <span class="val">Confidential</span></div>
+    <div><span class="key">version:</span> <span class="val">1.0 Final</span></div>
+    <div><span class="key">total_findings:</span> <span class="val">161</span></div>
+  </div>
+  <div class="sev-strip">
+    <span class="sev-chip critical">[CRITICAL] 5</span>
+    <span class="sev-chip high">[HIGH] 12</span>
+    <span class="sev-chip medium">[MEDIUM] 41</span>
+    <span class="sev-chip low">[LOW] 65+</span>
+  </div>
+</div>
+
+<!-- ═══ 01 EXECUTIVE SUMMARY ═══ -->
+<div class="section">
+  <div class="section-header"><span class="section-num">01</span><span class="section-title">Executive Summary</span></div>
+  <p>We audited <strong>11 MCP servers</strong> (287 tools) across four categories: health, architecture, completeness, and security. Each server was assigned a dedicated attack agent that read its source code and systematically probed every tool.</p>
+  <p>We found <strong>5 critical vulnerabilities</strong>. We extracted live <strong>Trello API credentials</strong> from a plaintext .env file. We read an <strong>Instagram session cookie</strong> granting full account access. We found <strong>Google OAuth tokens</strong> stored world-readable on disk across 2 servers. We discovered an <strong>AppleScript injection</strong> in MindNode that allows arbitrary code execution through unescaped clipboard content.</p>
+  <p>Beyond security, we found <strong>blocking synchronous calls</strong> in 6 servers that freeze the event loop, <strong>unbounded downloads</strong> that can OOM-crash 2 servers, and <strong>no .gitignore</strong> in 8 out of 11 projects — meaning any accidental <code>git push</code> leaks credentials.</p>
+  <p>Three servers demonstrated strong security posture: <strong>meeting-transcript</strong> (exemplary path traversal protection), <strong>youtube</strong> (proper URL validation), and <strong>fathom</strong> (bounded pagination, Pydantic validation, rate-limit awareness).</p>
+</div>
+
+<!-- ═══ 02 SCOPE ═══ -->
+<div class="section">
+  <div class="section-header"><span class="section-num">02</span><span class="section-title">Scope &amp; Methodology</span></div>
+  <p>11 servers &rarr; 11 isolated agents. Each agent read the server's source code, then audited every tool across all four categories.</p>
+  <table>
+    <tr><th>Server</th><th>Tools</th><th>Lang</th><th>Framework</th><th>Findings</th><th>Worst</th></tr>
+    <tr><td>youtube</td><td>13</td><td>Python</td><td>Raw MCP SDK</td><td>9</td><td class="td-warn">MEDIUM</td></tr>
+    <tr><td>fathom</td><td>10</td><td>Python</td><td>FastMCP</td><td>15</td><td class="td-high">HIGH</td></tr>
+    <tr><td>google-drive</td><td>25</td><td>Python</td><td>Raw MCP SDK</td><td>14</td><td class="td-high">HIGH</td></tr>
+    <tr><td>trello</td><td>55</td><td>Python</td><td>Raw MCP SDK</td><td>11</td><td class="td-fail">CRITICAL</td></tr>
+    <tr><td>meeting-transcript</td><td>4</td><td>Python</td><td>Raw MCP SDK</td><td>22</td><td class="td-warn">MEDIUM</td></tr>
+    <tr><td>instagram</td><td>2</td><td>Python</td><td>Raw MCP SDK</td><td>16</td><td class="td-fail">CRITICAL</td></tr>
+    <tr><td>google-sheets</td><td>40</td><td>Python</td><td>Raw MCP SDK</td><td>15</td><td class="td-fail">CRITICAL</td></tr>
+    <tr><td>apple-reminders</td><td>11</td><td>TS+Swift</td><td>MCP SDK</td><td>17</td><td class="td-warn">MEDIUM</td></tr>
+    <tr><td>mindnode</td><td>18</td><td>TS+Swift</td><td>MCP SDK</td><td>17</td><td class="td-fail">CRITICAL</td></tr>
+    <tr><td>notebooklm</td><td>36</td><td>Python</td><td>FastMCP</td><td>11</td><td class="td-high">HIGH</td></tr>
+    <tr><td>miro</td><td>62</td><td>Python</td><td>Raw MCP SDK</td><td>14</td><td class="td-high">HIGH</td></tr>
+  </table>
+</div>
+
+<!-- ═══ 03 AUDIT RESULTS ═══ -->
+<div class="section">
+  <div class="section-header"><span class="section-num">03</span><span class="section-title">Audit Results</span></div>
+
+  <!-- mindnode (92/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">mindnode</span>
+
+      <span class="cat-count has-issues">Critical</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev critical"></span><span class="f-title">AppleScript injection via setClipboard — newlines not escaped, allows arbitrary code execution</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value"><code>setClipboard()</code> escapes <code>\</code> and <code>"</code> but NOT newlines. A payload like <code>foo\n" &amp; (do shell script "id") &amp; "</code> breaks out of the AppleScript string and executes shell commands. Any tool that sets clipboard content can execute arbitrary commands as the current user.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">execSync shell usage in activateMindNode — dangerous pattern</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Uses <code>execSync</code> with shell invocation for activating MindNode, introducing potential command injection surface.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">All calls synchronous (execFileSync) — blocks event loop</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Every tool call uses synchronous <code>execFileSync</code> to call Swift bridge binaries. Blocks for up to 30 seconds per operation. No concurrent processing possible.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Swift bridge manual JSON serialization — incomplete escaping</span><span class="f-server">Architecture</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">JSON is built by string concatenation. The <code>jsonEscape</code> function handles <code>\</code>, <code>"</code>, <code>\n</code>, <code>\r</code>, <code>\t</code> but not other control characters (NUL, form feed). Produces invalid JSON on edge-case input.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">No .gitignore — node_modules exposed</span><span class="f-server">Completeness</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">No <code>.gitignore</code> present. <code>node_modules/</code> and build artifacts will be committed on any <code>git init &amp;&amp; git add .</code></div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>execFileSync with array args (no command injection)</li>
+        <li>Timeouts on all exec calls</li>
+        <li>Error containment</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- instagram (88/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">instagram</span>
+
+      <span class="cat-count has-issues">Critical</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev critical"></span><span class="f-title">cookies.txt with live sessionid stored plaintext, permissions 644</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Contains a live <code>sessionid</code>, <code>csrftoken</code>, and <code>ds_user_id</code>. File permissions 644 — readable by any process. Grants full Instagram account impersonation.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">Whisper transcription has no timeout — blocks indefinitely</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value"><code>run_in_executor</code> runs Whisper with no time limit. A 30-minute audio file blocks the thread pool for the entire inference duration.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">No browser/playwright cleanup on shutdown — zombie Chromium</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Playwright browser instances are not cleaned up on server shutdown. Chromium processes persist as zombies.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">playwright and httpx missing from requirements.txt</span><span class="f-server">Completeness</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Both <code>playwright</code> and <code>httpx</code> are imported and essential, but missing from requirements.txt. Fresh install from requirements fails immediately.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>SSRF defended (hostname whitelist on page.goto)</li>
+        <li>Temp dir cleanup in finally</li>
+        <li>Batch limited to 20</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- trello (85/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">trello</span>
+
+      <span class="cat-count has-issues">Critical</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev critical"></span><span class="f-title">Live API key + token in plaintext .env file</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">The <code>.env</code> file contains a live Trello API key and OAuth token in plaintext. No .gitignore. File permissions 644 — readable by any process. Full Trello account access.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">PII exposure — member emails returned by get_board_members</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Member email addresses are returned in API responses without redaction. PII leaks to LLM context.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">No .gitignore — .env will be committed</span><span class="f-server">Completeness</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">No <code>.gitignore</code> present. <code>.env</code> containing live API credentials will be committed on any git operation.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Dependencies not pinned</span><span class="f-server">Architecture</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Floor-only pins (<code>>=</code>) in requirements.txt. Future installs could pull breaking changes.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>Credential redaction in error messages (URL split at ?)</li>
+        <li>HTTP client reuse</li>
+        <li>Timeouts 30s</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- google-sheets (82/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">google-sheets</span>
+
+      <span class="cat-count has-issues">Critical</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev critical"></span><span class="f-title">token.json and credentials.json plaintext, mode 644</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Both files contain OAuth refresh tokens and client secrets. Permissions 644 — readable by any process. Grants full Google Drive + Sheets access.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev critical"></span><span class="f-title">No .gitignore — credentials at risk</span><span class="f-server">Completeness</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">No <code>.gitignore</code> present. <code>token.json</code> and <code>credentials.json</code> will be committed on any git operation.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">All Google API calls block event loop (sync httplib2)</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">All <code>googleapiclient</code> calls use synchronous <code>httplib2</code>. Every API call blocks the entire server. One slow response = all tools frozen.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">No HTTP client reuse — new service object every call</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Every tool call triggers <code>build("sheets", "v4")</code> which parses the discovery document and creates a new HTTP transport. ~200ms overhead per call.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Drive query injection — unescaped quotes in search</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">User input is interpolated into Drive API query strings without escaping quotes. Allows manipulating search queries.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>Spreadsheet_id validation</li>
+        <li>Filename sanitization</li>
+        <li>Error containment</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- google-drive (75/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">google-drive</span>
+
+      <span class="cat-count warn">High</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">No .gitignore — token.json, credentials.json exposed</span><span class="f-server">Completeness</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">No <code>.gitignore</code> present. <code>token.json</code> and <code>credentials.json</code> containing OAuth tokens will be committed on any git operation.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Blocking sync calls in async handlers</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Synchronous <code>httplib2</code> calls inside async handlers. Every API call blocks the entire server event loop.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Unbounded file download into memory — OOM risk</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value"><code>download_bytes()</code> loads entire files into <code>BytesIO</code>. No size check before download. A large file exhausts RAM and crashes the process.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">upload_file allows exfiltrating ~/.ssh, ~/.aws from home dir</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value"><code>upload_file</code> restricts <code>local_path</code> to be under <code>$HOME</code> — but that includes <code>~/.ssh/id_rsa</code>, <code>~/.aws/credentials</code>, <code>~/.gnupg/</code>. A prompt injection can instruct the LLM to upload private keys to Drive.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>Path traversal defended in download_file (is_relative_to)</li>
+        <li>No SSRF vectors</li>
+        <li>Signal handling</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- notebooklm (62/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">notebooklm</span>
+
+      <span class="cat-count warn">High</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">Path traversal in download_artifact — output_path not validated, writes anywhere</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value"><code>download_artifact</code> accepts <code>output_path</code> from LLM input. No validation. <code>Path(output_path).parent.mkdir(parents=True)</code> creates any directory. Files can be written to <code>/etc/cron.d/</code>, <code>~/.ssh/</code>, anywhere.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Blocking time.sleep() in async context during research_full</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Uses blocking <code>time.sleep()</code> inside async handler. Freezes the event loop during research operations.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Plaintext credential storage (~/.notebooklm-mcp-cli/cookies.json)</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Credentials stored in plaintext JSON file. Though permissions are 0o600, no encryption at rest.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>YAML safe_load</li>
+        <li>Destructive ops require confirmation</li>
+        <li>Credential file perms 0o600</li>
+        <li>HTTP client reuse</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- miro (58/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">miro</span>
+
+      <span class="cat-count warn">High</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">SSRF via create_image/create_embed — arbitrary URLs to Miro API</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">User-supplied URLs are passed directly to Miro API without validation. Can target internal services, cloud metadata, or attacker-controlled endpoints.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">Unrestricted webhook callback_url — data exfiltration</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value"><code>create_webhook</code> accepts any <code>callback_url</code>. An attacker can point it at internal services or their own server — Miro will POST board events (potentially containing sensitive content) to it.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">get_board_graph — O(N) sequential HTTP calls, hours to complete</span><span class="f-server">Architecture</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Resolves each node ID with a separate sequential HTTP request. A board with 500 nodes = 500 API calls = potentially 4+ hours of blocking.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">PII (emails, member data) in responses</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Member email addresses and personal data are returned in API responses without redaction. PII leaks to LLM context.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>HTTP client singleton</li>
+        <li>Error containment</li>
+        <li>No stdout pollution</li>
+        <li>BASE_URL hardcoded</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- fathom (45/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">fathom</span>
+
+      <span class="cat-count warn">High</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">SSRF via destination_url in get_summary/get_transcript</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value"><code>get_summary</code> and <code>get_transcript</code> accept a <code>destination_url</code> parameter. This URL is passed to Fathom's API which POSTs data to it. Can target internal services, cloud metadata, or attacker-controlled endpoints.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev high"></span><span class="f-title">SSRF via get_meeting_by_link — share_url fetched directly</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">The <code>share_url</code> parameter is fetched directly without URL validation. Can target internal services and metadata endpoints.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Unbounded max_pages in search — no hard cap</span><span class="f-server">Architecture</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value"><code>search_meetings</code> accepts any integer for <code>max_pages</code>. Setting it to 99999 triggers thousands of API calls, hitting rate limits and blocking the server.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">PII (participant emails) in responses without redaction</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Participant email addresses are returned in meeting data without redaction. PII leaks to LLM context.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>Signal handling</li>
+        <li>HTTP client reuse with recovery</li>
+        <li>Timeouts 30s</li>
+        <li>Pydantic validation</li>
+        <li>No stdout pollution</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- apple-reminders (22/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">apple-reminders</span>
+
+      <span class="cat-count clean">Medium</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">execFileSync blocks event loop up to 30s per call</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">Synchronous <code>execFileSync</code> blocks the Node.js event loop for up to 30 seconds per tool call. No concurrent processing possible.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Swift semaphore wait has no timeout — can hang indefinitely</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">The Swift bridge uses <code>semaphore.wait()</code> without a timeout parameter. If the EventKit callback never fires, the process hangs forever.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Manual JSON serialization — incomplete character escaping</span><span class="f-server">Architecture</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">JSON is built by string concatenation with incomplete escape handling. Control characters beyond <code>\n</code>, <code>\r</code>, <code>\t</code> are not escaped.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">No .gitignore</span><span class="f-server">Completeness</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">No <code>.gitignore</code> present. <code>node_modules/</code> and build artifacts will be committed.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>execFileSync with array args (no injection)</li>
+        <li>Error containment</li>
+        <li>No stdout pollution</li>
+        <li>Minimal deps</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- youtube (18/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">youtube</span>
+
+      <span class="cat-count clean">Medium</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Blocking sync call — _fetch_transcript not wrapped in asyncio.to_thread</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">The synchronous <code>_fetch_transcript</code> method is called directly from async handlers without <code>asyncio.to_thread()</code> wrapping. Blocks the event loop during network I/O.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Incomplete private IP blocking in URL validation</span><span class="f-server">Security</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">URL validation blocks common private ranges but misses some edge cases in IPv6 and link-local addresses.</div></div></div>
+      </details>
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">No .gitignore, get_trending documented but not implemented</span><span class="f-server">Completeness</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">No <code>.gitignore</code> present. Additionally, <code>get_trending</code> is documented in the tool list but the implementation is missing.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>Path traversal defended</li>
+        <li>SSRF base protection</li>
+        <li>No shell=True</li>
+        <li>Subprocess timeouts</li>
+        <li>Signal handling</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- meeting-transcript (10/100) -->
+  <details class="category">
+    <summary>
+      <span class="cat-num">meeting-transcript</span>
+
+      <span class="cat-count clean">Medium</span>
+    </summary>
+    <div class="category-body">
+      <details class="finding"><summary><span class="f-sev medium"></span><span class="f-title">Blocking file I/O in async handlers</span><span class="f-server">Health</span></summary>
+        <div class="f-body"><div class="f-field"><div class="f-label">What we found</div><div class="f-value">File read/write operations are performed synchronously inside async handlers. Blocks the event loop during disk I/O.</div></div></div>
+      </details>
+      <ul class="pass-list" style="margin-top: 1rem;">
+        <li>Exemplary path traversal protection (is_relative_to)</li>
+        <li>No SSRF vectors</li>
+        <li>Signal handling</li>
+        <li>No stdout pollution</li>
+        <li>Subprocess timeouts</li>
+        <li>Clean process separation</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- ═══ 04 RISK SCORE ═══ -->
+<div class="section">
+  <div class="section-header"><span class="section-num">04</span><span class="section-title">Risk Score by Server</span></div>
+  <div style="margin-top: 0.5rem;">
+    <div class="risk-item"><span class="risk-name">mindnode</span><div class="risk-track"><div class="risk-fill" style="width:92%;background:var(--critical)"></div></div><span class="risk-score" style="color:var(--critical)">92</span></div>
+    <div class="risk-item"><span class="risk-name">instagram</span><div class="risk-track"><div class="risk-fill" style="width:88%;background:var(--critical)"></div></div><span class="risk-score" style="color:var(--critical)">88</span></div>
+    <div class="risk-item"><span class="risk-name">trello</span><div class="risk-track"><div class="risk-fill" style="width:85%;background:var(--critical)"></div></div><span class="risk-score" style="color:var(--critical)">85</span></div>
+    <div class="risk-item"><span class="risk-name">google-sheets</span><div class="risk-track"><div class="risk-fill" style="width:82%;background:var(--critical)"></div></div><span class="risk-score" style="color:var(--critical)">82</span></div>
+    <div class="risk-item"><span class="risk-name">google-drive</span><div class="risk-track"><div class="risk-fill" style="width:75%;background:var(--high)"></div></div><span class="risk-score" style="color:var(--high)">75</span></div>
+    <div class="risk-item"><span class="risk-name">notebooklm</span><div class="risk-track"><div class="risk-fill" style="width:62%;background:var(--high)"></div></div><span class="risk-score" style="color:var(--high)">62</span></div>
+    <div class="risk-item"><span class="risk-name">miro</span><div class="risk-track"><div class="risk-fill" style="width:58%;background:var(--high)"></div></div><span class="risk-score" style="color:var(--high)">58</span></div>
+    <div class="risk-item"><span class="risk-name">fathom</span><div class="risk-track"><div class="risk-fill" style="width:45%;background:var(--medium)"></div></div><span class="risk-score" style="color:var(--medium)">45</span></div>
+    <div class="risk-item"><span class="risk-name">apple-reminders</span><div class="risk-track"><div class="risk-fill" style="width:22%;background:var(--low)"></div></div><span class="risk-score" style="color:var(--low)">22</span></div>
+    <div class="risk-item"><span class="risk-name">youtube</span><div class="risk-track"><div class="risk-fill" style="width:18%;background:var(--low)"></div></div><span class="risk-score" style="color:var(--low)">18</span></div>
+    <div class="risk-item"><span class="risk-name">meeting-transcript</span><div class="risk-track"><div class="risk-fill" style="width:10%;background:var(--low)"></div></div><span class="risk-score" style="color:var(--low)">10</span></div>
+  </div>
+</div>
+
+<!-- ═══ 05 REMEDIATION ═══ -->
+<div class="section">
+  <div class="section-header"><span class="section-num">05</span><span class="section-title">Remediation Roadmap</span></div>
+  <table>
+    <tr><th>Priority</th><th>Action</th><th>Servers</th><th>Effort</th></tr>
+    <tr><td style="color:var(--critical);font-weight:700">P0</td><td>Rotate Trello API key and token — currently exposed in plaintext</td><td>trello</td><td>Low</td></tr>
+    <tr><td style="color:var(--critical);font-weight:700">P0</td><td>Fix AppleScript injection — replace osascript clipboard with pbcopy</td><td>mindnode</td><td>Low</td></tr>
+    <tr><td style="color:var(--critical);font-weight:700">P0</td><td><code>chmod 600</code> on all credential files</td><td>trello, instagram, google-drive, google-sheets</td><td>Low</td></tr>
+    <tr><td style="color:var(--critical);font-weight:700">P0</td><td>Create .gitignore in all 8 servers missing it</td><td>8 servers</td><td>Low</td></tr>
+    <tr><td style="color:var(--high);font-weight:700">P1</td><td>Validate destination_url / callback_url — reject private IPs, require HTTPS</td><td>fathom, miro</td><td>Low</td></tr>
+    <tr><td style="color:var(--high);font-weight:700">P1</td><td>Fix path traversal in download_artifact</td><td>notebooklm</td><td>Low</td></tr>
+    <tr><td style="color:var(--high);font-weight:700">P1</td><td>Restrict upload_file to specific directory, not all of $HOME</td><td>google-drive</td><td>Low</td></tr>
+    <tr><td style="color:var(--high);font-weight:700">P1</td><td>Wrap blocking sync calls in <code>asyncio.to_thread()</code></td><td>google-drive, google-sheets</td><td>Medium</td></tr>
+    <tr><td style="color:var(--medium);font-weight:700">P2</td><td>Add download size limits and timeout on Whisper</td><td>google-drive, instagram</td><td>Low</td></tr>
+    <tr><td style="color:var(--medium);font-weight:700">P2</td><td>Pin dependency versions across all servers</td><td>7 servers</td><td>Low</td></tr>
+    <tr><td style="color:var(--medium);font-weight:700">P2</td><td>Cap search pagination — <code>max_pages = min(max_pages, 20)</code></td><td>fathom</td><td>Low</td></tr>
+  </table>
+</div>
+
+<!-- ═══ AUTHOR ═══ -->
+<div class="author-section">
+  <div class="author-name">m0rvayne</div>
+  <div class="author-desc">MCP infrastructure auditing — health, architecture, and security assessment of AI agent tool servers.</div>
+  <a href="https://github.com/m0rvayne" target="_blank" rel="noopener" class="author-cta">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+    github.com/m0rvayne
+  </a>
+</div>
+
+<div class="footer">
+  <span>Generated by <a href="https://github.com/m0rvayne/mcp-redteam">mcp-redteam</a></span>
+  <span><a href="https://github.com/m0rvayne">m0rvayne</a></span>
+</div>
+
+</div>
+</body>
+</html>

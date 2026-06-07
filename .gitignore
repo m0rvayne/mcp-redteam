@@ -1,0 +1,7 @@
+reports/*.html
+!examples/sample-report.html
+.DS_Store
+docs/research-synthesis.md
+docs/playbook-gaps.md
+docs/agent-architecture-draft.md
+docs/research-*.md
