@@ -34,7 +34,155 @@ Every finding must be **proven** through source code evidence or safe read-only 
 
 ---
 
-## Architecture: 2-Phase Audit
+## Architecture: 3-Phase Audit
+
+### Phase 0 — Config Validation (runs before everything)
+
+Before any source analysis, validate the health and security of MCP configuration itself. This catches entire classes of problems (dead servers, scope conflicts, credential leaks in configs) that make Phase 1 impossible or misleading.
+
+**Phase 0 does NOT spawn agents.** It runs as a single sequential check in the main conversation.
+
+#### Step 0A: Connection Health
+
+```bash
+claude mcp list
+```
+
+For EVERY server in output:
+- `Connected` = OK
+- `Failed to connect` / `Disconnected` / any other status = **finding**
+
+For each non-Connected server:
+```bash
+claude mcp get <name>
+```
+Check: does the Command binary exist? Do Args point to existing files?
+
+| Condition | Severity | Finding |
+|-----------|----------|---------|
+| Server status != Connected | HIGH | "Dead server: {name} configured but not running" |
+| Command binary not found on disk | HIGH | "Missing binary: {path} does not exist" |
+| Args reference non-existent file | HIGH | "Missing source: {path} does not exist — server was likely moved" |
+| Server Connected but 0 tools listed | MEDIUM | "Ghost server: {name} connected but exposes no tools" |
+
+#### Step 0B: Scope Conflict Detection
+
+Collect ALL MCP config sources:
+
+```bash
+# User scope
+cat ~/.claude.json 2>/dev/null | jq '.mcpServers // empty'
+cat ~/.claude/settings.json 2>/dev/null | jq '.mcpServers // empty'
+cat ~/.claude/settings.local.json 2>/dev/null | jq '.mcpServers // empty'
+
+# Project scope
+cat .mcp.json 2>/dev/null
+
+# Claude Desktop
+cat ~/Library/Application\ Support/Claude/claude_desktop_config.json 2>/dev/null | jq '.mcpServers // empty'
+
+# Find ALL .mcp.json files that could create scope conflicts
+find ~ -maxdepth 5 -name ".mcp.json" 2>/dev/null | grep -v node_modules | grep -v .cache
+```
+
+For each server name found in multiple scopes:
+- Compare command, args, env — are they identical or conflicting?
+- Note which scope wins (project > local > user)
+
+| Condition | Severity | Finding |
+|-----------|----------|---------|
+| Same server name in 2+ scopes with DIFFERENT commands/args | HIGH | "Scope conflict: {name} defined in {scope1} and {scope2} with different configs — {scope1} silently wins" |
+| Same server name, identical config in 2+ scopes | MEDIUM | "Redundant config: {name} duplicated in {scope1} and {scope2} — remove from lower-priority scope" |
+| Empty `mcpServers: {}` in project scope blocking user-scope inheritance | MEDIUM | "Inheritance blocker: {path}/.mcp.json has empty mcpServers — blocks all user-scope servers in this project" |
+| .mcp.json found in unexpected location (not project root) | LOW | "Orphaned config: {path}/.mcp.json — may be leftover from moved/deleted project" |
+
+#### Step 0C: Credential Exposure in Configs
+
+Read each config file and check for plaintext secrets:
+
+```bash
+# Check for API keys, tokens, passwords in config files
+grep -iE '(api.?key|token|password|secret|bearer|authorization)' ~/.claude.json .mcp.json ~/Library/Application\ Support/Claude/claude_desktop_config.json 2>/dev/null
+```
+
+Also check:
+- Config file permissions: `ls -la` on each config file
+- `.mcp.json` in git: `git ls-files .mcp.json 2>/dev/null` — if tracked AND contains env vars with secrets = CRITICAL
+- `.claude/settings.json` in git: check for `enableAllProjectMcpServers` or `ANTHROPIC_BASE_URL` override (CVE-2025-59536 / CVE-2026-21852 vectors)
+
+| Condition | Severity | Finding |
+|-----------|----------|---------|
+| Plaintext API key/token in .mcp.json AND file is git-tracked | CRITICAL | "Credential in git: {key_name} in .mcp.json is committed to repository — rotate immediately" |
+| Plaintext API key/token in config but NOT in git | HIGH | "Plaintext credential: {key_name} in {config_file} — migrate to OS keychain or .env (gitignored)" |
+| Config file permissions 644 (world-readable) with credentials | HIGH | "World-readable secrets: {config_file} is 644 — chmod 600" |
+| `enableAllProjectMcpServers: true` in .claude/settings.json | CRITICAL | "Auto-enable bypass: cloning a repo with malicious .mcp.json will auto-connect attacker's server (CVE-2026-21852)" |
+| `ANTHROPIC_BASE_URL` override in project settings | CRITICAL | "API exfiltration vector: project settings override ANTHROPIC_BASE_URL — all API calls (with your key) route to {url} (CVE-2025-59536)" |
+
+#### Step 0D: Supply Chain — Version Pinning
+
+For each server using npx or uvx:
+- Check if version is pinned (`@1.2.3`) or floating (no version, `@latest`, `^`, `~`)
+- Check `--prefer-offline` flag presence
+
+```bash
+# Extract all npx/uvx commands from configs
+grep -oE '(npx|uvx)\s+[^"]+' ~/.claude.json .mcp.json ~/Library/Application\ Support/Claude/claude_desktop_config.json 2>/dev/null
+```
+
+| Condition | Severity | Finding |
+|-----------|----------|---------|
+| npx/uvx without pinned version | HIGH | "Unpinned MCP package: `{command}` pulls latest on every run — supply chain attack vector. Pin to exact version: `{package}@x.y.z`" |
+| npx without `--prefer-offline` | LOW | "Network fetch on every start: add `--prefer-offline` to use cached version when available" |
+| Package name looks suspicious (typosquat of known server) | HIGH | "Possible typosquat: `{package}` is similar to `{known_package}` — verify publisher" |
+
+#### Step 0E: Network Exposure (Active Mode only)
+
+Only in Active Mode — check if any LOCAL MCP server binds to a network interface:
+
+```bash
+# Check for servers listening on 0.0.0.0 or public interfaces
+lsof -iTCP -sTCP:LISTEN -P 2>/dev/null | grep -i mcp
+```
+
+Also grep source code for bind patterns:
+- `0.0.0.0` or `INADDR_ANY` = listens on all interfaces
+- No auth on HTTP transport = unauthenticated access
+
+| Condition | Severity | Finding |
+|-----------|----------|---------|
+| MCP server bound to 0.0.0.0 without authentication | CRITICAL | "Network-exposed MCP: {name} listens on 0.0.0.0:{port} without auth — any device on the network can connect" |
+| MCP server bound to 127.0.0.1 | OK | Local-only, expected |
+
+#### Step 0F: Orphaned Processes
+
+Check for MCP server processes that outlived their session:
+
+```bash
+# Find potential orphaned MCP server processes
+ps aux | grep -iE '(mcp|model.context.protocol)' | grep -v grep
+```
+
+| Condition | Severity | Finding |
+|-----------|----------|---------|
+| MCP server process running but not in `claude mcp list` | MEDIUM | "Orphaned process: {process} (PID {pid}) — MCP server running without active session, consuming resources" |
+
+#### Phase 0 Output
+
+Phase 0 produces a CONFIG_HEALTH section for the final report:
+- Total servers configured vs connected
+- List of all findings (sorted by severity)
+- Config topology map: which servers in which scopes
+
+If Phase 0 finds CRITICAL issues (credential exposure, auto-enable bypass):
+- **WARN the user immediately** before proceeding to Phase 1
+- Suggest fixes for CRITICAL items first
+- Ask: "Continue audit with these config issues, or fix first?"
+
+If ALL servers are Failed/Dead:
+- Do NOT proceed to Phase 1
+- Report Phase 0 findings only
+
+---
 
 ### Phase 1 — Deep Audit (parallel, one agent per server)
 
@@ -260,7 +408,12 @@ For each finding:
 - Fix: exact code change
 
 ### CHAINABLE ASSETS
-Structured list for cross-server chain analysis:
+Structured list for cross-server chain analysis.
+
+**ACCURACY RULE: Only list assets that ACTUALLY EXIST. Do not speculate.**
+- If a tool can only SEND (not receive) — it is NOT an input channel
+- If a tool is read-only — it is NOT a writable tool
+- Read the tool descriptions and code carefully before classifying
 
 CHAINABLE_ASSETS:
 - credential: {type}={value} (source: {file}, server: {name})
@@ -268,6 +421,8 @@ CHAINABLE_ASSETS:
 - writable_tool: {tool_name}(params) — {what's not validated} (CODE EVIDENCE, not tested live)
 - readable_tool: {tool_name}(params) — {what can be read} (CODE EVIDENCE or read-only test)
 - pii_source: {tool_name} returns {emails/names/phones} without redaction
+- input_channel: {tool_name} — CAN receive external input (specify: from who? how?) — ONLY if tool actually receives external data
+- output_only: {tool_name} — sends data OUT but cannot receive input (NOT a prompt injection vector)
 
 Also list DEFENDED checks — what you analyzed and confirmed safe.
 ```
@@ -284,6 +439,9 @@ You are a cross-server vulnerability chain analyst.
 ALL output MUST be in this language. Technical terms (CRITICAL, SSRF, Path Traversal) stay in English.
 Generate the report DIRECTLY in the selected language — do NOT translate from English.
 
+## PHASE 0 RESULTS (Config Health)
+{paste Phase 0 config validation findings here}
+
 ## PHASE 1 RESULTS
 {paste all Phase 1 agent outputs here — findings + chainable assets}
 
@@ -293,12 +451,26 @@ Analyze chainable assets from ALL servers and MAP potential multi-step attack ch
 
 ### Chain Analysis (analytical — do NOT execute)
 
+**CRITICAL: Validate every step of the chain before including it.**
+
 For each potential chain:
 1. Identify the ENTRY POINT (first vulnerability in the chain)
-2. Trace the PATH (how data/access flows between servers)
-3. Identify the IMPACT (what the complete chain achieves)
-4. Rate severity of the FULL CHAIN (often higher than individual findings)
-5. Provide fix for the WEAKEST LINK
+2. **VERIFY each step is actually possible:**
+   - Does the tool ACTUALLY accept this type of input? (read the schema)
+   - Is the tool INPUT or OUTPUT? (a send-only tool cannot receive external data)
+   - Can the tool be triggered externally or only by the user? (prompt injection requires an INPUT channel)
+   - Does the data format match between steps? (e.g., file content → tool parameter)
+3. Trace the PATH (how data/access flows between servers)
+4. Identify the IMPACT (what the complete chain achieves)
+5. Rate severity of the FULL CHAIN
+6. Provide fix for the WEAKEST LINK
+
+**FALSE POSITIVE PREVENTION:**
+- A tool that SENDS messages (Telegram reply, email send) is NOT an input channel for prompt injection
+- A tool that only READS data cannot be used to WRITE data in a chain
+- "Theoretically possible" is NOT enough — every step must have a concrete, proven mechanism
+- If you cannot explain HOW an attacker triggers step 1, the chain is invalid — do NOT include it
+- Ask: "Can an external attacker actually trigger this chain without already having access?" If no → not a real chain
 
 ### Chain Types to Analyze
 
@@ -319,7 +491,7 @@ For each potential chain:
 
 Generate a single HTML report following the terminal style.
 Use the CSS and structure from the examples/sample-report.html reference.
-Structure: per-server sections (sorted by risk score), then cross-server chains section.
+Structure: Config Health section first (Phase 0), then per-server sections (sorted by risk score), then cross-server chains section.
 Save to reports/mcp-redteam-YYYY-MM-DD.html
 
 **CRITICAL RULES:**
@@ -375,6 +547,12 @@ After presenting the report, user may say "fix it" or "fix [server]".
 
 | Fix | How |
 |-----|-----|
+| Update broken MCP path | `claude mcp remove <name> && claude mcp add --scope <scope> <name> <new_command> <new_args>` |
+| Remove duplicate scope entry | `claude mcp remove --scope <lower_scope> <name>` |
+| Pin npx/uvx version | Replace `npx -y pkg` with `npx -y pkg@x.y.z --prefer-offline` in config |
+| Fix config file permissions | `chmod 600 ~/.claude.json .mcp.json` etc. |
+| Remove empty inheritance blocker | Delete empty `mcpServers: {}` from project .mcp.json |
+| Kill orphaned MCP process | `kill <pid>` after confirmation |
 | Create .gitignore | Write: .env, token.json, credentials.json, cookies.txt, __pycache__/, .venv/, node_modules/ |
 | chmod 600 | Bash: chmod 600 on credential files |
 | Path traversal protection | Add resolve() + is_relative_to(base) check |
@@ -397,6 +575,9 @@ After presenting the report, user may say "fix it" or "fix [server]".
 
 | Fix | What to explain |
 |-----|-----------------|
+| Credential in git history | "Key was committed. Even after removing from file, it's in git history. Run `git filter-repo` or rotate the key." |
+| enableAllProjectMcpServers | "This setting auto-connects MCP servers from cloned repos without trust dialog (CVE-2026-21852). Remove it — here's how." |
+| ANTHROPIC_BASE_URL override | "Project settings redirect all API traffic including your key (CVE-2025-59536). Remove immediately." |
 | Credential rotation | "Key was in plaintext. Go to [service URL] → regenerate. Old key is compromised." |
 | OAuth revoke | "Token is world-readable. Revoke at myaccount.google.com/permissions and re-auth." |
 | Keychain migration | "Architecture change — show code, let user decide." |
@@ -423,10 +604,12 @@ After presenting the report, user may say "fix it" or "fix [server]".
 
 ### Fix order
 
-1. **P0** — Credential exposure (.gitignore, chmod, rotation advice)
-2. **P0** — Injection/traversal (path validation, URL validation)
-3. **P1** — Stability (blocking calls, timeouts)
-4. **P2** — Hygiene (deps, dead code, schemas)
+1. **P0** — Config criticals (enableAllProjectMcpServers, ANTHROPIC_BASE_URL override, credentials in git)
+2. **P0** — Credential exposure (.gitignore, chmod, rotation advice)
+3. **P0** — Injection/traversal (path validation, URL validation)
+4. **P1** — Config health (dead servers, scope conflicts, unpinned packages)
+5. **P1** — Stability (blocking calls, timeouts)
+6. **P2** — Hygiene (deps, dead code, schemas, orphaned processes)
 
 ### "Fix all" flow
 
