@@ -1,69 +1,69 @@
-# Лучшие практики MCP-серверов
+# MCP Server Best Practices
 
-**Версия:** 1.0
-**Спецификация MCP:** 2025-03-26
-**Последнее обновление:** 7 июня 2026
-
----
-
-## Содержание
-
-1. [Золотые правила](#1-золотые-правила)
-2. [Архитектура и транспорт](#2-архитектура-и-транспорт)
-3. [Паттерны кода](#3-паттерны-кода)
-4. [Безопасность](#4-безопасность)
-5. [Стабильность](#5-стабильность)
-6. [Отладка](#6-отладка)
-7. [Выбор фреймворка](#7-выбор-фреймворка)
-8. [Чек-лист перед релизом](#8-чек-лист-перед-релизом)
+**Version:** 1.0
+**MCP Specification:** 2025-03-26
+**Last updated:** June 7, 2026
 
 ---
 
-## 1. Золотые правила
+## Table of Contents
 
-| # | Правило | Почему |
-|---|---------|--------|
-| 1 | **stdout = ТОЛЬКО JSON-RPC** | Любой `print()` убивает соединение мгновенно |
-| 2 | **Tool errors -> isError=True, никогда raise** | Необработанное исключение крашит весь процесс |
-| 3 | **Signal handling (SIGTERM/SIGINT)** | Claude Desktop шлёт SIGTERM при закрытии |
-| 4 | **HTTP-клиенты — переиспользовать** | Новый AsyncClient на каждый запрос = утечка соединений |
-| 5 | **Таймауты на ВСЕ исходящие запросы** | Без таймаута = зависший сервер навсегда |
-| 6 | **Абсолютные пути везде** | CWD Claude Desktop = `/` на macOS |
-| 7 | **Тяжёлые ресурсы — кэшировать** | Browser, ML-модель, auth — инициализировать один раз |
-| 8 | **Валидация путей через is_relative_to()** | Защита от path traversal |
-| 9 | **Валидация URL перед fetch** | Защита от SSRF |
-| 10 | **Не возвращать str(e) клиенту** | Утечка путей, токенов, внутренних деталей |
+1. [Golden Rules](#1-golden-rules)
+2. [Architecture and Transport](#2-architecture-and-transport)
+3. [Code Patterns](#3-code-patterns)
+4. [Security](#4-security)
+5. [Stability](#5-stability)
+6. [Debugging](#6-debugging)
+7. [Framework Selection](#7-framework-selection)
+8. [Pre-Release Checklist](#8-pre-release-checklist)
 
 ---
 
-## 2. Архитектура и транспорт
+## 1. Golden Rules
 
-### stdio (для Claude Desktop / Claude Code)
+| # | Rule | Why |
+|---|------|-----|
+| 1 | **stdout = ONLY JSON-RPC** | Any `print()` kills the connection instantly |
+| 2 | **Tool errors -> isError=True, never raise** | Unhandled exception crashes the entire process |
+| 3 | **Signal handling (SIGTERM/SIGINT)** | Claude Desktop sends SIGTERM on close |
+| 4 | **HTTP clients — reuse** | New AsyncClient per request = connection leak |
+| 5 | **Timeouts on ALL outgoing requests** | No timeout = server hung forever |
+| 6 | **Absolute paths everywhere** | CWD in Claude Desktop = `/` on macOS |
+| 7 | **Heavy resources — cache** | Browser, ML model, auth — initialize once |
+| 8 | **Path validation via is_relative_to()** | Protection against path traversal |
+| 9 | **URL validation before fetch** | Protection against SSRF |
+| 10 | **Don't return str(e) to client** | Leaks paths, tokens, internal details |
 
-- Клиент запускает сервер как subprocess
-- stdin/stdout = JSON-RPC, stderr = логи
-- Клиент управляет lifecycle: launch -> communicate -> close stdin -> SIGTERM -> SIGKILL
-- **Правило:** ничего кроме JSON-RPC в stdout
+---
 
-### Streamable HTTP (для удалённых серверов)
+## 2. Architecture and Transport
 
-- Сервер — независимый процесс с HTTP endpoint
-- POST для JSON-RPC, GET для SSE-стримов
-- Поддержка сессий через `Mcp-Session-Id`
-- **SSE (Server-Sent Events) deprecated** с spec 2025-03-26
+### stdio (for Claude Desktop / Claude Code)
 
-### Когда что использовать
+- Client launches server as subprocess
+- stdin/stdout = JSON-RPC, stderr = logs
+- Client manages lifecycle: launch -> communicate -> close stdin -> SIGTERM -> SIGKILL
+- **Rule:** nothing except JSON-RPC in stdout
 
-| Сценарий | Транспорт |
+### Streamable HTTP (for remote servers)
+
+- Server — independent process with HTTP endpoint
+- POST for JSON-RPC, GET for SSE streams
+- Session support via `Mcp-Session-Id`
+- **SSE (Server-Sent Events) deprecated** since spec 2025-03-26
+
+### When to use what
+
+| Scenario | Transport |
 |----------|-----------|
-| Локальный инструмент для Claude Desktop | stdio |
-| Сервер в Docker/Kubernetes | Streamable HTTP |
-| Несколько клиентов одновременно | Streamable HTTP |
-| Максимальная совместимость | stdio |
+| Local tool for Claude Desktop | stdio |
+| Server in Docker/Kubernetes | Streamable HTTP |
+| Multiple clients simultaneously | Streamable HTTP |
+| Maximum compatibility | stdio |
 
 ---
 
-## 3. Паттерны кода
+## 3. Code Patterns
 
 ### Signal Handler
 
@@ -77,7 +77,7 @@ signal.signal(signal.SIGTERM, _handle_shutdown)
 signal.signal(signal.SIGINT, _handle_shutdown)
 ```
 
-**Важно:** НЕ делать async cleanup в signal handler. `create_task(_cleanup())` + `sys.exit(0)` = cleanup никогда не выполнится (race condition). Просто `sys.exit(0)`.
+**Important:** Do NOT perform async cleanup in signal handler. `create_task(_cleanup())` + `sys.exit(0)` = cleanup never executes (race condition). Just `sys.exit(0)`.
 
 ### Cached HTTP Client
 
@@ -115,7 +115,7 @@ async def _request_safe(method, url, **kwargs):
         return resp
 ```
 
-### Error Handling в Tool Handlers
+### Error Handling in Tool Handlers
 
 ```python
 # Raw MCP SDK:
@@ -131,7 +131,7 @@ except Exception as e:
     raise ToolError(safe_error(e))
 ```
 
-### Safe Error (не утекает внутренняя информация)
+### Safe Error (does not leak internal information)
 
 ```python
 import re
@@ -140,10 +140,10 @@ def safe_error(e: Exception) -> str:
     msg = str(e)
     msg = re.sub(r'/Users/[^\s:]+', '[path]', msg)
     msg = re.sub(r'(key|token|secret|password)=[^\s&]+', r'\1=[REDACTED]', msg, flags=re.I)
-    return msg[:500]  # ограничить длину
+    return msg[:500]  # limit length
 ```
 
-### Subprocess с таймаутом и kill
+### Subprocess with Timeout and Kill
 
 ```python
 proc = await asyncio.create_subprocess_exec(
@@ -159,7 +159,7 @@ except asyncio.TimeoutError:
     raise ValueError("Command timed out after 60s")
 ```
 
-**Никогда:** `subprocess.run()` в async handler (блокирует event loop), `shell=True` (command injection).
+**Never:** `subprocess.run()` in async handler (blocks event loop), `shell=True` (command injection).
 
 ### Path Traversal Protection
 
@@ -189,63 +189,63 @@ def validate_url(url: str, allowed_hosts: set | None = None) -> str:
 
 ---
 
-## 4. Безопасность
+## 4. Security
 
-### Что проверять (checklist)
+### What to check (checklist)
 
-- [ ] Все файловые пути валидируются через `is_relative_to()`
-- [ ] Все URL валидируются перед fetch (scheme + host)
-- [ ] `subprocess.run` -> `create_subprocess_exec` (нет shell)
-- [ ] Ошибки не утекают пути, токены, внутренние детали
-- [ ] Credentials не в коде, не в plaintext config
-- [ ] `.env`, `token.json`, `credentials.json` в `.gitignore`
-- [ ] Файлы с секретами имеют `chmod 600`
-- [ ] Нет `print()` без `file=sys.stderr`
+- [ ] All file paths validated via `is_relative_to()`
+- [ ] All URLs validated before fetch (scheme + host)
+- [ ] `subprocess.run` -> `create_subprocess_exec` (no shell)
+- [ ] Errors don't leak paths, tokens, internal details
+- [ ] Credentials not in code, not in plaintext config
+- [ ] `.env`, `token.json`, `credentials.json` in `.gitignore`
+- [ ] Files with secrets have `chmod 600`
+- [ ] No `print()` without `file=sys.stderr`
 
-### Известные атаки на MCP (по состоянию на 2026)
+### Known Attacks on MCP (as of 2026)
 
-1. **Tool Poisoning** — скрытые `<IMPORTANT>` инструкции в описании инструмента
-2. **Cross-Server Shadowing** — один MCP-сервер влияет на поведение другого через описания
-3. **Rug Pull** — сервер меняет описания инструментов после одобрения
-4. **Output Poisoning** — инъекция инструкций в ответах инструментов
-5. **SSRF** — заставить сервер обратиться к внутренним сервисам
-6. **Path Traversal** — чтение/запись произвольных файлов (76% серверов уязвимы)
-7. **Credential Theft** — чтение config/env файлов через другой MCP-сервер
-
----
-
-## 5. Стабильность
-
-### Что убивает MCP-серверы
-
-| Причина | Как защититься |
-|---------|---------------|
-| `print()` в stdout | Только `file=sys.stderr` |
-| Unhandled exception | try/except в каждом handler |
-| Blocking sync в async | `asyncio.to_thread()` или `run_in_executor` |
-| HTTP без таймаута | `httpx.AsyncClient(timeout=30.0)` |
-| Subprocess без таймаута | `asyncio.wait_for()` + `proc.kill()` |
-| Новый HTTP client на каждый запрос | Module-level singleton |
-| Сломанный signal handler | Просто `sys.exit(0)`, никакого async |
-| venv shebang после перемещения директории | Пересоздать venv: `uv sync` или `python -m venv .venv` |
-
-### Graceful Shutdown последовательность (Claude Desktop)
-
-1. Клиент закрывает stdin
-2. Ждёт завершения процесса
-3. Шлёт SIGTERM
-4. Ждёт
-5. Шлёт SIGKILL
+1. **Tool Poisoning** — hidden `<IMPORTANT>` instructions in tool description
+2. **Cross-Server Shadowing** — one MCP server influences another's behavior through descriptions
+3. **Rug Pull** — server changes tool descriptions after approval
+4. **Output Poisoning** — instruction injection in tool responses
+5. **SSRF** — forcing server to access internal services
+6. **Path Traversal** — reading/writing arbitrary files (76% of servers vulnerable)
+7. **Credential Theft** — reading config/env files through another MCP server
 
 ---
 
-## 6. Отладка
+## 5. Stability
 
-### Логи Claude Desktop (macOS)
+### What Kills MCP Servers
+
+| Cause | How to protect |
+|-------|---------------|
+| `print()` to stdout | Only `file=sys.stderr` |
+| Unhandled exception | try/except in every handler |
+| Blocking sync in async | `asyncio.to_thread()` or `run_in_executor` |
+| HTTP without timeout | `httpx.AsyncClient(timeout=30.0)` |
+| Subprocess without timeout | `asyncio.wait_for()` + `proc.kill()` |
+| New HTTP client per request | Module-level singleton |
+| Broken signal handler | Just `sys.exit(0)`, no async |
+| venv shebang after moving directory | Recreate venv: `uv sync` or `python -m venv .venv` |
+
+### Graceful Shutdown Sequence (Claude Desktop)
+
+1. Client closes stdin
+2. Waits for process to finish
+3. Sends SIGTERM
+4. Waits
+5. Sends SIGKILL
+
+---
+
+## 6. Debugging
+
+### Claude Desktop Logs (macOS)
 
 ```
-~/Library/Logs/Claude/mcp.log              — общий лог всех MCP
-~/Library/Logs/Claude/mcp-server-NAME.log  — лог конкретного сервера
+~/Library/Logs/Claude/mcp.log              — general log for all MCP
+~/Library/Logs/Claude/mcp-server-NAME.log  — log for a specific server
 ```
 
 ### MCP Inspector
@@ -254,7 +254,7 @@ def validate_url(url: str, allowed_hosts: set | None = None) -> str:
 npx @modelcontextprotocol/inspector
 ```
 
-Браузерный UI для тестирования серверов.
+Browser UI for testing servers.
 
 ### Claude Code
 
@@ -262,61 +262,61 @@ npx @modelcontextprotocol/inspector
 claude --debug mcp
 ```
 
-### Chrome DevTools в Claude Desktop
+### Chrome DevTools in Claude Desktop
 
-Файл `~/Library/Application Support/Claude/developer_settings.json`:
+File `~/Library/Application Support/Claude/developer_settings.json`:
 ```json
 {"allowDevTools": true}
 ```
 
 ---
 
-## 7. Выбор фреймворка
+## 7. Framework Selection
 
-### FastMCP (рекомендуется для новых серверов)
+### FastMCP (recommended for new servers)
 
-- Декоратор `@mcp.tool()` на функцию — и готово
-- Автоматическая генерация схемы из type hints
-- Pydantic-валидация входных данных
-- `ToolError` для структурированных ошибок
-- ~5x меньше boilerplate
+- `@mcp.tool()` decorator on a function — and you're done
+- Automatic schema generation from type hints
+- Pydantic validation for input data
+- `ToolError` for structured errors
+- ~5x less boilerplate
 
 ### Raw MCP SDK
 
-- 1:1 маппинг на wire format
-- Полный контроль над протоколом
-- Когда нужен кастомный транспорт или нестандартные capabilities
+- 1:1 mapping to wire format
+- Full control over the protocol
+- When you need custom transport or non-standard capabilities
 
 ### Node.js (@modelcontextprotocol/sdk)
 
-- `McpServer` класс с `server.tool()` регистрацией
-- Типобезопасность через TypeScript
-- `process.on("SIGTERM")` для signal handling
+- `McpServer` class with `server.tool()` registration
+- Type safety via TypeScript
+- `process.on("SIGTERM")` for signal handling
 
 ---
 
-## 8. Чек-лист перед релизом
+## 8. Pre-Release Checklist
 
 ```
-СТАБИЛЬНОСТЬ
+STABILITY
 [ ] Signal handling (SIGTERM + SIGINT)
-[ ] Все tool handlers в try/except
-[ ] Нет print() без file=sys.stderr
-[ ] HTTP client reuse (не per-request)
-[ ] Таймауты на все HTTP и subprocess
-[ ] Нет blocking sync в async handlers
+[ ] All tool handlers in try/except
+[ ] No print() without file=sys.stderr
+[ ] HTTP client reuse (not per-request)
+[ ] Timeouts on all HTTP and subprocess
+[ ] No blocking sync in async handlers
 
-БЕЗОПАСНОСТЬ
-[ ] Path traversal: is_relative_to() на все файловые операции
-[ ] SSRF: validate_url() на все пользовательские URL
-[ ] No shell=True в subprocess
-[ ] Error messages не утекают секреты
-[ ] Credentials не в коде / не plaintext
-[ ] Sensitive files в .gitignore
+SECURITY
+[ ] Path traversal: is_relative_to() on all file operations
+[ ] SSRF: validate_url() on all user-provided URLs
+[ ] No shell=True in subprocess
+[ ] Error messages don't leak secrets
+[ ] Credentials not in code / not plaintext
+[ ] Sensitive files in .gitignore
 
-КАЧЕСТВО
-[ ] py_compile / node --check проходит
-[ ] Зависимости закреплены (==X.Y.Z)
-[ ] venv изолирован от системного Python
-[ ] Нет мёртвого кода / неиспользуемых зависимостей
+QUALITY
+[ ] py_compile / node --check passes
+[ ] Dependencies pinned (==X.Y.Z)
+[ ] venv isolated from system Python
+[ ] No dead code / unused dependencies
 ```

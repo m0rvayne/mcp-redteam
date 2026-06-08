@@ -107,7 +107,6 @@ If a server spans multiple categories, classify by its PRIMARY data flow (where 
 
 ### Context Budget
 
-- If source code exceeds 50K tokens — include only tool handler functions and security-relevant code (auth, file ops, subprocess calls, HTTP requests). Skip tests, configs, comments.
 - If a server has >40 tools — split into 2 agents by tool groups.
 - Priority for source inclusion: tool handlers > route definitions > auth code > utility functions > everything else.
 

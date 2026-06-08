@@ -90,7 +90,7 @@ Say "fix it" and the plugin applies fixes — with your confirmation:
 
 ## How it compares
 
-| | mcp-scan (Snyk) | mcpserver-audit (CSA) | MCP-Scanner (eSentire) | **mcp-redteam** |
+| | mcp-scan (Invariant Labs) | mcpserver-audit (CSA) | MCP-Scanner (eSentire) | **mcp-redteam** |
 |---|---|---|---|---|
 | Approach | Static config scan | Pre-install review | Keyword + LLM analysis | **Active red-teaming** |
 | Reads source code | No | No | No | **Yes** |
@@ -99,7 +99,7 @@ Say "fix it" and the plugin applies fixes — with your confirmation:
 | Fix suggestions with code | No | No | No | **Yes** |
 | Auto-applies fixes | No | No | No | **Yes** |
 | Runs in | CLI (Python) | CLI | CLI | **Claude Code** |
-| Needs API key | Snyk token | No | LLM API key | **No** |
+| Needs API key | No | No | LLM API key | **No** |
 
 ## Architecture
 

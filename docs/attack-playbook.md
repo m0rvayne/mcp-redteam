@@ -197,7 +197,7 @@ Malicious MCP servers exploit the `sampling/createMessage` capability:
 
 ### 3.1 Path Traversal
 
-76% of MCP servers contain path traversal vulnerabilities (per research on 2,614 implementations).
+82% of MCP servers contain path traversal vulnerabilities (per research on 2,614 implementations).
 
 | # | Test | Payload |
 |---|------|---------|

@@ -17,6 +17,7 @@ Tools:
   example_tool — does something useful
 """
 import asyncio
+import json
 import os
 import re
 import signal
