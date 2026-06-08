@@ -9,15 +9,11 @@ trigger: /mcp-redteam
 
 ## Step 0 — Language
 
-Before anything else, ask the user which language they want the report in. Use AskUserQuestion:
+Before anything else, ask the user in plain text (do NOT use AskUserQuestion with options — just type the question):
 
-**"Which language for the audit report?"**
-- English
-- Русский
-- Українська
+**"Report language? Type: en / ru / ua (default: en)"**
 
-Store the answer. Default: **English** (if user skips, says "go", or requests unsupported language).
-If user requests a language not listed — respond: "Currently supported: English, Русский, Українська. Which one?" and wait for answer.
+Wait for reply. Accept: `en`, `eng`, `english`, `ru`, `рус`, `русский`, `ua`, `укр`, `українська`, or just the first answer from the user. Default to English if user says "go", skips, or gives unsupported language.
 
 All findings, executive summary, remediation roadmap, and HTML report must be written in the selected language. Agent prompts stay in English (internal), but all user-facing output uses the selected language.
 
@@ -43,12 +39,35 @@ Before starting the audit, tell the user:
 ```
 3. **Full auto-approve** (fastest, use only on your own infrastructure)"
 
+## Step 1.6 — Claude Desktop servers
+
+After discovery, if servers are found in Claude Desktop config but NOT in Claude Code:
+
+Tell the user:
+
+"I found {N} MCP servers configured in Claude Desktop that are not connected to Claude Code. I can read their source code but cannot actively test their tools (different process).
+
+For full active testing, add them to Claude Code:
+```bash
+claude mcp add {server_name} -- {command} {args}
+```
+Or copy the server config from `~/Library/Application Support/Claude/claude_desktop_config.json` to your project's `.mcp.json`.
+
+Without this, these servers will get **source-code-only audit** (no live tool calls)."
+
+List the servers and let the user decide. Proceed with whatever is available — do NOT skip servers just because they can't be live-tested. Source-only audit is still valuable.
+
 ## Step 2 — Discover & audit
 
-3. Discover MCP servers (Claude Code settings.json + Claude Desktop config + .mcp.json)
+3. Discover MCP servers from ALL sources:
+   - Claude Code: `~/.claude/settings.json`, `.mcp.json`, `claude mcp list`
+   - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
+   - For each server: classify as CONNECTED (can call tools) or SOURCE-ONLY (can read code, no live calls)
 4. Classify each server by type (file, HTTP/API, browser, native, database)
-5. **Phase 1** — spawn 1 agent per server (parallel). Each reads source code, audits all 4 categories, outputs findings + chainable assets
-6. **Phase 2** — spawn 1 coordinator agent. Receives all Phase 1 output. Builds and TESTS cross-server attack chains. Generates HTML report.
+5. **Phase 1** — spawn 1 agent per server (parallel). Connected servers: source + live tool calls. Source-only servers: static analysis.
+6. **Phase 2** — spawn 1 coordinator. Receives all Phase 1 output. For connected servers: actively tests cross-server chains. For source-only: infers chains from code analysis. Generates HTML report.
+
+**IMPORTANT: Pass the user's selected language to Phase 2 coordinator explicitly. The report MUST be in the language chosen in Step 0.**
 
 ## Step 3 — Report
 

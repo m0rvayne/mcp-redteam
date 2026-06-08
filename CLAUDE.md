@@ -299,6 +299,10 @@ Also list DEFENDED checks — what you tested and passed.
 ```
 You are a cross-server attack chain builder. You have access to all MCP tools and the filesystem.
 
+## REPORT LANGUAGE: {language selected by user — en/ru/ua}
+
+ALL output — chain descriptions, findings, the HTML report — MUST be written in this language. Technical terms (CRITICAL, SSRF, Path Traversal) stay in English.
+
 ## PHASE 1 RESULTS
 {paste all Phase 1 agent outputs here — findings + chainable assets}
 
@@ -349,6 +353,12 @@ Save to reports/mcp-redteam-YYYY-MM-DD.html
 - ALL `<details>` elements must be CLOSED by default — NEVER add the `open` attribute
 - Write the report in the language selected by the user at the start (English, Russian, or Ukrainian)
 - Agent prompts stay in English internally, but all user-facing content (findings, executive summary, remediation, HTML report) uses the selected language
+- Generate the report DIRECTLY in the selected language — do NOT generate in English first then translate (causes timeouts)
+
+**SCALABILITY:**
+- If >15 servers: show all CRITICAL/HIGH findings individually, group MEDIUM by server as summary, summarize LOW as count
+- If total findings >100: each server section shows top 5 findings, with "and N more" link
+- Target report size: under 150KB HTML. If exceeded, reduce evidence verbosity.
 
 Risk score per server:
 - CRITICAL finding: +25 points
