@@ -1,21 +1,23 @@
 ---
 name: mcp-redteam
-description: Full audit and penetration test of all connected MCP servers. One agent per server + chain attacker coordinator. Health, architecture, completeness, security.
+description: Security audit of MCP servers. Safe mode (default) = source analysis + read-only probing. Active mode = controlled payload testing.
 user_invocable: true
 trigger: /mcp-redteam
 ---
 
 # MCP Red Team
 
-## Step 0 — Language
+## Step 0 — Mode & Language
 
-Before anything else, ask the user in plain text (do NOT use AskUserQuestion with options — just type the question):
+Check the user's command:
+- `/mcp-redteam` → **Safe Mode** (default). Source code analysis + read-only tools only. Production-safe.
+- `/mcp-redteam active` → **Active Mode**. Safe Mode + controlled payloads on read-only tools. Requires consent.
+
+Then ask language in plain text (do NOT use AskUserQuestion with options):
 
 **"Report language? Type: en / ru / ua (default: en)"**
 
-Wait for reply. Accept: `en`, `eng`, `english`, `ru`, `рус`, `русский`, `ua`, `укр`, `українська`, or just the first answer from the user. Default to English if user says "go", skips, or gives unsupported language.
-
-All findings, executive summary, remediation roadmap, and HTML report must be written in the selected language. Agent prompts stay in English (internal), but all user-facing output uses the selected language.
+Accept: `en`, `eng`, `english`, `ru`, `рус`, `русский`, `ua`, `укр`, `українська`. Default to English if user skips or gives unsupported language.
 
 **Translation rules:**
 - TRANSLATE: section headers, finding descriptions, remediation text, executive summary
@@ -24,53 +26,41 @@ All findings, executive summary, remediation roadmap, and HTML report must be wr
 ## Step 1 — Read instructions
 
 Read from the plugin root:
-1. `CLAUDE.md` — full architecture, agent prompts, fix strategy
-2. `docs/attack-playbook.md` — all attack vectors with payloads
+1. `CLAUDE.md` — full architecture, agent prompts, safety rules, fix strategy
+2. `docs/attack-playbook.md` — vulnerability patterns and code path examples
 
-## Step 1.5 — Permissions advisory
+## Step 1.5 — Active Mode consent (only if active)
 
-Before starting the audit, tell the user:
+If Active Mode: tell the user:
 
-"This audit will actively call your MCP tools with test payloads to prove vulnerabilities. You'll see permission prompts for tool calls. Options:
-1. **Approve each call manually** (safest, slower)
-2. **Auto-approve read-only tools** — add to your project's .claude/settings.json:
-```json
-{"permissions": {"allow": ["mcp__*__read_*", "mcp__*__get_*", "mcp__*__list_*", "mcp__*__search_*"]}}
-```
-3. **Full auto-approve** (fastest, use only on your own infrastructure)"
+"Active Mode runs controlled payloads on READ-ONLY tools to confirm vulnerabilities. It will NOT call create/update/delete/send tools. Still, I recommend committing your current state first: `git add -A && git commit -m 'pre-audit'`
+
+Proceed with Active Mode?"
+
+Wait for confirmation. If denied → fall back to Safe Mode.
 
 ## Step 1.6 — Claude Desktop servers
 
-After discovery, if servers are found in Claude Desktop config but NOT in Claude Code:
+After discovery, if servers found in Claude Desktop but not Claude Code:
 
-Tell the user:
+"I found {N} MCP servers in Claude Desktop not connected to Claude Code. I can read their source code but cannot probe their tools live.
 
-"I found {N} MCP servers configured in Claude Desktop that are not connected to Claude Code. I can read their source code but cannot actively test their tools (different process).
+For full probing, add them to Claude Code: `claude mcp add {name} -- {command} {args}`
 
-For full active testing, add them to Claude Code:
-```bash
-claude mcp add {server_name} -- {command} {args}
-```
-Or copy the server config from `~/Library/Application Support/Claude/claude_desktop_config.json` to your project's `.mcp.json`.
-
-Without this, these servers will get **source-code-only audit** (no live tool calls)."
-
-List the servers and let the user decide. Proceed with whatever is available — do NOT skip servers just because they can't be live-tested. Source-only audit is still valuable.
+Without this: source-code-only audit (still valuable)."
 
 ## Step 2 — Discover & audit
 
-3. Discover MCP servers from ALL sources:
-   - Claude Code: `~/.claude/settings.json`, `.mcp.json`, `claude mcp list`
-   - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
-   - For each server: classify as CONNECTED (can call tools) or SOURCE-ONLY (can read code, no live calls)
-4. Classify each server by type (file, HTTP/API, browser, native, database)
-5. **Phase 1** — spawn 1 agent per server (parallel). Connected servers: source + live tool calls. Source-only servers: static analysis.
-6. **Phase 2** — spawn 1 coordinator. Receives all Phase 1 output. For connected servers: actively tests cross-server chains. For source-only: infers chains from code analysis. Generates HTML report.
+1. Discover MCP servers from ALL sources (Claude Code + Claude Desktop)
+2. Classify: CONNECTED (can probe read-only tools) or SOURCE-ONLY (code analysis)
+3. Classify by type (file, HTTP/API, browser, native, database)
+4. **Phase 1** — spawn 1 agent per server (parallel). Pass the audit MODE (safe/active) to each agent.
+5. **Phase 2** — spawn 1 coordinator. Receives all Phase 1 output. Maps cross-server chains (analytical). Generates HTML report.
 
-**IMPORTANT: Pass the user's selected language to Phase 2 coordinator explicitly. The report MUST be in the language chosen in Step 0.**
+**IMPORTANT: Pass the selected language AND mode to both Phase 1 agents and Phase 2 coordinator.**
 
 ## Step 3 — Report
 
-7. Generate HTML report in the selected language
-8. **IMPORTANT: All `<details>` blocks must be CLOSED by default — no `open` attribute anywhere**
-9. Present findings, offer to fix
+6. Generate HTML report DIRECTLY in the selected language
+7. **All `<details>` blocks CLOSED by default — no `open` attribute**
+8. Present findings, offer to fix
