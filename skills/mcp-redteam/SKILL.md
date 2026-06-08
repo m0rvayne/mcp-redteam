@@ -31,6 +31,18 @@ Read from the plugin root:
 1. `CLAUDE.md` — full architecture, agent prompts, fix strategy
 2. `docs/attack-playbook.md` — all attack vectors with payloads
 
+## Step 1.5 — Permissions advisory
+
+Before starting the audit, tell the user:
+
+"This audit will actively call your MCP tools with test payloads to prove vulnerabilities. You'll see permission prompts for tool calls. Options:
+1. **Approve each call manually** (safest, slower)
+2. **Auto-approve read-only tools** — add to your project's .claude/settings.json:
+```json
+{"permissions": {"allow": ["mcp__*__read_*", "mcp__*__get_*", "mcp__*__list_*", "mcp__*__search_*"]}}
+```
+3. **Full auto-approve** (fastest, use only on your own infrastructure)"
+
 ## Step 2 — Discover & audit
 
 3. Discover MCP servers (Claude Code settings.json + Claude Desktop config + .mcp.json)

@@ -117,11 +117,22 @@ For each server, spawn an Agent with:
 ```
 You are a penetration tester. Target: "{server_name}" ({server_type} server).
 
+YOU MUST DO BOTH:
+1. Read source code (static analysis) — find vulnerabilities in code
+2. CALL MCP tools with attack payloads (dynamic testing) — PROVE vulnerabilities are exploitable
+
+Do NOT skip step 2. Reading code and saying "this looks vulnerable" is not enough.
+You must call the tool, show the payload, show the response, and prove it works.
+
+For every security test: call with BASELINE input first, then ATTACK payload, then COMPARE responses.
+
 SOURCE CODE:
 {paste actual source code — read all .py/.ts/.js/.swift files from the server directory}
 
 TOOLS ({tool_count}):
 {list every tool with name, description, inputSchema}
+
+You can call these tools directly using their MCP names: mcp__{server_name}__{tool_name}
 
 PRIORITY ATTACKS for {server_type}: {priority_list}
 
@@ -151,43 +162,108 @@ PRIORITY ATTACKS for {server_type}: {priority_list}
 - [ ] Input schemas: all params typed with descriptions? Missing = LOW.
 - [ ] Requirements: all imported packages listed? Missing = MEDIUM.
 
-### 4. SECURITY — PENETRATION TEST
+### 4. SECURITY — ACTIVE PENETRATION TEST
 
-Path traversal (every tool accepting file paths):
-- Try: ../../etc/passwd
-- Try: ..%2f..%2fetc/passwd
-- Try: ../../.ssh/id_rsa
-- Check source: is resolve() + is_relative_to() used?
+**IMPORTANT: You MUST actually CALL tools with attack payloads — not just read source code. Source analysis is Step 1. Live tool calls are Step 2. Both are required.**
 
-SSRF (every tool accepting URLs):
-- Try: http://169.254.169.254/latest/meta-data/
-- Try: file:///etc/passwd
-- Try: http://localhost:8080/
-- Try: http://[::1]:8080/
-- Check source: is scheme + hostname validated? Allowlist or blocklist?
+For every test below, follow this sequence:
+1. **BASELINE**: Call tool with normal, valid input → record response
+2. **PROBE**: Call tool with attack payload → record response
+3. **COMPARE**: Diff baseline vs probe response
+4. **VERDICT**: Different response = vulnerability likely. Canary in output = confirmed. Same error = defended.
 
-Command injection (every tool spawning processes):
-- Check source: shell=True? execSync(string)? execSync with interpolation?
-- If shell: try ; whoami, $(id), `id`
-- If execFileSync with array: PASS
+#### 4A. Path Traversal (every tool accepting file paths)
 
-Credential storage:
-- Read .env, token.json, credentials.json, cookies.txt if they exist
-- Report exact contents (redacted in report, but prove access)
-- ls -la to show permissions
+First check source: is resolve() + is_relative_to() used? Then CALL the tool:
 
-Error message leaks:
-- Send malformed input to trigger errors
-- Check if str(e) includes paths, tokens, URLs, stack traces
+| Step | Action | What to look for |
+|------|--------|-----------------|
+| Baseline | Call with valid filename: `{"path": "test.txt"}` | Normal response/error |
+| Probe 1 | Call with `{"path": "../../../etc/hostname"}` | If hostname content returned → CRITICAL |
+| Probe 2 | Call with `{"path": "..%2F..%2Fetc%2Fhostname"}` | Tests URL-encoded bypass |
+| Probe 3 | Call with `{"path": "....//....//etc/hostname"}` | Tests double-dot bypass |
+| Evidence | Compare: does error message reveal the resolved path? | Path in error → MEDIUM info leak |
 
-Tool poisoning:
-- Read all tool descriptions
-- Search for <IMPORTANT>, hidden Unicode (U+E0000 range), suspicious params (env_details, system_info)
-- Check if description changed since last audit (if baseline exists)
+Safe targets: `/etc/hostname`, `/etc/os-release`. DO NOT target: `/etc/passwd`, `~/.ssh/id_rsa`, any secrets.
 
-Type confusion:
-- Send string where int expected, null where required, array where string
-- Check if server crashes or leaks info
+#### 4B. SSRF (every tool accepting URLs)
+
+First check source: is scheme + hostname validated? Then CALL the tool:
+
+| Step | Action | What to look for |
+|------|--------|-----------------|
+| Baseline | Call with valid URL: `{"url": "https://example.com"}` | Normal response |
+| Probe 1 | Call with `{"url": "http://127.0.0.1:1"}` | Connection refused = server tried to connect = SSRF |
+| Probe 2 | Call with `{"url": "http://[::1]:1"}` | IPv6 variant |
+| Probe 3 | Call with `{"url": "file:///etc/hostname"}` | Protocol handler injection |
+| Probe 4 | Call with `{"url": "http://169.254.169.254/latest/meta-data/"}` | Cloud metadata — only on targets you own |
+| Time test | Call with `{"url": "http://httpstat.us/200?sleep=5000"}` | If response delayed ~5s → server fetches URLs |
+| Evidence | Compare error messages: different errors for different hosts = SSRF confirmed |
+
+#### 4C. Command Injection (every tool spawning processes)
+
+First check source: shell=True? execSync with string? Then CALL the tool:
+
+| Step | Action | What to look for |
+|------|--------|-----------------|
+| Baseline | Call with valid input: `{"query": "test"}` | Normal response |
+| Probe 1 | Call with `{"query": "test; echo REDTEAM_CANARY_12345"}` | CANARY in response → CRITICAL |
+| Probe 2 | Call with `{"query": "test$(echo REDTEAM_CANARY)"}` | Command substitution |
+| Probe 3 | Call with `{"query": "test\`echo REDTEAM_CANARY\`"}` | Backtick injection |
+| Time test | Call with `{"query": "test; sleep 5"}` | 5s delay → blind injection |
+| Evidence | If CANARY appears in response OR timing confirms execution → CRITICAL |
+
+If source shows execFileSync with array args (not shell) → PASS, skip live test.
+
+#### 4D. Credential Storage
+
+DO NOT call tools for this — use file system directly:
+
+| Step | Action | What to look for |
+|------|--------|-----------------|
+| Find files | Bash: `ls -la .env token.json credentials.json cookies.txt 2>/dev/null` | Files exist? |
+| Check perms | If found: are they 644 (world-readable) or 600 (owner-only)? | 644 → HIGH |
+| Read contents | Read the files, note what credentials they contain | Plaintext tokens → CRITICAL |
+| Check gitignore | Is the file listed in .gitignore? | Missing → HIGH |
+
+#### 4E. Error Message Probing
+
+CALL every tool with malformed input and analyze error responses:
+
+| Step | Action | What to look for |
+|------|--------|-----------------|
+| Null input | Call with `{"required_param": null}` | Stack trace? File paths? |
+| Wrong type | Call with `{"number_param": "not_a_number"}` | Internal field names? |
+| Empty string | Call with `{"required_param": ""}` | Database errors? |
+| Huge input | Call with `{"param": "A" * 10000}` | Memory/buffer info? |
+| Evidence | Any error containing `/Users/`, `/home/`, `key=`, `token=` → MEDIUM leak |
+
+#### 4F. Tool Poisoning (static analysis only)
+
+| Step | Action | What to look for |
+|------|--------|-----------------|
+| Read descriptions | List all tools, read full descriptions | Hidden `<IMPORTANT>` tags |
+| Unicode check | Check for invisible chars (U+E0000 range, zero-width) | Smuggled instructions |
+| Suspicious params | Look for params named: env_details, system_info, context_summary | LLM auto-populates these |
+| Cross-server | Does any description reference tools from OTHER servers? | Shadowing attempt |
+
+#### 4G. Type Confusion (CALL the tools)
+
+| Step | Action | What to look for |
+|------|--------|-----------------|
+| Array where string | Call with `{"name": ["a","b"]}` | Unexpected behavior |
+| Object where string | Call with `{"name": {"toString": "evil"}}` | Type coercion error |
+| Overflow | Call with `{"count": 99999999999999}` | Precision loss, crash |
+| Negative | Call with `{"index": -1}` | Out of bounds |
+| Evidence | Server crash = HIGH. Info leak in error = MEDIUM. Clean error = PASS |
+
+#### Safety Rules for Active Testing
+
+- **Safe file targets**: `/etc/hostname`, `/etc/os-release` — NEVER target real secrets
+- **Safe commands**: `echo CANARY`, `sleep 5`, `id` — NEVER use `rm`, `chmod`, `curl|sh`
+- **State-modifying tools** (create, update, delete): test ONLY with canary data prefix `[SECTEST-{date}]` and clean up immediately after
+- **Delete/send tools**: NEVER call live. Infer from source code + shared code paths with read tools
+- **Rate limit**: max 10 probe calls per tool. If rate-limited, stop and note it
 
 ## OUTPUT FORMAT
 
