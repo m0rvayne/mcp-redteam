@@ -70,10 +70,6 @@ Based on 40+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of 
 
 ## What you get
 
-<div align="center">
-<img src="examples/screenshot.png" alt="mcp-redteam report" width="700">
-</div>
-
 An interactive HTML report — not a PDF, not a dashboard. A document that opens in any browser, works on mobile, and lets you drill into each server:
 
 - **Per-server breakdown** — click a server, see everything that's wrong with it
