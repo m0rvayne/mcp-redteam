@@ -9,15 +9,18 @@ trigger: /mcp-redteam
 
 ## Step 0 — Mode & Language
 
-Check the user's command:
-- `/mcp-redteam` → **Safe Mode** (default). Source code analysis + read-only tools only. Production-safe.
-- `/mcp-redteam active` → **Active Mode**. Safe Mode + controlled payloads on read-only tools. Requires consent.
+**If arguments provided** (e.g. `/mcp-redteam active ru`): parse first token as mode (safe/active), second as language (en/ru/ua). Skip interactive selection.
 
-Then ask language in plain text (do NOT use AskUserQuestion with options):
+**Otherwise**, use AskUserQuestion for interactive selection:
 
-**"Report language? Type: en / ru / ua (default: en)"**
+1. Ask audit mode:
+   - Use AskUserQuestion with options: `Safe Mode` (description: "Source analysis + read-only probing. Production-safe.") and `Active Mode` (description: "Safe Mode + controlled payloads on read-only tools.")
 
-Accept: `en`, `eng`, `english`, `ru`, `рус`, `русский`, `ua`, `укр`, `українська`. Default to English if user skips or gives unsupported language.
+2. Ask report language:
+   - Use AskUserQuestion with options: `English`, `Russian`, `Ukrainian`
+
+Mapping: Safe Mode = default, Active Mode = opt-in. English = default language.
+Also accept typed shortcuts: `en`, `eng`, `ru`, `рус`, `русский`, `ua`, `укр`, `українська`.
 
 **Translation rules:**
 - TRANSLATE: section headers, finding descriptions, remediation text, executive summary
