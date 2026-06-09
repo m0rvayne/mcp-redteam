@@ -415,13 +415,27 @@ Structured list for cross-server chain analysis.
 - If a tool is read-only — it is NOT a writable tool
 - Read the tool descriptions and code carefully before classifying
 
+**INPUT vs OUTPUT CLASSIFICATION — follow strictly:**
+- input_channel = a tool/mechanism where an EXTERNAL ATTACKER can inject text that enters Claude's context
+  - Examples: tool that READS emails/messages/comments from external sources, webhook receiver, file watcher on shared directory
+  - The question is: "Can someone OUTSIDE this machine put text into Claude's context through this tool?"
+- output_only = a tool that SENDS data OUT from Claude but does NOT bring external data IN
+  - Examples: reply/send_message, post_comment, send_email, create_webhook, upload_file
+  - These tools are EXFILTRATION endpoints (data goes OUT), NOT injection points (data comes IN)
+- notification_push = MCP server pushes notifications to Claude (e.g., Telegram bot forwards incoming messages)
+  - This IS an input channel IF the server has a mechanism to push external messages into Claude's context
+  - Check: does the server run a bot/listener that forwards external messages? If yes → input_channel via notification
+  - Check: does the server ONLY respond to Claude's tool calls? If yes → NOT an input channel
+- DO NOT confuse: "tool can send messages" (output) with "tool receives messages" (input)
+- DO NOT classify a tool as input_channel just because it belongs to a messaging platform
+
 CHAINABLE_ASSETS:
 - credential: {type}={value} (source: {file}, server: {name})
 - path_leak: {path} (from: {error handler code / error response})
 - writable_tool: {tool_name}(params) — {what's not validated} (CODE EVIDENCE, not tested live)
 - readable_tool: {tool_name}(params) — {what can be read} (CODE EVIDENCE or read-only test)
 - pii_source: {tool_name} returns {emails/names/phones} without redaction
-- input_channel: {tool_name} — CAN receive external input (specify: from who? how?) — ONLY if tool actually receives external data
+- input_channel: {tool_name} — CAN receive external input (specify: from who? how? what mechanism?) — ONLY if tool actually receives external data. Must state: "Attacker sends X via Y, which reaches Claude context through Z"
 - output_only: {tool_name} — sends data OUT but cannot receive input (NOT a prompt injection vector)
 
 Also list DEFENDED checks — what you analyzed and confirmed safe.
@@ -465,12 +479,30 @@ For each potential chain:
 5. Rate severity of the FULL CHAIN
 6. Provide fix for the WEAKEST LINK
 
-**FALSE POSITIVE PREVENTION:**
-- A tool that SENDS messages (Telegram reply, email send) is NOT an input channel for prompt injection
-- A tool that only READS data cannot be used to WRITE data in a chain
+**FALSE POSITIVE PREVENTION — MANDATORY CHECKS before including ANY chain:**
+
+Step 1 validation (entry point):
+- Identify the EXACT tool or mechanism that serves as the entry point
+- If entry point is "prompt injection via X message" — verify X has an input_channel asset from Phase 1
+- If Phase 1 classified X as output_only — the chain is INVALID, do NOT include it
+- If entry point requires attacker to already have access to the user's machine/account — it is NOT a remote attack chain
+
+Tool direction validation:
+- A tool that SENDS messages (reply, send_email, post_message, slack_post) is output_only — NOT an input channel
+- A tool that READS data (get, list, search, download) is a data source — NOT a writable tool
+- A tool that CREATES/MODIFIES resources (create, update, delete) is writable — verify it is reachable from the entry point
+- Do NOT assume a messaging platform tool is an input channel — check the SPECIFIC tools available
+
+Chain mechanism validation:
 - "Theoretically possible" is NOT enough — every step must have a concrete, proven mechanism
-- If you cannot explain HOW an attacker triggers step 1, the chain is invalid — do NOT include it
-- Ask: "Can an external attacker actually trigger this chain without already having access?" If no → not a real chain
+- Each step must reference a SPECIFIC tool name and parameter, not a vague "via Telegram" or "through email"
+- If you cannot explain the exact sequence of tool calls for each step — the chain is speculative, do NOT include it
+- Data format must match between steps: output of step N must be usable as input to step N+1
+
+Attacker access validation:
+- Ask: "Can an external attacker trigger step 1 WITHOUT already having access?" If no → not a real chain
+- "Prompt injection via X" requires: (1) X has a tool that RECEIVES external text, (2) that text enters Claude context, (3) Claude processes it without user review
+- If the only way to trigger step 1 is to be the authenticated user — it is not an attack, it is normal usage
 
 ### Chain Types to Analyze
 
