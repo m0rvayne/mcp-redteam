@@ -23,6 +23,25 @@ Accept: `en`, `eng`, `english`, `ru`, `рус`, `русский`, `ua`, `укр`
 - TRANSLATE: section headers, finding descriptions, remediation text, executive summary
 - KEEP IN ENGLISH: severity levels (CRITICAL, HIGH, MEDIUM, LOW), technical terms (SSRF, Path Traversal, OAuth, RCE), tool names, file paths, code snippets
 
+## Step 0.5 — Banner
+
+Immediately after determining the mode and language, output the following banner as a fenced code block (for monospace rendering). Substitute `{MODE}` with the actual mode line:
+- Safe Mode → `mode: Safe Mode (read-only)`
+- Active Mode → `mode: Active Mode (controlled payloads)`
+
+```
+  ┌─── mcp-redteam ─────────────────────────────┐
+  │                                              │
+  │     O    MCP Infrastructure Security Audit   │
+  │    /|\>                                      │
+  │    / \   {MODE}                              │
+  │          version: 0.1.0 · by m0rvayne        │
+  │                                              │
+  └──────────────────────────────────────────────┘
+```
+
+Output this banner BEFORE reading CLAUDE.md or any other files. Then proceed to Step 1.
+
 ## Step 1 — Read instructions
 
 Read from the plugin root:

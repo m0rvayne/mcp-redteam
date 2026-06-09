@@ -1,12 +1,13 @@
 <div align="center">
 
-# mcp-redteam
+<img src="assets/logo.svg" alt="mcp-redteam" width="700">
 
 **It doesn't tell you where your walls are thin. It walks through them.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![OWASP MCP Top 10](https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange)](https://owasp.org/www-project-mcp-top-10/)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-7b61ff)](https://claude.ai/code)
+[![Phase 0 Config](https://img.shields.io/badge/Phase%200-Config%20Validation-green)](#config-health-phase-0)
 
 </div>
 
@@ -14,7 +15,7 @@
 
 A Claude Code plugin that audits and penetration-tests your MCP servers. Reads source code, probes every tool, finds what's broken — and shows you how to fix it.
 
-Not a static scanner. Not a config checker. An active red team that isolates each server, attacks it across four categories, and generates an interactive HTML report with proven findings.
+Not a static scanner. Not a config checker. An active red team that validates your configs, isolates each server, attacks it across five categories, and generates an interactive HTML report with proven findings.
 
 ## Install
 
@@ -33,6 +34,7 @@ No dependencies. No API keys. No build step. The marketplace is added once — f
 
 ## What happens when you run it
 
+0. **Config Validation** — checks config health before any audit starts: connection health, scope conflicts, credential exposure in config files, supply chain risks (unpinned npx/uvx), network exposure, orphaned processes. Catches problems no scanner looks for.
 1. **Discovery** — finds all your connected MCP servers
 2. **Isolation** — spawns one dedicated agent per server (10 servers = 10 agents)
 3. **Source analysis** — each agent reads the server's source code
@@ -42,7 +44,11 @@ No dependencies. No API keys. No build step. The marketplace is added once — f
 
 ## What it checks
 
-Each server gets a full audit across four categories:
+Each server gets a full audit across five categories:
+
+### Config Health (Phase 0)
+
+Dead/disconnected servers, scope conflicts (same server in multiple scopes), credentials in git-tracked config files (CVE-2025-59536), unpinned npx/uvx packages (supply chain), enableAllProjectMcpServers bypass (CVE-2026-21852), orphaned MCP processes.
 
 ### Health
 
@@ -90,16 +96,32 @@ Say "fix it" and the plugin applies fixes — with your confirmation:
 
 ## How it compares
 
-| | mcp-scan (Invariant Labs) | mcpserver-audit (CSA) | MCP-Scanner (eSentire) | **mcp-redteam** |
+| | mcp-scan (Snyk) | Cisco MCP Scanner | Promptfoo | **mcp-redteam** |
 |---|---|---|---|---|
-| Approach | Static config scan | Pre-install review | Keyword + LLM analysis | **Active red-teaming** |
-| Reads source code | No | No | No | **Yes** |
-| Calls tools with payloads | No | No | No | **Yes** |
-| Health + Architecture audit | No | No | No | **Yes** |
-| Fix suggestions with code | No | No | No | **Yes** |
-| Auto-applies fixes | No | No | No | **Yes** |
-| Runs in | CLI (Python) | CLI | CLI | **Claude Code** |
-| Needs API key | No | No | LLM API key | **No** |
+| GitHub Stars | 2,500 | 956 | 6,000 (all) | New |
+| Approach | Static description scan | YARA + LLM-as-judge | Red team framework | **Active red-teaming** |
+| Reads source code | No (CLI) | Python only | No | **Yes -- all languages** |
+| Active probing | No | No | Yes (YAML config) | **Yes -- built-in** |
+| Config validation | No | Config discovery | No | **Yes -- Phase 0** |
+| Cross-server chains | Basic (toxic flows) | No | No | **Yes -- validated chains** |
+| Health + Arch audit | No | No | No | **Yes -- 4 categories** |
+| Auto-fix | No | No | No | **Yes** |
+| Cloud dependency | Snyk API required | Cisco API (optional) | No | **No -- fully local** |
+| Report | Terminal / JSON | JSON | YAML output | **Interactive HTML** |
+
+### Why not just use mcp-scan?
+
+mcp-scan reads what a server **says about itself** — tool descriptions, parameter schemas. mcp-redteam checks what a server **actually does** — source code analysis + active probing.
+
+A server with clean descriptions but leaky code: mcp-scan passes it. We catch it.
+
+Real findings mcp-scan cannot detect (they live in code, not descriptions):
+- Trello API keys in `.env` committed to git
+- Instagram session cookies stored in plaintext
+- AppleScript injection via unescaped clipboard input
+- Google OAuth tokens with permissions `644`
+
+mcp-scan would flag zero of these.
 
 ## Architecture
 
@@ -107,31 +129,37 @@ Say "fix it" and the plugin applies fixes — with your confirmation:
 /mcp-redteam
      │
      ▼
- ┌───────────┐
- │ Discovery  │  Find all MCP servers, locate source code
- └─────┬──────┘
-       │
-       ▼          1 server = 1 agent
- ┌──────────┐  ┌──────────┐  ┌──────────┐       ┌──────────┐
- │ Agent-01  │  │ Agent-02  │  │ Agent-03  │  ...  │ Agent-N   │
- │ youtube   │  │ trello    │  │ instagram │       │ server-N  │
- │           │  │           │  │           │       │           │
- │ health    │  │ health    │  │ health    │       │ health    │
- │ arch      │  │ arch      │  │ arch      │       │ arch      │
- │ complete  │  │ complete  │  │ complete  │       │ complete  │
- │ security  │  │ security  │  │ security  │       │ security  │
- └─────┬─────┘  └─────┬─────┘  └─────┬─────┘       └─────┬─────┘
-       │              │              │                    │
-       ▼              ▼              ▼                    ▼
- ┌──────────────────────────────────────────────────────────────┐
- │              Collect findings + calculate risk               │
- └──────────────────────────┬───────────────────────────────────┘
-                            │
-                            ▼
-                ┌───────────────────┐
-                │   HTML Report     │
-                │   + Fix engine    │
-                └───────────────────┘
+┌──────────────────┐
+│ Phase 0: Config  │  Connection health, scope conflicts,
+│   Validation     │  credential exposure, supply chain
+└────────┬─────────┘
+         │
+         ▼
+   ┌───────────┐
+   │ Discovery  │  Find all MCP servers, locate source code
+   └─────┬──────┘
+         │
+         ▼          1 server = 1 agent
+   ┌──────────┐  ┌──────────┐  ┌──────────┐       ┌──────────┐
+   │ Agent-01  │  │ Agent-02  │  │ Agent-03  │  ...  │ Agent-N   │
+   │ youtube   │  │ trello    │  │ instagram │       │ server-N  │
+   │           │  │           │  │           │       │           │
+   │ health    │  │ health    │  │ health    │       │ health    │
+   │ arch      │  │ arch      │  │ arch      │       │ arch      │
+   │ complete  │  │ complete  │  │ complete  │       │ complete  │
+   │ security  │  │ security  │  │ security  │       │ security  │
+   └─────┬─────┘  └─────┬─────┘  └─────┬─────┘       └─────┬─────┘
+         │              │              │                    │
+         ▼              ▼              ▼                    ▼
+   ┌──────────────────────────────────────────────────────────────┐
+   │              Collect findings + calculate risk               │
+   └──────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
+                  ┌───────────────────┐
+                  │   HTML Report     │
+                  │   + Fix engine    │
+                  └───────────────────┘
 ```
 
 ## What's inside

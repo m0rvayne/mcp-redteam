@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200">
+  <defs>
+    <linearGradient id="redGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff4444;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#cc0000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#880000;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#ff0000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="200" rx="12" fill="#0d1117"/>
+
+  <!-- Subtle grid pattern -->
+  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#161b22" stroke-width="0.5"/>
+  </pattern>
+  <rect width="800" height="200" rx="12" fill="url(#grid)" opacity="0.5"/>
+
+  <!-- Top accent line -->
+  <rect x="0" y="0" width="800" height="3" rx="1" fill="url(#redGlow)" opacity="0.8"/>
+
+  <!-- Main title -->
+  <text x="400" y="95" text-anchor="middle" font-family="'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace" font-size="72" font-weight="900" fill="url(#redGlow)" filter="url(#shadow)" letter-spacing="4">
+    MCP-REDTEAM
+  </text>
+
+  <!-- Subtitle -->
+  <text x="400" y="135" text-anchor="middle" font-family="'SF Mono', 'Fira Code', monospace" font-size="16" fill="#8b949e" letter-spacing="6">
+    DEEP AUDIT · SECURITY · HEALTH · ARCHITECTURE
+  </text>
+
+  <!-- Bottom info line -->
+  <text x="400" y="175" text-anchor="middle" font-family="'SF Mono', 'Fira Code', monospace" font-size="12" fill="#484f58" letter-spacing="2">
+    by m0rvayne  ·  v0.1.0  ·  Claude Code Plugin
+  </text>
+
+  <!-- Corner decorations -->
+  <path d="M 20 15 L 20 8 L 27 8" fill="none" stroke="#cc0000" stroke-width="1.5" opacity="0.5"/>
+  <path d="M 780 15 L 780 8 L 773 8" fill="none" stroke="#cc0000" stroke-width="1.5" opacity="0.5"/>
+  <path d="M 20 185 L 20 192 L 27 192" fill="none" stroke="#cc0000" stroke-width="1.5" opacity="0.5"/>
+  <path d="M 780 185 L 780 192 L 773 192" fill="none" stroke="#cc0000" stroke-width="1.5" opacity="0.5"/>
+</svg>
