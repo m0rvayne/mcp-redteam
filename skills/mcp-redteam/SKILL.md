@@ -30,14 +30,14 @@ Immediately after determining the mode and language, output the following banner
 - Active Mode → `mode: Active Mode (controlled payloads)`
 
 ```
-  ┌─── mcp-redteam ─────────────────────────────┐
-  │                                              │
-  │     O    MCP Infrastructure Security Audit   │
-  │    /|\>                                      │
-  │    / \   {MODE}                              │
-  │          version: 0.1.0 · by m0rvayne        │
-  │                                              │
-  └──────────────────────────────────────────────┘
+  ███  ████ ███  ███ ████  ██  █   █
+  █  █ █    █  █  █  █    █  █ ██ ██
+  ███  ███  █  █  █  ███  ████ █ █ █
+  █ █  █    █  █  █  █    █  █ █   █
+  █  █ ████ ███   █  ████ █  █ █   █
+  ─────────────────────────────────────
+     mcp-redteam v0.1.0 · m0rvayne
+     {MODE} · Security · Health
 ```
 
 Output this banner BEFORE reading CLAUDE.md or any other files. Then proceed to Step 1.
