@@ -158,6 +158,7 @@
 
 ### Distribution
 - [ ] Submit to anthropics/claude-plugins-official marketplace
+- [ ] Submit to Anthropic in-app connector directory (Organization Settings → Directory)
 - [ ] npm package for easy installation
 - [ ] Docker image (for CI/CD environments)
 

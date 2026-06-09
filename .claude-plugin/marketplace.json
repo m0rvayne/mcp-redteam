@@ -1,7 +1,5 @@
 {
   "name": "m0rvayne",
-  "displayName": "m0rvayne plugins",
-  "description": "AI security tools by m0rvayne",
   "owner": {
     "name": "m0rvayne",
     "email": "m0rvayne@proton.me"
@@ -9,8 +7,16 @@
   "plugins": [
     {
       "name": "mcp-redteam",
-      "description": "Full audit and penetration testing of MCP servers",
-      "source": "./"
+      "description": "Security audit and penetration testing of MCP servers. Source code analysis, config validation, active probing, cross-server chain detection.",
+      "author": {
+        "name": "m0rvayne",
+        "email": "m0rvayne@proton.me",
+        "url": "https://github.com/m0rvayne"
+      },
+      "category": "security",
+      "source": "./",
+      "homepage": "https://github.com/m0rvayne/mcp-redteam",
+      "keywords": ["security", "audit", "mcp", "pentest", "red-team", "vulnerability"]
     }
   ]
 }
