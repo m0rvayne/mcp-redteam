@@ -127,39 +127,27 @@ mcp-scan would flag zero of these.
 
 ```
 /mcp-redteam
-     │
-     ▼
-┌──────────────────┐
-│ Phase 0: Config  │  Connection health, scope conflicts,
-│   Validation     │  credential exposure, supply chain
-└────────┬─────────┘
-         │
-         ▼
-   ┌───────────┐
-   │ Discovery  │  Find all MCP servers, locate source code
-   └─────┬──────┘
-         │
-         ▼          1 server = 1 agent
-   ┌──────────┐  ┌──────────┐  ┌──────────┐       ┌──────────┐
-   │ Agent-01  │  │ Agent-02  │  │ Agent-03  │  ...  │ Agent-N   │
-   │ youtube   │  │ trello    │  │ instagram │       │ server-N  │
-   │           │  │           │  │           │       │           │
-   │ health    │  │ health    │  │ health    │       │ health    │
-   │ arch      │  │ arch      │  │ arch      │       │ arch      │
-   │ complete  │  │ complete  │  │ complete  │       │ complete  │
-   │ security  │  │ security  │  │ security  │       │ security  │
-   └─────┬─────┘  └─────┬─────┘  └─────┬─────┘       └─────┬─────┘
-         │              │              │                    │
-         ▼              ▼              ▼                    ▼
-   ┌──────────────────────────────────────────────────────────────┐
-   │              Collect findings + calculate risk               │
-   └──────────────────────────┬───────────────────────────────────┘
-                              │
-                              ▼
-                  ┌───────────────────┐
-                  │   HTML Report     │
-                  │   + Fix engine    │
-                  └───────────────────┘
+  |
+  v
+Phase 0: Config Validation
+  |
+  v
+Discovery --> locate source code
+  |
+  v
+Phase 1: 1 agent per server (parallel)
+  Agent-01    Agent-02    Agent-03    Agent-N
+  youtube     trello      instagram   server-N
+  health      health      health      health
+  arch        arch        arch        arch
+  complete    complete    complete    complete
+  security    security    security    security
+  |           |           |           |
+  v           v           v           v
+Phase 2: Chain analysis + risk scoring
+  |
+  v
+HTML Report + Fix engine
 ```
 
 ## What's inside
