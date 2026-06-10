@@ -20,9 +20,7 @@ def get_rules_dir() -> Path:
     # When installed via pip, they should be included in package data
     package_dir = Path(__file__).parent.parent
     rules_dir = package_dir.parent / "rules"
-    if not rules_dir.exists():
-        # Fallback: look relative to current working directory
-        rules_dir = Path.cwd() / "rules"
+    # VULN-03 fix: no CWD fallback — prevents rule substitution attack
     return rules_dir
 
 

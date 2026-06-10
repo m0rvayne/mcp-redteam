@@ -39,6 +39,7 @@ def scan(
 
     scan_start = datetime.now()
 
+    path = path.resolve()  # VULN-08 fix: canonicalize path
     if not path.exists():
         console.print(f"[red]Error:[/red] path {path} does not exist")
         raise typer.Exit(code=2)

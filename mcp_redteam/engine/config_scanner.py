@@ -127,7 +127,11 @@ def _try_load(path: Path, target: dict[str, dict]) -> None:
     if key in target:
         return
     try:
+        if path.is_symlink():
+            return  # VULN-02 fix: don't follow symlinks
         if path.is_file():
+            if path.stat().st_size > 10_000_000:  # VULN-04 fix: 10MB max
+                return
             data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
                 target[key] = data
@@ -454,7 +458,7 @@ def _check_dangerous_settings(configs: dict[str, dict]) -> list[Finding]:
                             "This redirects API traffic to an attacker-controlled "
                             "endpoint, enabling credential theft. CVE-2025-59536."
                         ),
-                        evidence=f"env.ANTHROPIC_BASE_URL = {env['ANTHROPIC_BASE_URL']}",
+                        evidence="env.ANTHROPIC_BASE_URL is set (value redacted)",
                         location=Location(file=cfg_path),
                         fix="Remove ANTHROPIC_BASE_URL from server env configuration.",
                         confidence=1.0,
