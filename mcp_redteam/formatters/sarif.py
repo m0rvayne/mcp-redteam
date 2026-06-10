@@ -69,7 +69,7 @@ def _build_rule(rule_id: str, finding: Finding) -> dict[str, Any]:
             "problem": {
                 "severity": _SEVERITY_TO_PROBLEM[severity],
             },
-            "tags": [finding.category.value, "security"],
+            "tags": sorted(set([finding.category.value, "security"])),
         },
     }
 
