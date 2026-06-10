@@ -32,6 +32,15 @@ dev = ["pytest>=8.0", "hypothesis>=6.0"]
 [project.scripts]
 mcp-redteam = "mcp_redteam.cli:app"
 
+[tool.hatch.build.targets.wheel]
+packages = ["mcp_redteam"]
+
+[tool.hatch.build.targets.sdist]
+include = ["mcp_redteam/", "rules/"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"rules" = "mcp_redteam/rules"
+
 [project.urls]
 Homepage = "https://github.com/m0rvayne/mcp-redteam"
 Repository = "https://github.com/m0rvayne/mcp-redteam"

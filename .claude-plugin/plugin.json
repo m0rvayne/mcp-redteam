@@ -1,7 +1,7 @@
 {
   "name": "mcp-redteam",
   "displayName": "MCP Red Team",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Full audit and penetration testing of MCP servers — health, architecture, completeness, security",
   "author": {
     "name": "m0rvayne",
