@@ -13,24 +13,26 @@
 
 ---
 
-A Claude Code plugin that audits and penetration-tests your MCP servers. Reads source code, probes every tool, finds what's broken — and shows you how to fix it.
+A Claude Code plugin + standalone CLI that audits and penetration-tests your MCP servers. Reads source code, probes every tool, finds what's broken — and shows you how to fix it.
+
+Two modes: **AI-native deep audit** (Claude Code plugin — behavioral analysis, cross-server chains, rug-pull detection) and **deterministic scan** (standalone CLI — 30 Semgrep rules, SARIF output, CI/CD ready).
 
 Not a static scanner. Not a config checker. An active red team that validates your configs, isolates each server, attacks it across five categories, and generates an interactive HTML report with proven findings.
 
 ## Install
 
+**Claude Code plugin** (deep AI-native audit):
 ```bash
 claude plugin marketplace add m0rvayne/mcp-redteam
 claude plugin install mcp-redteam
-```
-
-Works globally — run from any project:
-
-```
 /mcp-redteam
 ```
 
-No dependencies. No API keys. No build step. The marketplace is added once — future updates are just `claude plugin update mcp-redteam`.
+**Standalone CLI** (deterministic, CI/CD ready):
+```bash
+pip install mcp-redteam
+mcp-redteam scan ./your-mcp-server --no-llm --format sarif
+```
 
 ## What happens when you run it
 
@@ -104,6 +106,8 @@ Say "fix it" and the plugin applies fixes — with your confirmation:
 | Auto-fix | No | No | No | **Yes** |
 | Cloud dependency | Snyk API required | Cisco API (optional) | No | **No -- fully local** |
 | Report | Terminal / JSON | JSON | YAML output | **Interactive HTML** |
+| Persistent history | No | No | No | **Yes — JSONL audit log, cross-run comparison** |
+| Self-tested | Unknown | Unknown | Unknown | **62+ tests, self-security audit, Hypothesis fuzzing** |
 
 ### Why not just use mcp-scan?
 
@@ -162,19 +166,35 @@ mcp-scan would flag zero of these.
 
 ```
 mcp-redteam/
-├── .claude-plugin/
-│   └── plugin.json              # Plugin manifest — enables global install
-├── CLAUDE.md                    # Full audit instructions + fix strategy
-├── skills/
-│   └── mcp-redteam/
-│       └── SKILL.md             # /mcp-redteam entry point with agent template
+├── mcp_redteam/                 # Python CLI package
+│   ├── cli.py                   # typer CLI: scan, version
+│   ├── models.py                # Pydantic models, 16-rule registry, severity scoring
+│   ├── engine/
+│   │   ├── semgrep_runner.py    # Run 30 Semgrep rules, map to Finding model
+│   │   └── config_scanner.py    # Phase 0: 6 deterministic config checks
+│   └── formatters/
+│       ├── sarif.py             # SARIF 2.1.0 for GitHub Security tab
+│       ├── json_fmt.py          # Machine-readable JSON
+│       └── terminal.py          # Rich colored terminal output
+├── rules/                       # 30 Semgrep YAML rules
+│   ├── python/                  # 8 rules: injection, traversal, SSRF, secrets, ...
+│   └── javascript/              # 22 patterns: exec, fs, fetch, eval, secrets, ...
+├── tests/                       # 62+ tests
+│   ├── test_semgrep.py          # Fixture-based: 6 vulnerable detected, 4 benign clean
+│   ├── test_self_security.py    # Self-audit: 10 vulns found and fixed in our own code
+│   ├── test_stress.py           # 1000/10000 findings, concurrent scans, unicode
+│   ├── test_fuzzing.py          # Hypothesis property-based: any input → no crash
+│   ├── test_edge_cases.py       # Corrupt JSON, missing files, null bytes, timeouts
+│   └── fixtures/                # 8 vulnerable + 4 benign MCP servers
+├── .claude-plugin/              # Claude Code plugin manifest
+├── CLAUDE.md                    # AI audit instructions + fix strategy
+├── skills/mcp-redteam/SKILL.md  # Plugin entry point + persistent audit history
 ├── docs/
-│   ├── attack-playbook.md       # 700 lines — 12 attack categories, 40+ CVEs, test suites A–F
-│   ├── best-practices.md        # MCP server checklist — golden rules, code patterns, anti-patterns
-│   └── reference-server.md      # Secure server templates for Python (Raw SDK + FastMCP) and Node.js
-├── examples/
-│   └── sample-report.html       # Real report from audit of 11 servers (161 findings)
-└── reports/                     # Generated reports (gitignored)
+│   ├── attack-playbook.md       # 700 lines — 12 categories, 40+ CVEs
+│   ├── best-practices.md        # MCP server security checklist
+│   └── reference-server.md      # Secure server templates (Python + Node.js)
+└── examples/
+    └── sample-report.html       # Real report: 11 servers, 161 findings
 ```
 
 ## Docs
@@ -185,13 +205,23 @@ The `docs/` folder is useful independently:
 - **[best-practices.md](docs/best-practices.md)** — 10 golden rules, signal handling, HTTP client patterns, path/URL validation, error sanitization, pre-release checklist.
 - **[reference-server.md](docs/reference-server.md)** — copy-paste server templates with security controls built in. Python (Raw SDK + FastMCP) and Node.js.
 
+## Audit History
+
+Each audit saves a compact JSONL log to `~/Desktop/redteam-results/`. On the next run, mcp-redteam reads previous results and compares:
+
+- **confirmed** — found again, higher confidence
+- **new** — first time seeing this
+- **fixed** — was in previous audit, now gone
+
+This turns LLM non-determinism into an advantage: each run is a new perspective, the intersection is ground truth.
+
 ## Limitations
 
-- Requires Claude Code with connected MCP servers
-- Cannot test servers it's not connected to
+- Plugin requires Claude Code with connected MCP servers
+- CLI requires semgrep for code analysis (graceful skip if not installed)
 - Destructive tests (file deletion, data modification) are intentionally skipped
 - Source code analysis works for local servers; pip/npm packages may have limited access
-- Report quality scales with model capability — Opus produces deeper analysis than Haiku
+- Plugin report quality scales with model capability — Opus produces deeper analysis than Haiku
 - Tool poisoning detection is static (description analysis), not runtime monitoring
 
 ## References
