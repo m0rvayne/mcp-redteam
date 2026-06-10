@@ -14,3 +14,7 @@ docs/agent-architecture-draft.md
 __pycache__/
 *.pyc
 .venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/

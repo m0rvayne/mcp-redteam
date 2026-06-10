@@ -1,0 +1,23 @@
+name: 'mcp-redteam'
+description: 'Scan MCP servers for security vulnerabilities'
+inputs:
+  path:
+    description: 'Path to scan'
+    default: '.'
+  format:
+    description: 'Output format (terminal, json, sarif)'
+    default: 'sarif'
+  fail-on:
+    description: 'Fail if findings at this severity (critical, high)'
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+    - run: pip install mcp-redteam semgrep
+      shell: bash
+    - run: mcp-redteam scan ${{ inputs.path }} --no-llm --format ${{ inputs.format }} -o mcp-findings.sarif ${{ inputs.fail-on && format('--fail-on {0}', inputs.fail-on) || '' }}
+      shell: bash
+    - uses: github/codeql-action/upload-sarif@v3
+      if: always() && inputs.format == 'sarif'
+      with:
+        sarif_file: mcp-findings.sarif

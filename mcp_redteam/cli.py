@@ -64,9 +64,17 @@ def scan(
         console.print("[yellow]Phase 1:[/yellow] Semgrep not installed — skipping deterministic code scan")
         console.print("  Install: [dim]pip install semgrep[/dim]")
 
-    # Phase 2: LLM behavioral analysis (future)
+    # Phase 2: LLM behavioral analysis
     if not no_llm:
-        console.print("[dim]Phase 2: LLM behavioral analysis — coming in v0.3[/dim]")
+        from mcp_redteam.llm.analyzer import analyze_behavioral, is_llm_available
+        if is_llm_available():
+            console.print("[bold cyan]Phase 2:[/bold cyan] LLM behavioral analysis...")
+            llm_findings = analyze_behavioral(path)
+            findings.extend(llm_findings)
+            console.print(f"  {len(llm_findings)} behavioral findings")
+        else:
+            console.print("[yellow]Phase 2:[/yellow] No ANTHROPIC_API_KEY — skipping LLM analysis")
+            console.print("  Set: [dim]export ANTHROPIC_API_KEY=sk-...[/dim]")
 
     # Build result
     result = ScanResult(
