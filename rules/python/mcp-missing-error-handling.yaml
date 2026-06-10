@@ -1,0 +1,89 @@
+rules:
+  - id: mcp-python-missing-error-handling
+    message: >
+      MCP tool function lacks try/except error handling. Unhandled exceptions
+      crash the MCP server or leak stack traces. Wrap tool logic in try/except
+      and return structured error responses.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT007
+      confidence: MEDIUM
+      owasp: "MCP08: Missing Error Handling"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              @tool(...)
+              def $FUNC(...):
+                  ...
+          - pattern: |
+              @tool(...)
+              async def $FUNC(...):
+                  ...
+          - pattern: |
+              @tool
+              def $FUNC(...):
+                  ...
+          - pattern: |
+              @tool
+              async def $FUNC(...):
+                  ...
+          - pattern: |
+              @$SERVER.tool(...)
+              def $FUNC(...):
+                  ...
+          - pattern: |
+              @$SERVER.tool(...)
+              async def $FUNC(...):
+                  ...
+      - pattern-not:
+          pattern-either:
+            - pattern: |
+                @tool(...)
+                def $FUNC(...):
+                    ...
+                    try:
+                        ...
+                    except ...:
+                        ...
+            - pattern: |
+                @tool(...)
+                async def $FUNC(...):
+                    ...
+                    try:
+                        ...
+                    except ...:
+                        ...
+            - pattern: |
+                @tool
+                def $FUNC(...):
+                    ...
+                    try:
+                        ...
+                    except ...:
+                        ...
+            - pattern: |
+                @tool
+                async def $FUNC(...):
+                    ...
+                    try:
+                        ...
+                    except ...:
+                        ...
+            - pattern: |
+                @$SERVER.tool(...)
+                def $FUNC(...):
+                    ...
+                    try:
+                        ...
+                    except ...:
+                        ...
+            - pattern: |
+                @$SERVER.tool(...)
+                async def $FUNC(...):
+                    ...
+                    try:
+                        ...
+                    except ...:
+                        ...

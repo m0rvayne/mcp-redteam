@@ -1,0 +1,76 @@
+rules:
+  - id: mcp-js-path-traversal-read
+    message: >
+      Non-literal path passed to fs read operation.
+      In MCP servers, tool arguments may contain path traversal sequences (../).
+      Resolve the path with path.resolve() and verify it starts with the allowed
+      base directory using startsWith() before passing to fs functions.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT002
+      confidence: HIGH
+      owasp: "MCP06: Path Traversal"
+      cwe: "CWE-22: Path Traversal"
+    patterns:
+      - pattern-either:
+          - pattern: fs.readFile($PATH, ...)
+          - pattern: fs.readFileSync($PATH, ...)
+          - pattern: fs.createReadStream($PATH, ...)
+          - pattern: $FS.readFile($PATH, ...)
+          - pattern: $FS.readFileSync($PATH, ...)
+          - pattern: $FS.createReadStream($PATH, ...)
+      - pattern-not: fs.readFile("...", ...)
+      - pattern-not: fs.readFileSync("...", ...)
+      - pattern-not: fs.createReadStream("...", ...)
+      - pattern-not: $FS.readFile("...", ...)
+      - pattern-not: $FS.readFileSync("...", ...)
+      - pattern-not: $FS.createReadStream("...", ...)
+
+  - id: mcp-js-path-traversal-write
+    message: >
+      Non-literal path passed to fs write operation.
+      In MCP servers, tool arguments may contain path traversal sequences (../).
+      Resolve the path with path.resolve() and verify it starts with the allowed
+      base directory using startsWith() before passing to fs functions.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT002
+      confidence: HIGH
+      owasp: "MCP06: Path Traversal"
+      cwe: "CWE-22: Path Traversal"
+    patterns:
+      - pattern-either:
+          - pattern: fs.writeFile($PATH, ...)
+          - pattern: fs.writeFileSync($PATH, ...)
+          - pattern: fs.createWriteStream($PATH, ...)
+          - pattern: $FS.writeFile($PATH, ...)
+          - pattern: $FS.writeFileSync($PATH, ...)
+          - pattern: $FS.createWriteStream($PATH, ...)
+      - pattern-not: fs.writeFile("...", ...)
+      - pattern-not: fs.writeFileSync("...", ...)
+      - pattern-not: fs.createWriteStream("...", ...)
+      - pattern-not: $FS.writeFile("...", ...)
+      - pattern-not: $FS.writeFileSync("...", ...)
+      - pattern-not: $FS.createWriteStream("...", ...)
+
+  - id: mcp-js-path-traversal-template
+    message: >
+      Template literal used as path in fs operation. This is a path traversal risk.
+      Use path.resolve() and verify with startsWith() against an allowed base directory.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT002
+      confidence: HIGH
+      owasp: "MCP06: Path Traversal"
+      cwe: "CWE-22: Path Traversal"
+    pattern-either:
+      - pattern: fs.readFile(`...${...}...`, ...)
+      - pattern: fs.readFileSync(`...${...}...`, ...)
+      - pattern: fs.writeFile(`...${...}...`, ...)
+      - pattern: fs.writeFileSync(`...${...}...`, ...)

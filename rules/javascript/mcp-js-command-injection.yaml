@@ -1,0 +1,79 @@
+rules:
+  - id: mcp-js-command-injection-exec
+    message: >
+      Non-literal argument passed to child_process.exec().
+      In MCP servers, user-controlled tool arguments flow directly into handlers.
+      Use execFile with array arguments instead of exec with string interpolation.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT001
+      confidence: HIGH
+      owasp: "MCP05: Command Injection"
+      cwe: "CWE-78: OS Command Injection"
+    patterns:
+      - pattern-either:
+          - pattern: exec($CMD, ...)
+          - pattern: execSync($CMD, ...)
+      - pattern-not: exec("...", ...)
+      - pattern-not: execSync("...", ...)
+
+  - id: mcp-js-command-injection-execfile
+    message: >
+      Non-literal argument passed to execFile command.
+      In MCP servers, user-controlled tool arguments flow directly into handlers.
+      Validate and sanitize the command before passing to execFile.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT001
+      confidence: HIGH
+      owasp: "MCP05: Command Injection"
+      cwe: "CWE-78: OS Command Injection"
+    patterns:
+      - pattern-either:
+          - pattern: execFile($CMD, ...)
+          - pattern: execFileSync($CMD, ...)
+      - pattern-not: execFile("...", ...)
+      - pattern-not: execFileSync("...", ...)
+
+  - id: mcp-js-command-injection-spawn
+    message: >
+      Non-literal command passed to spawn/spawnSync.
+      In MCP servers, user-controlled tool arguments can be injected into shell commands.
+      Ensure the command is a hardcoded literal, not derived from user input.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT001
+      confidence: MEDIUM
+      owasp: "MCP05: Command Injection"
+      cwe: "CWE-78: OS Command Injection"
+    patterns:
+      - pattern-either:
+          - pattern: spawn($CMD, ...)
+          - pattern: spawnSync($CMD, ...)
+      - pattern-not: spawn("...", ...)
+      - pattern-not: spawnSync("...", ...)
+
+  - id: mcp-js-command-injection-template
+    message: >
+      Template literal used in child_process function call.
+      Template literals with interpolated values are a common command injection vector.
+      Use execFile with separate array arguments instead.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT001
+      confidence: HIGH
+      owasp: "MCP05: Command Injection"
+      cwe: "CWE-78: OS Command Injection"
+    pattern-either:
+      - pattern: exec(`...${...}...`, ...)
+      - pattern: execSync(`...${...}...`, ...)
+      - pattern: execFile(`...${...}...`, ...)
+      - pattern: execFileSync(`...${...}...`, ...)

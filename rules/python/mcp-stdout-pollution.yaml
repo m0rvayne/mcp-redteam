@@ -1,0 +1,16 @@
+rules:
+  - id: mcp-python-stdout-pollution
+    message: >
+      print() call detected in MCP server code. In stdio transport mode,
+      print() pollutes the JSON-RPC stream and breaks the protocol.
+      Use logging.info() or sys.stderr.write() instead.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT006
+      confidence: MEDIUM
+      owasp: "MCP07: Protocol Pollution"
+    pattern-either:
+      - pattern: print(...)
+      - pattern: sys.stdout.write(...)

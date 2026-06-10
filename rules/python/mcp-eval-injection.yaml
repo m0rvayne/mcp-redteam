@@ -1,0 +1,49 @@
+rules:
+  - id: mcp-python-eval-injection
+    message: >
+      Tool argument flows to eval()/exec()/compile(). This is critical —
+      there is no safe way to pass user input to eval. Refactor to use
+      ast.literal_eval() for data parsing or a sandboxed approach.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      rule_id: MRT004
+      confidence: HIGH
+      owasp: "MCP04: Code Injection"
+    mode: taint
+    pattern-sources:
+      - pattern: $ARGS["$KEY"]
+      - pattern: $ARGS.get("$KEY")
+      - pattern: $ARGS.get("$KEY", ...)
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+    pattern-sinks:
+      - pattern: eval($CODE)
+        focus-metavariable: $CODE
+      - pattern: eval($CODE, ...)
+        focus-metavariable: $CODE
+      - pattern: exec($CODE)
+        focus-metavariable: $CODE
+      - pattern: exec($CODE, ...)
+        focus-metavariable: $CODE
+      - pattern: compile($CODE, ...)
+        focus-metavariable: $CODE

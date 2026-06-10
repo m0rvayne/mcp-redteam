@@ -1,0 +1,48 @@
+rules:
+  - id: mcp-python-path-traversal
+    message: >
+      Tool argument flows to file operation without path normalization.
+      Use os.path.realpath() or Path.resolve() and validate with startswith() check.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      rule_id: MRT002
+      confidence: HIGH
+      owasp: "MCP02: Path Traversal"
+    mode: taint
+    pattern-sources:
+      - pattern: $ARGS["$KEY"]
+      - pattern: $ARGS.get("$KEY")
+      - pattern: $ARGS.get("$KEY", ...)
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+    pattern-sinks:
+      - pattern: open($PATH, ...)
+        focus-metavariable: $PATH
+      - pattern: Path($PATH)
+        focus-metavariable: $PATH
+      - pattern: os.path.join(..., $PATH, ...)
+        focus-metavariable: $PATH
+    pattern-sanitizers:
+      - pattern: os.path.realpath(...)
+      - pattern: $X.resolve(...)
+      - pattern: os.path.abspath(...)

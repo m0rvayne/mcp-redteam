@@ -1,0 +1,85 @@
+rules:
+  - id: mcp-js-ssrf-fetch
+    message: >
+      Non-literal URL passed to fetch(). In MCP servers, tool arguments may contain
+      URLs pointing to internal services (127.0.0.1, metadata endpoints, etc.).
+      Validate the URL against an allowlist of domains/schemes before making requests.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT003
+      confidence: HIGH
+      owasp: "MCP07: SSRF"
+      cwe: "CWE-918: Server-Side Request Forgery"
+    patterns:
+      - pattern: fetch($URL, ...)
+      - pattern-not: fetch("...", ...)
+
+  - id: mcp-js-ssrf-axios
+    message: >
+      Non-literal URL passed to axios request. In MCP servers, tool arguments may
+      contain URLs pointing to internal services. Validate the URL against an
+      allowlist of domains/schemes before making requests.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT003
+      confidence: HIGH
+      owasp: "MCP07: SSRF"
+      cwe: "CWE-918: Server-Side Request Forgery"
+    patterns:
+      - pattern-either:
+          - pattern: axios.get($URL, ...)
+          - pattern: axios.post($URL, ...)
+          - pattern: axios.put($URL, ...)
+          - pattern: axios.delete($URL, ...)
+          - pattern: axios.patch($URL, ...)
+          - pattern: axios($URL, ...)
+      - pattern-not: axios.get("...", ...)
+      - pattern-not: axios.post("...", ...)
+      - pattern-not: axios.put("...", ...)
+      - pattern-not: axios.delete("...", ...)
+      - pattern-not: axios.patch("...", ...)
+      - pattern-not: axios("...", ...)
+
+  - id: mcp-js-ssrf-got
+    message: >
+      Non-literal URL passed to got(). In MCP servers, tool arguments may contain
+      URLs pointing to internal services. Validate the URL against an allowlist
+      of domains/schemes before making requests.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT003
+      confidence: HIGH
+      owasp: "MCP07: SSRF"
+      cwe: "CWE-918: Server-Side Request Forgery"
+    patterns:
+      - pattern-either:
+          - pattern: got($URL, ...)
+          - pattern: got.get($URL, ...)
+          - pattern: got.post($URL, ...)
+      - pattern-not: got("...", ...)
+      - pattern-not: got.get("...", ...)
+      - pattern-not: got.post("...", ...)
+
+  - id: mcp-js-ssrf-template-url
+    message: >
+      Template literal used as URL in HTTP request. This is an SSRF risk.
+      Validate the constructed URL against an allowlist before making the request.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT003
+      confidence: HIGH
+      owasp: "MCP07: SSRF"
+      cwe: "CWE-918: Server-Side Request Forgery"
+    pattern-either:
+      - pattern: fetch(`...${...}...`, ...)
+      - pattern: axios.get(`...${...}...`, ...)
+      - pattern: axios.post(`...${...}...`, ...)
+      - pattern: got(`...${...}...`, ...)

@@ -1,0 +1,59 @@
+rules:
+  - id: mcp-python-shell-injection
+    message: >
+      Tool argument flows to shell command without sanitization.
+      Use subprocess.run(args_list) without shell=True, or sanitize with shlex.quote().
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      rule_id: MRT001
+      confidence: HIGH
+      owasp: "MCP05: Command Injection"
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern: $FUNC(..., $ARG, ...)
+          - metavariable-pattern:
+              metavariable: $FUNC
+              pattern-either:
+                - pattern: $X.tool(...)
+                - pattern: tool(...)
+          - focus-metavariable: $ARG
+      - pattern: $ARGS["$KEY"]
+      - pattern: $ARGS.get("$KEY")
+      - pattern: $ARGS.get("$KEY", ...)
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+    pattern-sinks:
+      - pattern: subprocess.run($CMD, ..., shell=True, ...)
+        focus-metavariable: $CMD
+      - pattern: subprocess.call($CMD, ..., shell=True, ...)
+        focus-metavariable: $CMD
+      - pattern: subprocess.Popen($CMD, ..., shell=True, ...)
+        focus-metavariable: $CMD
+      - pattern: os.system($CMD)
+        focus-metavariable: $CMD
+      - pattern: os.popen($CMD)
+        focus-metavariable: $CMD
+    pattern-sanitizers:
+      - pattern: shlex.quote(...)
+      - pattern: shlex.split(...)

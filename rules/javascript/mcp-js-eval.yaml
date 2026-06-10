@@ -1,0 +1,68 @@
+rules:
+  - id: mcp-js-eval-call
+    message: >
+      eval() called with non-literal argument. In MCP servers, user-controlled
+      tool arguments can lead to arbitrary code execution via eval().
+      Never use eval() with dynamic input. Use safer alternatives like
+      JSON.parse() for data or a sandboxed interpreter for code execution.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT004
+      confidence: HIGH
+      owasp: "MCP08: Code Injection"
+      cwe: "CWE-94: Code Injection"
+    patterns:
+      - pattern: eval($ARG)
+      - pattern-not: eval("...")
+
+  - id: mcp-js-eval-new-function
+    message: >
+      new Function() called with non-literal argument. This is equivalent to eval()
+      and allows arbitrary code execution. In MCP servers, user-controlled tool
+      arguments can be injected. Use safer alternatives.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT004
+      confidence: HIGH
+      owasp: "MCP08: Code Injection"
+      cwe: "CWE-94: Code Injection"
+    patterns:
+      - pattern: new Function($ARG)
+      - pattern-not: new Function("...")
+
+  - id: mcp-js-eval-new-function-multi
+    message: >
+      new Function() called with non-literal body argument. The last argument to
+      new Function() is the function body and is equivalent to eval().
+      In MCP servers, this can lead to arbitrary code execution.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT004
+      confidence: HIGH
+      owasp: "MCP08: Code Injection"
+      cwe: "CWE-94: Code Injection"
+    patterns:
+      - pattern: new Function("...", $BODY)
+      - pattern-not: new Function("...", "...")
+
+  - id: mcp-js-eval-template
+    message: >
+      eval() or new Function() called with template literal containing interpolation.
+      This is a code injection vector in MCP servers.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT004
+      confidence: HIGH
+      owasp: "MCP08: Code Injection"
+      cwe: "CWE-94: Code Injection"
+    pattern-either:
+      - pattern: eval(`...${...}...`)
+      - pattern: new Function(`...${...}...`)

@@ -1,0 +1,62 @@
+rules:
+  - id: mcp-python-ssrf
+    message: >
+      Tool argument flows to HTTP request without URL validation.
+      Validate the URL scheme and host with urllib.parse.urlparse() before making requests.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      rule_id: MRT003
+      confidence: HIGH
+      owasp: "MCP03: Server-Side Request Forgery"
+    mode: taint
+    pattern-sources:
+      - pattern: $ARGS["$KEY"]
+      - pattern: $ARGS.get("$KEY")
+      - pattern: $ARGS.get("$KEY", ...)
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+    pattern-sinks:
+      - pattern: requests.get($URL, ...)
+        focus-metavariable: $URL
+      - pattern: requests.post($URL, ...)
+        focus-metavariable: $URL
+      - pattern: requests.put($URL, ...)
+        focus-metavariable: $URL
+      - pattern: requests.delete($URL, ...)
+        focus-metavariable: $URL
+      - pattern: requests.patch($URL, ...)
+        focus-metavariable: $URL
+      - pattern: httpx.get($URL, ...)
+        focus-metavariable: $URL
+      - pattern: httpx.post($URL, ...)
+        focus-metavariable: $URL
+      - pattern: httpx.put($URL, ...)
+        focus-metavariable: $URL
+      - pattern: $CLIENT.get($URL, ...)
+        focus-metavariable: $URL
+      - pattern: $CLIENT.post($URL, ...)
+        focus-metavariable: $URL
+      - pattern: urllib.request.urlopen($URL, ...)
+        focus-metavariable: $URL
+    pattern-sanitizers:
+      - pattern: urllib.parse.urlparse(...)
