@@ -9,14 +9,14 @@ specific attack vector against the tool.
 AUDIT RESULTS SUMMARY
 =====================
 
-VULN-01 [HIGH]   config_scanner.py:457 — Credential value leaks into evidence/SARIF
-VULN-02 [HIGH]   config_scanner.py:130 — _try_load follows symlinks (symlink-to-sensitive-file)
-VULN-03 [HIGH]   semgrep_runner.py:22-26 — get_rules_dir() CWD fallback allows rule injection
+VULN-01 [FIXED]  config_scanner.py — Evidence value redacted (was: credential leak)
+VULN-02 [FIXED]  config_scanner.py — is_symlink() check added (was: symlink following)
+VULN-03 [FIXED]  semgrep_runner.py — CWD fallback removed (was: rule injection)
 VULN-04 [MEDIUM] config_scanner.py:131 — _try_load reads unlimited file size (DoS: OOM)
 VULN-05 [MEDIUM] cli.py:79 — rglob("*.py") on huge dirs = DoS (OOM/hang)
 VULN-06 [MEDIUM] sarif.py:97 — Full absolute paths leak into SARIF (PII: username)
 VULN-07 [MEDIUM] sarif.py/terminal.py — No sanitization of finding titles (XSS if rendered in HTML)
-VULN-08 [LOW]    cli.py:42-44 — Path existence check only; no canonicalization (path traversal)
+VULN-08 [FIXED]  cli.py — path.resolve() added (was: no canonicalization)
 VULN-09 [LOW]    config_scanner.py:107-111 — find subprocess on $HOME with no size guard
 VULN-10 [INFO]   Dependencies (typer/rich/pydantic) — no known critical CVEs at current versions
 """
@@ -32,22 +32,18 @@ from datetime import datetime
 import pytest
 
 # ---------------------------------------------------------------------------
-# VULN-01: Credential value leak in evidence
-# config_scanner.py line 457:
-#   evidence=f"env.ANTHROPIC_BASE_URL = {env['ANTHROPIC_BASE_URL']}"
-# If the value is "https://evil.com?stolen_key=sk-1234", the actual
-# attacker-controlled URL (which may itself contain secrets) leaks into
-# findings -> SARIF -> GitHub Security tab -> visible to all repo maintainers.
-#
-# Fix: Redact the value. Show only "env.ANTHROPIC_BASE_URL is set (redacted)".
+# VULN-01 [FIXED]: Credential value leak in evidence
+# Was: evidence=f"env.ANTHROPIC_BASE_URL = {env['ANTHROPIC_BASE_URL']}"
+# Now: evidence="env.ANTHROPIC_BASE_URL is set (value redacted)"
+# The secret URL no longer leaks into findings/SARIF/GitHub Security tab.
 # ---------------------------------------------------------------------------
 
 
 class TestVuln01CredentialLeakInEvidence:
-    """VULN-01: ANTHROPIC_BASE_URL value leaks into finding evidence."""
+    """VULN-01 [FIXED]: ANTHROPIC_BASE_URL value is redacted in finding evidence."""
 
-    def test_anthropic_base_url_value_exposed(self, tmp_path):
-        """The actual URL value ends up in the finding evidence field."""
+    def test_anthropic_base_url_value_redacted(self, tmp_path):
+        """The actual URL value is redacted and does NOT appear in evidence."""
         from mcp_redteam.engine.config_scanner import _check_dangerous_settings
 
         secret_url = "https://evil.com/proxy?real_key=sk-proj-VERYSECRETKEY1234567890"
@@ -69,9 +65,12 @@ class TestVuln01CredentialLeakInEvidence:
         mrt014 = [f for f in findings if f.id == "MRT014"]
         assert len(mrt014) == 1
 
-        # BUG: The secret URL is fully visible in evidence
-        assert secret_url in mrt014[0].evidence, (
-            "Expected the raw secret URL to leak into evidence (proving the bug)"
+        # FIX: The secret URL is redacted in evidence
+        assert secret_url not in mrt014[0].evidence, (
+            "Secret URL must NOT appear in evidence (redacted)"
+        )
+        assert "redacted" in mrt014[0].evidence.lower(), (
+            "Evidence should indicate the value is redacted"
         )
 
     def test_credential_in_sarif_output(self, tmp_path):
@@ -109,20 +108,17 @@ class TestVuln01CredentialLeakInEvidence:
 
 
 # ---------------------------------------------------------------------------
-# VULN-02: _try_load follows symlinks to read arbitrary files
-# config_scanner.py:130 — path.is_file() returns True for symlinks
-# A malicious .mcp.json could be a symlink to /etc/shadow or ~/.ssh/id_rsa
-# The tool will happily read and parse it.
-#
-# Fix: Check path.is_symlink() before reading. Or use os.open with O_NOFOLLOW.
+# VULN-02 [FIXED]: _try_load now rejects symlinks
+# Was: path.is_file() returns True for symlinks — arbitrary file read
+# Now: path.is_symlink() check returns early before reading.
 # ---------------------------------------------------------------------------
 
 
 class TestVuln02SymlinkFollowing:
-    """VULN-02: _try_load follows symlinks without checking."""
+    """VULN-02 [FIXED]: _try_load rejects symlinks."""
 
-    def test_symlink_to_sensitive_file_is_read(self, tmp_path):
-        """A symlink masquerading as .mcp.json reads the target file."""
+    def test_symlink_to_sensitive_file_is_rejected(self, tmp_path):
+        """A symlink masquerading as .mcp.json is NOT read."""
         from mcp_redteam.engine.config_scanner import _try_load
 
         # Create a "sensitive" file with valid JSON
@@ -134,17 +130,15 @@ class TestVuln02SymlinkFollowing:
         symlink.symlink_to(sensitive)
 
         target = {}
-        _try_load(symlink.resolve(), target)
+        _try_load(symlink, target)
 
-        # BUG: The tool reads through the symlink without checking
-        # In real attack: symlink -> /etc/passwd or ~/.ssh/id_rsa
-        # (would fail json.loads but error is silently swallowed)
-        assert len(target) == 1, (
-            "Symlinked file was read without symlink check (proving the bug)"
+        # FIX: The tool detects the symlink and refuses to read
+        assert len(target) == 0, (
+            "Symlinked file must NOT be read — is_symlink() check should block it"
         )
 
-    def test_symlink_in_find_results(self, tmp_path):
-        """If `find` returns a symlink path, _try_load will follow it."""
+    def test_symlink_in_find_results_rejected(self, tmp_path):
+        """[FIXED] Symlinks are now rejected by _try_load."""
         from mcp_redteam.engine.config_scanner import _try_load
 
         real_file = tmp_path / "real.json"
@@ -156,26 +150,22 @@ class TestVuln02SymlinkFollowing:
         target = {}
         _try_load(link, target)
 
-        # Symlink followed — file content loaded
-        assert str(link) in target or str(real_file) in target
+        # FIX: symlink rejected — file NOT loaded
+        assert str(link) not in target and str(real_file) not in target
 
 
 # ---------------------------------------------------------------------------
-# VULN-03: get_rules_dir() CWD fallback allows rule injection
-# semgrep_runner.py:25 — if bundled rules not found, falls back to Path.cwd() / "rules"
-# Attack: attacker puts a malicious rules/ directory in CWD.
-# Semgrep rules can have `fix:` patterns that rewrite code.
-# A malicious rule could also suppress real findings (allowlisting patterns).
-#
-# Fix: Remove CWD fallback entirely, or validate rule file checksums.
+# VULN-03 [FIXED]: get_rules_dir() CWD fallback removed
+# Was: if bundled rules not found, falls back to Path.cwd() / "rules"
+# Now: only returns package-relative path, no CWD fallback.
 # ---------------------------------------------------------------------------
 
 
 class TestVuln03RulesDirInjection:
-    """VULN-03: CWD fallback for rules directory allows injection."""
+    """VULN-03 [FIXED]: CWD fallback removed — no rule injection possible."""
 
-    def test_cwd_fallback_is_used(self, tmp_path, monkeypatch):
-        """When bundled rules don't exist, CWD rules/ is used."""
+    def test_cwd_fallback_not_used(self, tmp_path, monkeypatch):
+        """When bundled rules don't exist, CWD rules/ is NOT used."""
         from mcp_redteam.engine import semgrep_runner
 
         # Make the package-relative path not exist
@@ -193,16 +183,13 @@ class TestVuln03RulesDirInjection:
 
         rules_dir = semgrep_runner.get_rules_dir()
 
-        # BUG: Falls back to CWD which attacker controls
-        assert rules_dir == attacker_rules, (
-            "CWD fallback allows attacker to inject malicious semgrep rules"
+        # FIX: CWD fallback removed — attacker rules dir is NOT used
+        assert rules_dir != attacker_rules, (
+            "CWD fallback must NOT be used — prevents rule injection attack"
         )
 
-    def test_malicious_rule_suppresses_findings(self, tmp_path, monkeypatch):
-        """An attacker-controlled rule could allowlist dangerous patterns."""
-        # This test demonstrates the CONCEPT — a malicious rule that matches
-        # nothing (effectively suppressing detection) while the real rules
-        # are replaced.
+    def test_malicious_rules_dir_in_cwd_ignored(self, tmp_path, monkeypatch):
+        """An attacker-controlled rules/ in CWD is ignored."""
         from mcp_redteam.engine import semgrep_runner
 
         monkeypatch.setattr(
@@ -212,7 +199,6 @@ class TestVuln03RulesDirInjection:
 
         attacker_rules = tmp_path / "rules"
         attacker_rules.mkdir()
-        # Empty rule file = no detections
         (attacker_rules / "empty.yaml").write_text(
             "rules:\n  - id: noop\n    pattern: 'NEVER_MATCH_THIS_STRING_12345'\n"
             "    message: noop\n    languages: [python]\n    severity: INFO\n"
@@ -221,7 +207,10 @@ class TestVuln03RulesDirInjection:
         monkeypatch.chdir(tmp_path)
         rules_dir = semgrep_runner.get_rules_dir()
 
-        assert (rules_dir / "empty.yaml").exists()
+        # FIX: returned rules_dir points to package-relative path, NOT CWD
+        assert rules_dir != attacker_rules, (
+            "get_rules_dir() must not return attacker-controlled CWD/rules"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -436,17 +425,14 @@ class TestVuln07XssInFindingFields:
 
 
 # ---------------------------------------------------------------------------
-# VULN-08: No path canonicalization in CLI
-# cli.py:42 — only checks path.exists(), no resolve() or realpath()
-# User passes ../../etc/passwd — typer converts to Path, exists() is checked,
-# but the path is then passed to rglob and semgrep as-is.
-#
-# Fix: path = path.resolve(); validate it's under expected scope.
+# VULN-08 [FIXED]: Path canonicalization added in CLI
+# Was: only path.exists(), no resolve() — traversal possible
+# Now: path = path.resolve() before any use.
 # ---------------------------------------------------------------------------
 
 
 class TestVuln08PathTraversalInCli:
-    """VULN-08: CLI accepts arbitrary paths without canonicalization."""
+    """VULN-08 [FIXED]: CLI canonicalizes paths with resolve()."""
 
     def test_relative_path_traversal_accepted(self, tmp_path):
         """Path with .. components is accepted without canonicalization."""
@@ -458,15 +444,15 @@ class TestVuln08PathTraversalInCli:
             "Path traversal components preserved (no resolve/canonicalization)"
         )
 
-    def test_path_not_resolved_before_use(self):
-        """cli.py scan() does not call resolve() on the path argument."""
+    def test_path_is_resolved_before_use(self):
+        """cli.py scan() calls resolve() on the path argument."""
         import inspect
         from mcp_redteam.cli import scan
 
         source = inspect.getsource(scan)
-        # Check that resolve() is NOT called on path
-        assert "path.resolve()" not in source and "path = path.resolve()" not in source, (
-            "path argument is not canonicalized with resolve() — traversal possible"
+        # FIX: resolve() IS called on path — canonicalization prevents traversal
+        assert "path.resolve()" in source or "path = path.resolve()" in source, (
+            "path argument must be canonicalized with resolve() to prevent traversal"
         )
 
 
