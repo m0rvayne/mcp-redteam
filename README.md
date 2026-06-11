@@ -4,10 +4,10 @@
 
 **It doesn't tell you where your walls are thin. It walks through them.**
 
+[![Tests](https://github.com/m0rvayne/mcp-redteam/actions/workflows/test.yml/badge.svg)](https://github.com/m0rvayne/mcp-redteam/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![OWASP MCP Top 10](https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange)](https://owasp.org/www-project-mcp-top-10/)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-7b61ff)](https://claude.ai/code)
-[![Tests](https://img.shields.io/badge/tests-75%2B%20passing-green)](#tests)
 
 </div>
 
