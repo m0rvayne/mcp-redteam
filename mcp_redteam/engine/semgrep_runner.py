@@ -51,6 +51,12 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
         "--json",
         "--quiet",  # suppress progress bar
         "--no-git-ignore",  # scan everything
+        "--exclude", "*test*",
+        "--exclude", "*__tests__*",
+        "--exclude", "*spec*",
+        "--exclude", "node_modules",
+        "--exclude", ".venv",
+        "--exclude", "__pycache__",
         str(target_path),
     ]
 
