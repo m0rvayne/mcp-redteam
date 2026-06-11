@@ -5,6 +5,7 @@
 **It doesn't tell you where your walls are thin. It walks through them.**
 
 [![Tests](https://github.com/m0rvayne/mcp-redteam/actions/workflows/test.yml/badge.svg)](https://github.com/m0rvayne/mcp-redteam/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/pypi/v/redteam-mcp)](https://pypi.org/project/redteam-mcp/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![OWASP MCP Top 10](https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange)](https://owasp.org/www-project-mcp-top-10/)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-7b61ff)](https://claude.ai/code)
@@ -53,7 +54,7 @@ claude plugin install mcp-redteam
 
 **Standalone CLI** (deterministic, CI/CD ready):
 ```bash
-pip install mcp-redteam
+pip install redteam-mcp
 mcp-redteam scan ./your-mcp-server --no-llm
 ```
 
