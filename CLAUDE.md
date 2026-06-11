@@ -25,12 +25,23 @@ Every finding must be **proven** through source code evidence or safe read-only 
 ### Active Mode (opt-in): `/mcp-redteam active`
 
 - Everything from Safe Mode PLUS:
-- **Controlled payloads** on read-only tools — path traversal probes, SSRF detection via timing
-- **Time-based detection** — `sleep` injection to confirm blind vulnerabilities
-- **Differential response analysis** — baseline vs probe comparison
-- **NEVER: state-modifying calls** — no create, update, delete, send even in active mode
-- **NEVER: external requests** — no DNS callbacks, no httpstat.us, no metadata endpoints
+- **Read-only tool probes** — call read-only tools (list, get, search, read) with test input:
+  - Path traversal: `{"path": "../../etc/hostname"}` on file-reading tools
+  - SSRF detection: `{"url": "http://127.0.0.1:1"}` — compare error vs invalid domain
+  - Type confusion: wrong types (string where int expected) on read tools
+  - Null/empty input: trigger error responses, analyze what leaks
+- **Differential response analysis** — baseline normal call vs probe call, compare responses
 - Requires explicit user consent at start
+
+**ALLOWED in Active Mode:**
+- Calling read-only tools with non-destructive test input
+- Analyzing error responses from read-only tools
+
+**NEVER (in ANY mode, including Active):**
+- State-modifying tools: create, update, delete, send, upload, share
+- Timing/sleep injection (causes DoS on production servers)
+- Requests to cloud metadata (169.254.169.254) or external callback URLs
+- DNS callbacks, httpstat.us, or any outbound data exfiltration probes
 
 ---
 
@@ -311,8 +322,9 @@ ACTIVE MODE (only if mode is ACTIVE):
 - All of Safe Mode PLUS:
 - Read-only tools with malformed input (wrong types, empty strings, null) — YES (for error analysis)
 - Read-only tools with path traversal probes on safe targets (/etc/hostname) — YES
-- Time-based detection (if tool accepts timeouts/delays) — YES
 - State-modifying tools — STILL NEVER
+- Timing/sleep injection — NEVER (causes DoS)
+- Cloud metadata probes (169.254.169.254) — NEVER (credential exposure)
 
 SOURCE CODE:
 {paste actual source code — read all .py/.ts/.js/.swift files from the server directory}
