@@ -14,9 +14,19 @@
 
 ---
 
-MCP server security auditor. Two modes of operation:
+I build MCP connectors and AI automation for businesses. 70+ connectors deployed across client projects. Some of them started acting up — dropping connections, config conflicts, servers I forgot to remove still sitting in config eating resources.
 
-- **Claude Code plugin** — AI-native deep audit. Reads source code semantically, probes tools, detects behavioral mismatches, maps cross-server attack chains. Interactive HTML report.
+Went looking for something to audit this. Found mcp-scan — only reads tool descriptions, doesn't touch source code. Cisco's scanner — 78% false positives. Nothing that actually reads the server code and says "line 42, you have exec() with unsanitized input."
+
+Built my own. Ran it on 106 public MCP servers. 7 had remote code execution. One of them had 25K GitHub stars.
+
+Open-sourced because if my connectors had these problems, so do yours.
+
+---
+
+Two modes of operation:
+
+- **Claude Code plugin** — reads source code, probes tools, detects behavioral mismatches, maps cross-server attack chains. Interactive HTML report.
 - **Standalone CLI** — deterministic scan. 14 Semgrep rules, config health checks, SARIF output. Works in CI/CD without Claude.
 
 ## What works today
