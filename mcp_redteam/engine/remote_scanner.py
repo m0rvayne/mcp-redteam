@@ -255,7 +255,7 @@ def _oauth_flow(mcp_url: str, timeout: int = 120) -> Optional[str]:
     )
 
     # Step 4: Callback server + browser
-    code = _wait_for_oauth_callback(port, auth_url, timeout)
+    code = _wait_for_oauth_callback(port, auth_url, timeout, expected_state=state)
     if not code:
         return None
 
@@ -279,7 +279,7 @@ def _oauth_flow(mcp_url: str, timeout: int = 120) -> Optional[str]:
 
 
 def _wait_for_oauth_callback(
-    port: int, auth_url: str, timeout: int
+    port: int, auth_url: str, timeout: int, expected_state: str = ""
 ) -> Optional[str]:
     """Start callback server, open browser, wait for code."""
     result: dict[str, Optional[str]] = {"code": None}
@@ -287,6 +287,15 @@ def _wait_for_oauth_callback(
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             params = parse_qs(urlparse(self.path).query)
+            # Validate state to prevent CSRF
+            returned_state = params.get("state", [None])[0]
+            if expected_state and returned_state != expected_state:
+                logger.error("OAuth state mismatch — possible CSRF attack")
+                self.send_response(403)
+                self.end_headers()
+                self.wfile.write(b"State mismatch. Authentication rejected.")
+                threading.Thread(target=self.server.shutdown, daemon=True).start()
+                return
             if "code" in params:
                 result["code"] = params["code"][0]
             self.send_response(200)
