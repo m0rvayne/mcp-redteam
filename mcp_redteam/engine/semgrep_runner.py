@@ -89,8 +89,13 @@ def _map_semgrep_results(data: dict) -> list[Finding]:
 
     for match in data.get("results", []):
         rule_id = _extract_rule_id(match)
-        severity = _map_severity(match.get("extra", {}).get("severity", "WARNING"))
-        category = _extract_category(match)
+        # Use severity from RULE_REGISTRY if available (more accurate than semgrep mapping)
+        if rule_id in RULE_REGISTRY:
+            severity = RULE_REGISTRY[rule_id].severity
+            category = RULE_REGISTRY[rule_id].category
+        else:
+            severity = _map_severity(match.get("extra", {}).get("severity", "WARNING"))
+            category = _extract_category(match)
 
         finding = Finding(
             id=rule_id,
