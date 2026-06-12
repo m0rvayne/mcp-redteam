@@ -79,9 +79,11 @@ def _build_result(finding: Finding) -> dict[str, Any]:
     rule_id = _resolve_rule_id(finding)
     level = _SEVERITY_TO_LEVEL[finding.severity]
 
-    message_parts = [finding.title]
+    # VULN-07 fix: sanitize to prevent XSS if SARIF rendered in HTML viewer
+    import html
+    message_parts = [html.escape(finding.title)]
     if finding.description and finding.description != finding.title:
-        message_parts.append(finding.description)
+        message_parts.append(html.escape(finding.description))
     if finding.evidence:
         message_parts.append(f"Evidence: {finding.evidence}")
 
@@ -94,7 +96,12 @@ def _build_result(finding: Finding) -> dict[str, Any]:
     # Location (required by GitHub — provide a fallback)
     if finding.location:
         loc = finding.location
-        uri = loc.file.lstrip("/")  # SARIF uses relative URIs
+        # VULN-06 fix: make paths relative to avoid PII (username) leak
+        import os
+        try:
+            uri = os.path.relpath(loc.file)
+        except ValueError:
+            uri = loc.file.lstrip("/")
         region: dict[str, Any] = {"startLine": loc.line or 1}
         if loc.end_line:
             region["endLine"] = loc.end_line

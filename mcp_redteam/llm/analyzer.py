@@ -61,7 +61,6 @@ def is_llm_available() -> bool:
 
 def analyze_behavioral(
     source_path: Path,
-    tool_descriptions: Optional[dict] = None,
 ) -> list[Finding]:
     """
     Run LLM behavioral analysis on MCP server source code.
@@ -86,14 +85,8 @@ def analyze_behavioral(
     if not source_code:
         return []
 
-    # Build descriptions block
-    descriptions_block = ""
-    if tool_descriptions:
-        desc_text = json.dumps(tool_descriptions, indent=2, ensure_ascii=False)
-        descriptions_block = f"TOOL DESCRIPTIONS (from MCP manifest):\n{desc_text}\n"
-
     # Run analysis
-    findings = _analyze_with_llm(client, source_code, descriptions_block)
+    findings = _analyze_with_llm(client, source_code, "")
 
     return findings
 

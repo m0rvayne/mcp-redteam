@@ -1,3 +1,4 @@
+import os
 import sys
 import typer
 from rich.console import Console
@@ -85,7 +86,7 @@ def scan(
             mode="deterministic" if no_llm else "hybrid",
             llm_enabled=not no_llm,
             semgrep_available=semgrep_available,
-            files_scanned=sum(1 for _ in path.rglob("*.py")) + sum(1 for _ in path.rglob("*.ts")) + sum(1 for _ in path.rglob("*.js")) if path.is_dir() else 1,
+            files_scanned=_count_source_files(path),
         ),
         findings=findings,
     )
@@ -115,6 +116,22 @@ def scan(
             failing = [f for f in findings if _severity_rank(f.severity) >= _severity_rank(threshold)]
             if failing:
                 raise typer.Exit(code=1)
+
+
+def _count_source_files(path: Path, cap: int = 10000) -> int:
+    """Count source files with cap to avoid DoS on huge dirs."""
+    if not path.is_dir():
+        return 1
+    count = 0
+    skip = {".venv", "venv", "node_modules", "__pycache__", ".git"}
+    for root, dirs, files in os.walk(path):
+        dirs[:] = [d for d in dirs if d not in skip]
+        for f in files:
+            if f.endswith((".py", ".ts", ".js")):
+                count += 1
+                if count >= cap:
+                    return cap
+    return count
 
 
 def _severity_rank(severity) -> int:
