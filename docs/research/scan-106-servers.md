@@ -3,7 +3,7 @@
 MCP (Model Context Protocol) lets AI agents call external tools — file systems, databases, browsers, smart homes, even reverse engineering tools. We ran automated static analysis on 106 MCP servers: Anthropic's official implementations plus the most popular community servers. Combined: 300K+ GitHub stars.
 
 **Tool:** [mcp-redteam](https://github.com/m0rvayne/mcp-redteam) (`pip install redteam-mcp`)
-**Mode:** Deterministic Semgrep rules + embedding-based tool poisoning detection.
+**Mode:** 25 Semgrep rules + embedding-based tool poisoning detection.
 
 ---
 
@@ -13,7 +13,7 @@ MCP (Model Context Protocol) lets AI agents call external tools — file systems
 
 | Server | Stars | Language | Vulnerability | Verified |
 |--------|-------|----------|--------------|----------|
-| **serena** | 25.2K | Python | `subprocess.Popen(command, shell=True)` — unsanitized LLM input | Confirmed, [disclosed](https://github.com/oraios/serena/issues/1569) |
+| **serena** | 25.2K | Python | `subprocess.Popen(command, shell=True)` — LLM-controlled input | [Disclosed](https://github.com/oraios/serena/issues/1569), maintainer considers intentional |
 | **mcp-chrome** | 11.8K | TypeScript | `new Function(code)()` in browser MAIN world — 7 injection points in 5 files | Confirmed |
 | **mcp-use** | 10K | Python | `exec()` — "restricted namespace" bypassed via `asyncio.create_subprocess_shell()` | Confirmed, [disclosed](https://github.com/mcp-use/mcp-use/issues/1718) |
 | **ida-pro-mcp** | 9.3K | Python | `exec()` + `eval()` with full `__builtins__` inside IDA Pro | Confirmed (has `@unsafe` opt-in flag) |
@@ -107,11 +107,11 @@ This catches attacks that regex misses, without sending any data to external API
 
 ## Shell injection: the most starred vulnerable server
 
-**serena** (25.2K stars) — the most starred server with direct shell injection:
+**serena** (25.2K stars) — the most starred server with shell=True:
 ```python
-subprocess.Popen(command, shell=True)  # unsanitized
+subprocess.Popen(command, shell=True)
 ```
-The only "protection" is a docstring telling the LLM "Never execute unsafe shell commands!" That's not a security boundary.
+The maintainer [responded](https://github.com/oraios/serena/issues/1569) that this is intentional: "arguments do not come from user inputs." We disagree — in MCP context, arguments come from the LLM, and LLM output can be manipulated via prompt injection in analyzed files. A docstring telling the LLM "Never execute unsafe commands" is not a security boundary.
 
 **DesktopCommanderMCP** (6.1K stars) — writes agent-supplied code to temp file and executes:
 ```typescript
@@ -170,7 +170,7 @@ mcp-redteam scan ./your-mcp-server --no-llm
 mcp-redteam scan-remote https://your-server.com/mcp --token <bearer>
 ```
 
-14 Semgrep rules. Embedding-based poisoning detection. Config health checks. SARIF output for CI/CD.
+25 Semgrep rules. Embedding-based poisoning detection. Remote server scanning. Config health checks. SARIF output for CI/CD.
 
 Source: [github.com/m0rvayne/mcp-redteam](https://github.com/m0rvayne/mcp-redteam)
 

@@ -27,7 +27,7 @@ Open-sourced because if my connectors had these problems, so do yours.
 Two modes of operation:
 
 - **Claude Code plugin** — reads source code, probes tools, detects behavioral mismatches, maps cross-server attack chains. Interactive HTML report.
-- **Standalone CLI** — deterministic scan. 14 Semgrep rules, config health checks, SARIF output. Works in CI/CD without Claude.
+- **Standalone CLI** — deterministic scan. 25 Semgrep rules, config health checks, SARIF output. Works in CI/CD without Claude.
 
 ## What works today
 
@@ -68,6 +68,11 @@ pip install redteam-mcp
 mcp-redteam scan ./your-mcp-server --no-llm
 ```
 
+**Remote MCP server** (via URL, OAuth or token):
+```bash
+mcp-redteam scan-remote https://your-server.com/mcp --token <bearer>
+```
+
 Requires Python 3.10+. Semgrep installed separately for code analysis: `pip install semgrep`.
 
 ## What it checks
@@ -76,7 +81,7 @@ Requires Python 3.10+. Semgrep installed separately for code analysis: `pip inst
 
 Dead/disconnected servers, scope conflicts (same server in multiple scopes), credentials in git-tracked config files (CVE-2025-59536), unpinned npx/uvx packages (supply chain), enableAllProjectMcpServers bypass (CVE-2026-21852), orphaned MCP processes.
 
-### Code Security (Semgrep, 14 rules)
+### Code Security (Semgrep, 25 rules)
 
 | Rule | What it detects | Languages |
 |------|----------------|-----------|
@@ -85,9 +90,16 @@ Dead/disconnected servers, scope conflicts (same server in multiple scopes), cre
 | SSRF | HTTP requests with user-controlled URL | Python, JS/TS |
 | Eval injection | eval()/exec()/new Function() with user input | Python, JS/TS |
 | Hardcoded secrets | API keys, tokens, passwords in source | Python, JS/TS |
-| Stdout pollution | print()/console.log() in MCP handlers | Python, JS/TS |
-| Missing error handling | Tool functions without try/except | Python |
-| Credential in response | API keys/tokens in tool return values | Python |
+| Stdout pollution | print()/console.log() in stdio handlers | Python, JS/TS |
+| Missing error handling | Tool functions without try/catch | Python, JS/TS |
+| Credential in response | API keys/tokens in tool return values | Python, JS/TS |
+| Missing signal handler | Server without SIGTERM/SIGINT | Python |
+| Blocking sync calls | requests.get() inside async functions | Python |
+| OAuth over-privilege | Excessive OAuth scopes (gmail.modify, admin) | Python |
+| No timeout on HTTP | httpx/requests/fetch without timeout | Python, JS/TS |
+| No timeout on subprocess | subprocess/spawn without timeout | Python, JS/TS |
+| Dangerous parameter names | Tool params named cmd, exec, eval, code | JS/TS |
+| Env secrets without rotation | API keys from os.getenv used directly | Python |
 
 Based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of Bits, Palo Alto Unit 42, OX Security, and Snyk.
 
