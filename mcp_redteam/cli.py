@@ -123,6 +123,90 @@ def _severity_rank(severity) -> int:
     return ranks.get(severity, 0)
 
 @app.command()
+def scan_remote(
+    url: str = typer.Argument(..., help="Remote MCP server URL (https://...)"),
+    token: Optional[str] = typer.Option(None, "--token", "-t", help="Bearer token (skip OAuth)"),
+    format: OutputFormat = typer.Option(OutputFormat.terminal, "--format", "-f", help="Output format"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file path"),
+    no_auth: bool = typer.Option(False, "--no-auth", help="Skip authentication entirely"),
+    fail_on: Optional[str] = typer.Option(None, "--fail-on", help="Exit 1 if findings at this severity or above (critical, high)"),
+):
+    """Scan a remote MCP server for security issues."""
+    from mcp_redteam.engine.remote_scanner import scan_remote as do_scan
+    from mcp_redteam.models import ScanResult, ScanMetadata, Severity
+    from mcp_redteam.formatters import format_sarif, format_json, format_terminal
+    from mcp_redteam.formatters.sarif import write_sarif
+    from mcp_redteam.formatters.json_fmt import write_json
+
+    scan_start = datetime.now()
+
+    console.print(f"[bold red]mcp-redteam[/bold red] scan-remote")
+    console.print(f"target: {url}")
+
+    effective_token = token
+    if no_auth:
+        console.print("[yellow]Warning: scanning without auth — may get limited results[/yellow]")
+        effective_token = None
+    elif not token:
+        console.print("[cyan]OAuth: opening browser for authentication...[/cyan]")
+        console.print("[dim]Press Ctrl+C to skip[/dim]")
+
+    try:
+        findings, metadata = do_scan(url, effective_token)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Scan cancelled[/yellow]")
+        raise typer.Exit(0)
+    except ImportError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=2)
+
+    if "error" in metadata:
+        console.print(f"[red]Error:[/red] {metadata['error']}")
+        raise typer.Exit(code=2)
+
+    tool_count = metadata.get("tool_count", 0)
+    console.print(f"tools found: {tool_count}")
+    console.print(f"findings: {len(findings)}")
+
+    # Build result
+    result = ScanResult(
+        metadata=ScanMetadata(
+            scan_start=scan_start,
+            scan_end=datetime.now(),
+            target_path=url,
+            mode="remote",
+        ),
+        findings=findings,
+    )
+
+    # Output
+    if format == OutputFormat.terminal:
+        format_terminal(result, console)
+    elif format == OutputFormat.sarif:
+        sarif_str = format_sarif(result)
+        if output:
+            write_sarif(result, output)
+            console.print(f"[green]SARIF written to {output}[/green]")
+        else:
+            print(sarif_str)
+    elif format == OutputFormat.json:
+        json_str = format_json(result)
+        if output:
+            write_json(result, output)
+            console.print(f"[green]JSON written to {output}[/green]")
+        else:
+            print(json_str)
+
+    # Exit code for CI
+    if fail_on:
+        threshold = {"critical": Severity.CRITICAL, "high": Severity.HIGH}.get(fail_on.lower())
+        if threshold:
+            failing = [f for f in findings if _severity_rank(f.severity) >= _severity_rank(threshold)]
+            if failing:
+                raise typer.Exit(code=1)
+
+
+@app.command()
 def version():
     """Show version."""
     from mcp_redteam import __version__
