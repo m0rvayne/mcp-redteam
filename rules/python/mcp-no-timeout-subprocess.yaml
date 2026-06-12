@@ -1,0 +1,34 @@
+rules:
+  - id: mcp-python-no-timeout-subprocess-run
+    message: >
+      subprocess.run() called without timeout parameter. A hanging subprocess
+      blocks the MCP server indefinitely. Always set timeout= (e.g., timeout=30).
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT023
+      confidence: HIGH
+      owasp: "MCP15: Missing Timeout"
+    patterns:
+      - pattern: subprocess.run(...)
+      - pattern-not: subprocess.run(..., timeout=..., ...)
+
+  - id: mcp-python-no-timeout-subprocess-popen
+    message: >
+      subprocess.Popen() called without timeout handling. A hanging subprocess
+      blocks the MCP server indefinitely. Use subprocess.run() with timeout=
+      or call communicate(timeout=) on the Popen object.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT023
+      confidence: MEDIUM
+      owasp: "MCP15: Missing Timeout"
+    patterns:
+      - pattern: subprocess.Popen(...)
+      - pattern-not-inside: |
+          $P = subprocess.Popen(...)
+          ...
+          $P.communicate(..., timeout=..., ...)

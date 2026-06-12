@@ -1,0 +1,17 @@
+rules:
+  - id: mcp-js-no-timeout-fetch
+    message: >
+      fetch() called without AbortSignal timeout. Without a timeout, the MCP server
+      can hang indefinitely waiting for a response. Use signal: AbortSignal.timeout(ms)
+      in the options object, or wrap with a timeout controller.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: health
+      rule_id: MRT024
+      confidence: MEDIUM
+      owasp: "MCP15: Missing Timeout"
+      cwe: "CWE-400: Uncontrolled Resource Consumption"
+    patterns:
+      - pattern: fetch($URL, ...)
+      - pattern-not: "fetch($URL, {..., signal: ..., ...})"

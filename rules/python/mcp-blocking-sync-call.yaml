@@ -1,0 +1,54 @@
+rules:
+  - id: mcp-python-blocking-sync-requests-get
+    message: >
+      Synchronous requests.get() call inside async function blocks the event loop.
+      MCP servers are async — blocking calls freeze all concurrent tool executions.
+      Use httpx.AsyncClient or aiohttp instead.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT019
+      confidence: HIGH
+      owasp: "MCP12: Event Loop Blocking"
+    patterns:
+      - pattern: requests.get(...)
+      - pattern-inside: |
+          async def $FUNC(...):
+              ...
+
+  - id: mcp-python-blocking-sync-requests-post
+    message: >
+      Synchronous requests.post() call inside async function blocks the event loop.
+      MCP servers are async — blocking calls freeze all concurrent tool executions.
+      Use httpx.AsyncClient or aiohttp instead.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT019
+      confidence: HIGH
+      owasp: "MCP12: Event Loop Blocking"
+    patterns:
+      - pattern: requests.post(...)
+      - pattern-inside: |
+          async def $FUNC(...):
+              ...
+
+  - id: mcp-python-blocking-sync-urllib
+    message: >
+      Synchronous urllib.request.urlopen() call inside async function blocks the event loop.
+      MCP servers are async — blocking calls freeze all concurrent tool executions.
+      Use httpx.AsyncClient or aiohttp instead.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT019
+      confidence: HIGH
+      owasp: "MCP12: Event Loop Blocking"
+    patterns:
+      - pattern: urllib.request.urlopen(...)
+      - pattern-inside: |
+          async def $FUNC(...):
+              ...

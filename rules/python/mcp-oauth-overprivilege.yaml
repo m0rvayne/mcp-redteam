@@ -1,0 +1,19 @@
+rules:
+  - id: mcp-python-oauth-overprivilege
+    message: >
+      OAuth scope requests dangerous permissions. Broad scopes like gmail.modify,
+      drive.file, or admin.* grant excessive access that can be abused if the
+      MCP server is compromised. Request only the minimum scopes needed.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      rule_id: MRT020
+      confidence: MEDIUM
+      owasp: "MCP13: Overprivileged OAuth Scopes"
+    patterns:
+      - pattern: |
+          SCOPES = [..., "$SCOPE", ...]
+      - metavariable-regex:
+          metavariable: $SCOPE
+          regex: .*(gmail\.modify|drive\.file|admin\.\w+|drive\.readonly).*

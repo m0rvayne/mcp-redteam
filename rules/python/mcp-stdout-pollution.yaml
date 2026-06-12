@@ -4,7 +4,7 @@ rules:
       print() call detected in MCP server code. In stdio transport mode,
       print() pollutes the JSON-RPC stream and breaks the protocol.
       Use logging.info() or sys.stderr.write() instead.
-    severity: WARNING
+    severity: INFO
     languages: [python]
     metadata:
       category: health
@@ -14,3 +14,9 @@ rules:
     pattern-either:
       - pattern: print(...)
       - pattern: sys.stdout.write(...)
+    paths:
+      exclude:
+        - "*http*"
+        - "*transport*"
+        - "*streamable*"
+        - "*sse*"

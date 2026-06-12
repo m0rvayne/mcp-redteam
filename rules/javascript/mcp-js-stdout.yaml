@@ -4,26 +4,40 @@ rules:
       console.log() writes to stdout, which is the MCP transport channel.
       Any stdout output corrupts the JSON-RPC message stream between client and server.
       Use console.error() or console.warn() instead (they write to stderr).
-    severity: WARNING
+    severity: INFO
     languages: [javascript, typescript]
     metadata:
-      category: security
+      category: health
       rule_id: MRT006
       confidence: HIGH
       owasp: "MCP10: Transport Pollution"
       cwe: "CWE-838: Inappropriate Encoding for Output"
     pattern: console.log(...)
+    paths:
+      exclude:
+        - "*http*"
+        - "*express*"
+        - "*streamable*"
+        - "*transport*"
+        - "*sse*"
 
   - id: mcp-js-stdout-process-write
     message: >
       Direct write to process.stdout in an MCP server corrupts the JSON-RPC
       transport channel. Use process.stderr.write() instead for debug output.
-    severity: WARNING
+    severity: INFO
     languages: [javascript, typescript]
     metadata:
-      category: security
+      category: health
       rule_id: MRT006
       confidence: HIGH
       owasp: "MCP10: Transport Pollution"
       cwe: "CWE-838: Inappropriate Encoding for Output"
     pattern: process.stdout.write(...)
+    paths:
+      exclude:
+        - "*http*"
+        - "*express*"
+        - "*streamable*"
+        - "*transport*"
+        - "*sse*"

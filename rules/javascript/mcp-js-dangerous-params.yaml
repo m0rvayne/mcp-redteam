@@ -1,0 +1,30 @@
+rules:
+  - id: mcp-js-dangerous-params-cmd
+    message: >
+      Tool input schema contains a parameter named 'cmd' / 'command' / 'shell' /
+      'exec' / 'eval' / 'code' / 'script'. These parameter names strongly suggest
+      the tool accepts arbitrary commands or code for execution, which is a critical
+      security risk in MCP servers. Rename the parameter and restrict input validation.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      rule_id: MRT025
+      confidence: HIGH
+      owasp: "MCP05: Command Injection"
+      cwe: "CWE-78: OS Command Injection"
+    pattern-either:
+      - pattern: |
+          { ..., cmd: { type: "string", ... }, ... }
+      - pattern: |
+          { ..., command: { type: "string", ... }, ... }
+      - pattern: |
+          { ..., shell: { type: "string", ... }, ... }
+      - pattern: |
+          { ..., exec: { type: "string", ... }, ... }
+      - pattern: |
+          { ..., eval: { type: "string", ... }, ... }
+      - pattern: |
+          { ..., code: { type: "string", ... }, ... }
+      - pattern: |
+          { ..., script: { type: "string", ... }, ... }

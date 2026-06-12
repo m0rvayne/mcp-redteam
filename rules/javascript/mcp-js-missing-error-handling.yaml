@@ -1,0 +1,29 @@
+rules:
+  - id: mcp-js-missing-error-handling
+    message: >
+      Async function without try/catch error handling. Unhandled exceptions in MCP
+      server tool handlers crash the server or leak stack traces to the client.
+      Wrap the function body in try/catch and return structured error responses.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: health
+      rule_id: MRT026
+      confidence: MEDIUM
+      owasp: "MCP08: Missing Error Handling"
+      cwe: "CWE-755: Improper Handling of Exceptional Conditions"
+    patterns:
+      - pattern: |
+          async function $FUNC(...) {
+            ...
+          }
+      - pattern-not: |
+          async function $FUNC(...) {
+            ...
+            try {
+              ...
+            } catch($E) {
+              ...
+            }
+            ...
+          }

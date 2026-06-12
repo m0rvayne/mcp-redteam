@@ -1,0 +1,38 @@
+rules:
+  - id: mcp-js-no-timeout-spawn
+    message: >
+      spawn() called without timeout in options. A hanging child process blocks
+      the MCP server indefinitely. Pass { timeout: 30000 } in the options object.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: health
+      rule_id: MRT028
+      confidence: MEDIUM
+      owasp: "MCP15: Missing Timeout"
+      cwe: "CWE-400: Uncontrolled Resource Consumption"
+    patterns:
+      - pattern-either:
+          - pattern: spawn($CMD, $ARGS, $OPTS)
+          - pattern: spawn($CMD, $ARGS)
+          - pattern: spawn($CMD)
+      - pattern-not: "spawn($CMD, $ARGS, {..., timeout: ..., ...})"
+
+  - id: mcp-js-no-timeout-execfile
+    message: >
+      execFile() called without timeout in options. A hanging child process blocks
+      the MCP server indefinitely. Pass { timeout: 30000 } in the options object.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: health
+      rule_id: MRT028
+      confidence: MEDIUM
+      owasp: "MCP15: Missing Timeout"
+      cwe: "CWE-400: Uncontrolled Resource Consumption"
+    patterns:
+      - pattern-either:
+          - pattern: execFile($CMD, $ARGS, $OPTS, ...)
+          - pattern: execFile($CMD, $ARGS)
+          - pattern: execFile($CMD)
+      - pattern-not: "execFile($CMD, $ARGS, {..., timeout: ..., ...}, ...)"

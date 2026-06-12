@@ -1,0 +1,64 @@
+rules:
+  - id: mcp-python-no-timeout-requests-get
+    message: >
+      HTTP request without timeout parameter. Without a timeout, the MCP server
+      can hang indefinitely waiting for a response, blocking the tool execution.
+      Always set timeout= (e.g., timeout=30).
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT022
+      confidence: HIGH
+      owasp: "MCP15: Missing Timeout"
+    patterns:
+      - pattern: requests.get(...)
+      - pattern-not: requests.get(..., timeout=..., ...)
+
+  - id: mcp-python-no-timeout-requests-post
+    message: >
+      HTTP request without timeout parameter. Without a timeout, the MCP server
+      can hang indefinitely waiting for a response, blocking the tool execution.
+      Always set timeout= (e.g., timeout=30).
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT022
+      confidence: HIGH
+      owasp: "MCP15: Missing Timeout"
+    patterns:
+      - pattern: requests.post(...)
+      - pattern-not: requests.post(..., timeout=..., ...)
+
+  - id: mcp-python-no-timeout-httpx-get
+    message: >
+      HTTP request without timeout parameter. Without a timeout, the MCP server
+      can hang indefinitely waiting for a response, blocking the tool execution.
+      Always set timeout= (e.g., timeout=30).
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT022
+      confidence: HIGH
+      owasp: "MCP15: Missing Timeout"
+    patterns:
+      - pattern: httpx.get(...)
+      - pattern-not: httpx.get(..., timeout=..., ...)
+
+  - id: mcp-python-no-timeout-httpx-post
+    message: >
+      HTTP request without timeout parameter. Without a timeout, the MCP server
+      can hang indefinitely waiting for a response, blocking the tool execution.
+      Always set timeout= (e.g., timeout=30).
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: health
+      rule_id: MRT022
+      confidence: HIGH
+      owasp: "MCP15: Missing Timeout"
+    patterns:
+      - pattern: httpx.post(...)
+      - pattern-not: httpx.post(..., timeout=..., ...)
