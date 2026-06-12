@@ -9,18 +9,20 @@ MCP (Model Context Protocol) lets AI agents call external tools — file systems
 
 ## The headline
 
-**6 servers have Remote Code Execution via `exec()`/`eval()`/`new Function()`.** These aren't obscure repos — they have 10K-25K stars and real users.
+**4 servers have confirmed Remote Code Execution.** These aren't obscure repos — they have 10K-25K stars and real users.
 
-| Server | Stars | Language | Vulnerability |
-|--------|-------|----------|--------------|
-| **serena** | 25.2K | Python | `subprocess.Popen(command, shell=True)` — unsanitized |
-| **mcp-chrome** | 11.8K | TypeScript | `new Function(code)()` in browser's MAIN world |
-| **mcp-use** | 10K | Python | `exec(compiled_code, namespace)` — "sandbox" bypassable via `asyncio.create_subprocess_shell()` |
-| **ida-pro-mcp** | 9.3K | Python | `exec()` + `eval()` inside IDA Pro process |
-| **DesktopCommanderMCP** | 6.1K | TypeScript | `spawn(executable, args)` — no allowlist, writes code to temp file and runs it |
-| **klavis** | 5.7K | Python | `shell=True` + credential leaks in 10+ sub-servers |
+| Server | Stars | Language | Vulnerability | Verified |
+|--------|-------|----------|--------------|----------|
+| **serena** | 25.2K | Python | `subprocess.Popen(command, shell=True)` — unsanitized LLM input | Confirmed, [disclosed](https://github.com/oraios/serena/issues/1569) |
+| **mcp-chrome** | 11.8K | TypeScript | `new Function(code)()` in browser MAIN world — 7 injection points in 5 files | Confirmed |
+| **mcp-use** | 10K | Python | `exec()` — "restricted namespace" bypassed via `asyncio.create_subprocess_shell()` | Confirmed, [disclosed](https://github.com/mcp-use/mcp-use/issues/1718) |
+| **ida-pro-mcp** | 9.3K | Python | `exec()` + `eval()` with full `__builtins__` inside IDA Pro | Confirmed (has `@unsafe` opt-in flag) |
 
-We reported findings to serena and mcp-use maintainers. Both issues confirmed and open.
+Two additional servers flagged by the scanner turned out to be less severe after manual review:
+- **DesktopCommanderMCP** (6.1K) — terminal tool by design, `spawn()` is the intended behavior. Has blocklist but `node:local` bypasses it completely. By-design risk, not a vulnerability.
+- **klavis** (5.7K) — shell=True exists but has multi-layer validation. 3 of 4 original claims (credential leaks, hardcoded secrets, eval injection) were false positives after deeper review. `ast.literal_eval` ≠ `eval()`.
+
+We initially also reported ha-mcp (3.3K) but [closed the issue](https://github.com/homeassistant-ai/ha-mcp/issues/1583) after finding their `python_sandbox.py` has proper AST validation, dunder-attribute blocking, and method whitelisting. Not every `exec()` is a vulnerability.
 
 ---
 
@@ -135,8 +137,9 @@ const proc = spawn(process.execPath, [tempFile]);
 | Servers scanned (local) | 106 |
 | Servers scanned (remote) | 1 (246 tools) |
 | Combined GitHub stars | 300K+ |
-| Servers with RCE | 6 (5.7%) |
-| Servers with credential leaks | 4 (3.8%) |
+| Confirmed RCE | 4 (3.8%) |
+| By-design risks | 2 (terminal tools with bypass vectors) |
+| False positives caught by manual review | 3 (ha-mcp, klavis creds, klavis eval) |
 | Servers with zero findings | 12 (11.3%) |
 | Responsible disclosures sent | 3 (2 confirmed, 1 closed as FP) |
 
