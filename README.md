@@ -137,7 +137,7 @@ Based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of 
 | SARIF output | No | No | **Yes** |
 | CI exit codes | Yes | No | **Yes** |
 | Self-tested | Unknown | Unknown | **95+ tests, self-security audit** |
-| Cloud dependency | Snyk API required | Cisco API (optional) | **No — fully local** |
+| Cloud dependency | Snyk API required | Cisco API (optional) | **No — fully local in deterministic mode. LLM mode uses Anthropic API** |
 
 ### Why not just use mcp-scan?
 

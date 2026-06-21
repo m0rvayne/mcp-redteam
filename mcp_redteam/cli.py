@@ -29,11 +29,16 @@ def scan(
     config: bool = typer.Option(True, "--config/--no-config", help="Run config health checks"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file path"),
     fail_on: Optional[str] = typer.Option(None, "--fail-on", help="Exit 1 if findings at this severity or above (critical, high)"),
+    quick: bool = typer.Option(False, "--quick", "-q", help="Quick scan: config checks only, CRITICAL+HIGH findings"),
 ):
     """Scan MCP server for security vulnerabilities."""
     from mcp_redteam.models import ScanResult, ScanMetadata
     from mcp_redteam.engine.semgrep_runner import run_semgrep, is_semgrep_available
     from mcp_redteam.engine.config_scanner import scan_config
+
+    if quick:
+        no_llm = True
+        console.print("[bold yellow]Quick scan[/bold yellow] — config checks only, CRITICAL+HIGH findings")
 
     scan_start = datetime.now()
 
@@ -51,8 +56,10 @@ def scan(
         findings.extend(config_findings)
         console.print(f"  {len(config_findings)} config issues found")
 
-    # Phase 1: Semgrep deterministic scan
+    # Phase 1: Semgrep deterministic scan (skip in quick mode)
     semgrep_available = is_semgrep_available()
+    if quick:
+        semgrep_available = False  # skip semgrep in quick mode
     if semgrep_available:
         console.print("[bold cyan]Phase 1:[/bold cyan] Semgrep analysis...")
         semgrep_findings = run_semgrep(path)
@@ -75,18 +82,48 @@ def scan(
             console.print("  Set: [dim]export ANTHROPIC_API_KEY=sk-...[/dim]")
 
     # Build result
+    if quick:
+        mode = "quick"
+    elif no_llm:
+        mode = "deterministic"
+    else:
+        mode = "hybrid"
+
     result = ScanResult(
         metadata=ScanMetadata(
             scan_start=scan_start,
             scan_end=datetime.now(),
             target_path=str(path),
-            mode="deterministic" if no_llm else "hybrid",
+            mode=mode,
             llm_enabled=not no_llm,
             semgrep_available=semgrep_available,
             files_scanned=_count_source_files(path),
         ),
         findings=findings,
     )
+
+    if quick:
+        from mcp_redteam.models import Severity
+        result.findings = [f for f in result.findings if f.severity in (Severity.CRITICAL, Severity.HIGH)]
+        console.print(f"[dim]Quick scan complete. Run without --quick for full analysis ({_count_source_files(path)} source files to scan).[/dim]")
+
+    # Save to audit history and show delta if previous run exists
+    from mcp_redteam.engine.audit_history import save_run, get_previous_run, compare_runs, _compact_finding
+    save_run(result)
+    previous = get_previous_run(str(path))
+    if previous:
+        current_entry = {
+            "findings": [_compact_finding(f) for f in result.findings],
+            "risk_score": result.risk_score,
+        }
+        delta = compare_runs(previous, current_entry)
+        s = delta["summary"]
+        console.print(
+            f"  [green]fixed: {s['fixed_count']}[/green]  "
+            f"[red]new: {s['new_count']}[/red]  "
+            f"confirmed: {s['confirmed_count']}  "
+            f"risk: {s['prev_risk_score']} \u2192 {s['curr_risk_score']}"
+        )
 
     _output_and_exit(result, format, output, fail_on, console)
 

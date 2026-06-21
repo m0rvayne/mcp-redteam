@@ -100,8 +100,12 @@ def _build_result(finding: Finding) -> dict[str, Any]:
         # VULN-06 fix: make paths relative to avoid PII (username) leak
         try:
             uri = os.path.relpath(loc.file)
+            # If relpath still walks up many dirs, it may leak parent path info
+            if uri.count("..") > 3:
+                uri = os.path.basename(loc.file)
         except ValueError:
-            uri = loc.file.lstrip("/")
+            # Cross-device path — use filename only to avoid PII leak
+            uri = os.path.basename(loc.file)
         region: dict[str, Any] = {"startLine": loc.line or 1}
         if loc.end_line:
             region["endLine"] = loc.end_line

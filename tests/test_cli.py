@@ -122,6 +122,26 @@ def test_scan_html_format(tmp_path):
     assert "mcp-redteam" in result.output
 
 
+def test_scan_quick_mode(tmp_path):
+    """Quick scan completes fast with only config checks."""
+    (tmp_path / "server.py").write_text("def hello(): return 'world'")
+    result = runner.invoke(app, ["scan", str(tmp_path), "--quick", "--no-config"])
+    assert result.exit_code == 0
+    assert "Quick scan" in result.output or "quick" in result.output.lower()
+
+
+def test_scan_quick_filters_severity(tmp_path):
+    """Quick scan shows only CRITICAL+HIGH, not MEDIUM/LOW."""
+    (tmp_path / "server.py").write_text("def hello(): return 'world'")
+    result = runner.invoke(app, ["scan", str(tmp_path), "--quick", "--format", "json", "--no-config"])
+    assert result.exit_code == 0
+    data = _extract_json(result.output)
+    # With no config checks and no semgrep, should have no findings
+    assert data["metadata"]["mode"] == "quick"
+    for finding in data.get("findings", []):
+        assert finding["severity"] in ("CRITICAL", "HIGH")
+
+
 def test_scan_html_output_to_file(tmp_path):
     """HTML format written to file."""
     src = tmp_path / "src"

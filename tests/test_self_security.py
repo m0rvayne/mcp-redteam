@@ -349,10 +349,8 @@ class TestVuln06PathLeakInSarif:
 
         sarif_str = format_sarif(result)
 
-        # BUG: Username leaks in SARIF URI
-        assert "secretuser" in sarif_str, (
-            "Username from absolute path leaks into SARIF output"
-        )
+        # FIX: Username no longer leaks in SARIF URI
+        assert "secretuser" not in sarif_str, "Username must NOT leak in SARIF output"
 
 
 # ---------------------------------------------------------------------------
