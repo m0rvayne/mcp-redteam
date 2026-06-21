@@ -5,14 +5,20 @@ build-backend = "hatchling.build"
 [project]
 name = "redteam-mcp"
 version = "0.4.0"
-description = "MCP server security auditor — deterministic engine + AI-native behavioral analysis"
+description = "MCP security scanner — source code audit with 25+ Semgrep rules, config health checks, SARIF output for CI/CD"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
     { name = "m0rvayne", email = "m0rvayne@proton.me" }
 ]
-keywords = ["mcp", "security", "audit", "pentest", "red-team"]
+keywords = [
+    "mcp", "mcp-security", "mcp-scanner", "mcp-audit",
+    "model-context-protocol", "security-scanner", "vulnerability-scanner",
+    "semgrep", "sarif", "red-team", "tool-poisoning", "claude-code",
+    "ai-security", "devsecops", "owasp", "sast", "code-analysis",
+    "mcp-server", "prompt-injection", "supply-chain-security",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

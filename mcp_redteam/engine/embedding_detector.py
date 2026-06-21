@@ -170,40 +170,44 @@ def scan_descriptions(descriptions: dict[str, str]) -> list[Finding]:
         logger.warning("sentence-transformers not installed — skipping embedding analysis")
         return []
 
-    model = load_model()
-    if model is None:
+    try:
+        model = load_model()
+        if model is None:
+            return []
+
+        pattern_embeddings = encode_patterns(model)
+        findings = []
+
+        for tool_name, description in descriptions.items():
+            if not description or len(description.strip()) < 10:
+                continue
+
+            score, matched_pattern = check_description(model, pattern_embeddings, description)
+
+            if score > 0.85:
+                severity = Severity.CRITICAL
+            elif score > 0.7:
+                severity = Severity.HIGH
+            elif score > 0.55:
+                severity = Severity.MEDIUM
+            else:
+                continue  # below threshold
+
+            findings.append(Finding(
+                id="MRT017",
+                title=f"Tool poisoning detected in '{tool_name}'",
+                severity=severity,
+                category=FindingCategory.security,
+                description=(
+                    f"Tool description has {score:.0%} similarity with known malicious pattern. "
+                    f"Closest match: \"{matched_pattern[:80]}...\""
+                ),
+                evidence=f"Tool: {tool_name}\nScore: {score:.3f}\nDescription: {description[:200]}",
+                confidence=min(score, 0.95),  # embedding-based, not deterministic
+                source="embedding",
+            ))
+
+        return findings
+    except Exception as e:
+        logger.error("Embedding scan failed: %s", e)
         return []
-
-    pattern_embeddings = encode_patterns(model)
-    findings = []
-
-    for tool_name, description in descriptions.items():
-        if not description or len(description.strip()) < 10:
-            continue
-
-        score, matched_pattern = check_description(model, pattern_embeddings, description)
-
-        if score > 0.85:
-            severity = Severity.CRITICAL
-        elif score > 0.7:
-            severity = Severity.HIGH
-        elif score > 0.55:
-            severity = Severity.MEDIUM
-        else:
-            continue  # below threshold
-
-        findings.append(Finding(
-            id="MRT017",
-            title=f"Tool poisoning detected in '{tool_name}'",
-            severity=severity,
-            category=FindingCategory.security,
-            description=(
-                f"Tool description has {score:.0%} similarity with known malicious pattern. "
-                f"Closest match: \"{matched_pattern[:80]}...\""
-            ),
-            evidence=f"Tool: {tool_name}\nScore: {score:.3f}\nDescription: {description[:200]}",
-            confidence=min(score, 0.95),  # embedding-based, not deterministic
-            source="embedding",
-        ))
-
-    return findings

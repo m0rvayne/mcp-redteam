@@ -9,6 +9,7 @@ Scans MCP server configurations from all known sources and detects:
 """
 
 import json
+import logging
 import os
 import re
 import stat
@@ -39,6 +40,8 @@ SECRET_PATTERNS: list[tuple[str, str]] = [
 
 _SECRET_RE = [(re.compile(p), label) for p, label in SECRET_PATTERNS]
 
+logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------------------------------
 # Known config locations
 # ---------------------------------------------------------------------------
@@ -66,17 +69,21 @@ def scan_config(project_dir: Optional[str] = None) -> list[Finding]:
         project_dir: Optional project directory to look for .mcp.json.
                      Defaults to cwd.
     """
-    findings: list[Finding] = []
+    try:
+        findings: list[Finding] = []
 
-    configs = _collect_configs(project_dir=project_dir)
+        configs = _collect_configs(project_dir=project_dir)
 
-    findings.extend(_check_scope_conflicts(configs))
-    findings.extend(_check_credential_exposure(configs))
-    findings.extend(_check_supply_chain(configs))
-    findings.extend(_check_dangerous_settings(configs))
-    findings.extend(_check_dead_servers())
+        findings.extend(_check_scope_conflicts(configs))
+        findings.extend(_check_credential_exposure(configs))
+        findings.extend(_check_supply_chain(configs))
+        findings.extend(_check_dangerous_settings(configs))
+        findings.extend(_check_dead_servers())
 
-    return findings
+        return findings
+    except Exception as e:
+        logger.error("Config scan failed: %s", e)
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +118,7 @@ def _collect_configs(project_dir: Optional[str] = None) -> dict[str, dict]:
             timeout=10,
         )
         if result.returncode == 0:
-            for line in result.stdout.strip().splitlines():
+            for line in result.stdout.strip().splitlines()[:100]:  # VULN-09 fix: cap results
                 line = line.strip()
                 if line:
                     _try_load(Path(line).resolve(), configs)
@@ -165,7 +172,10 @@ def _extract_servers(config: dict) -> dict[str, dict]:
 def _raw_text(path: str) -> str:
     """Read file as raw text. Returns '' on error."""
     try:
-        return Path(path).read_text(encoding="utf-8", errors="replace")
+        p = Path(path)
+        if p.stat().st_size > 10_000_000:  # VULN-04 fix: 10MB max
+            return ""
+        return p.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return ""
 

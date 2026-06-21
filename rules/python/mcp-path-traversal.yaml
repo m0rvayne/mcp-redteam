@@ -42,6 +42,14 @@ rules:
         focus-metavariable: $PATH
       - pattern: os.path.join(..., $PATH, ...)
         focus-metavariable: $PATH
+      # Path / operator (division builds paths)
+      - pattern: $BASE / $PATH
+        focus-metavariable: $PATH
+      # f-string path construction
+      - pattern: open(f"...{$PATH}...", ...)
+        focus-metavariable: $PATH
+      - pattern: Path(f"...{$PATH}...")
+        focus-metavariable: $PATH
     pattern-sanitizers:
       - pattern: os.path.realpath(...)
       - pattern: $X.resolve(...)

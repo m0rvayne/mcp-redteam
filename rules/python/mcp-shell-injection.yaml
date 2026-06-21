@@ -50,10 +50,53 @@ rules:
         focus-metavariable: $CMD
       - pattern: subprocess.Popen($CMD, ..., shell=True, ...)
         focus-metavariable: $CMD
-      - pattern: os.system($CMD)
-        focus-metavariable: $CMD
-      - pattern: os.popen($CMD)
+      # f-string shell command construction
+      - pattern: subprocess.run(f"...{$CMD}...", ..., shell=True, ...)
         focus-metavariable: $CMD
     pattern-sanitizers:
       - pattern: shlex.quote(...)
       - pattern: shlex.split(...)
+
+  - id: mcp-python-shell-injection-os-system
+    message: >
+      Tool argument flows to os.system(). os.system() passes commands through
+      /bin/sh which splits on spaces — shlex.quote() does NOT protect here.
+      Use subprocess.run([cmd, arg1, arg2]) instead of os.system().
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      rule_id: MRT001
+      confidence: HIGH
+      owasp: "MCP05: Command Injection"
+    mode: taint
+    pattern-sources:
+      - pattern: $ARGS["$KEY"]
+      - pattern: $ARGS.get("$KEY")
+      - pattern: $ARGS.get("$KEY", ...)
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG: str, ...):
+                  ...
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG, ...):
+                  ...
+          - focus-metavariable: $ARG
+    pattern-sinks:
+      - pattern: os.system($CMD)
+        focus-metavariable: $CMD
+      - pattern: os.popen($CMD)
+        focus-metavariable: $CMD
+    # NO sanitizers — os.system is fundamentally unsafe with user input

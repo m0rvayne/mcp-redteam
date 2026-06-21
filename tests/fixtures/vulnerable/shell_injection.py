@@ -26,5 +26,21 @@ async def system_info(query: str) -> str:
     return proc.stdout.strip()
 
 
+@server.tool("run_os_system")
+async def run_os_system(cmd: str) -> str:
+    """Execute via os.system — should trigger MRT001. shlex.quote doesn't help."""
+    import os
+
+    os.system(f"ls {cmd}")  # vulnerable, shlex.quote doesn't help
+    return "done"
+
+
+@server.tool("run_with_pipe")
+async def run_with_pipe(filter_str: str) -> str:
+    """Multi-stage pipe — should trigger MRT001."""
+    subprocess.run(f"find . | grep {filter_str}", shell=True)  # vulnerable
+    return "done"
+
+
 if __name__ == "__main__":
     server.run()

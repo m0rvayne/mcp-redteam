@@ -1,12 +1,15 @@
 """Semgrep integration for deterministic MCP security analysis."""
 
-import subprocess
 import json
+import logging
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Optional
 
 from mcp_redteam.models import Finding, Severity, FindingCategory, Location, RULE_REGISTRY
+
+logger = logging.getLogger(__name__)
 
 
 def is_semgrep_available() -> bool:
@@ -35,52 +38,59 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
     Returns:
         List of Finding objects mapped from semgrep results
     """
-    if not is_semgrep_available():
-        return []  # Graceful skip — caller should warn user
-
-    if rules_dir is None:
-        rules_dir = get_rules_dir()
-
-    if not rules_dir.exists():
-        return []
-
-    # Run semgrep with JSON output
-    cmd = [
-        "semgrep",
-        "--config", str(rules_dir),
-        "--json",
-        "--quiet",  # suppress progress bar
-        "--no-git-ignore",  # scan everything
-        "--exclude", "*test*",
-        "--exclude", "*__tests__*",
-        "--exclude", "*spec*",
-        "--exclude", "node_modules",
-        "--exclude", ".venv",
-        "--exclude", "__pycache__",
-        str(target_path),
-    ]
-
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=120,  # 2 min timeout
-        )
-    except subprocess.TimeoutExpired:
-        return []
-    except FileNotFoundError:
-        return []
+        if not is_semgrep_available():
+            return []  # Graceful skip — caller should warn user
 
-    if not result.stdout:
-        return []
+        if rules_dir is None:
+            rules_dir = get_rules_dir()
 
-    try:
-        data = json.loads(result.stdout)
-    except json.JSONDecodeError:
-        return []
+        if not rules_dir.exists():
+            return []
 
-    return _map_semgrep_results(data)
+        # Run semgrep with JSON output
+        cmd = [
+            "semgrep",
+            "--config", str(rules_dir),
+            "--json",
+            "--quiet",  # suppress progress bar
+            "--no-git-ignore",  # scan everything
+            "--exclude", "*test*",
+            "--exclude", "*__tests__*",
+            "--exclude", "*spec*",
+            "--exclude", "node_modules",
+            "--exclude", ".venv",
+            "--exclude", "__pycache__",
+            str(target_path),
+        ]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,  # 2 min timeout
+            )
+        except subprocess.TimeoutExpired:
+            logger.error("Semgrep timed out after 120s on %s", target_path)
+            return []
+        except FileNotFoundError:
+            logger.error("Semgrep binary not found")
+            return []
+
+        if not result.stdout:
+            return []
+
+        try:
+            data = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            logger.error("Failed to parse semgrep JSON output")
+            return []
+
+        return _map_semgrep_results(data)
+    except Exception as e:
+        logger.error("Semgrep scan failed: %s", e)
+        return []
 
 
 def _map_semgrep_results(data: dict) -> list[Finding]:

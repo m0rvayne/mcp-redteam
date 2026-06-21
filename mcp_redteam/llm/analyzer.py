@@ -1,12 +1,15 @@
 """LLM behavioral analysis for MCP servers — semantic mismatch, hidden ops, credential mishandling."""
 
 import json
+import logging
 import os
 import re
 from pathlib import Path
 from typing import Optional
 
 from mcp_redteam.models import Finding, Severity, FindingCategory, Location
+
+logger = logging.getLogger(__name__)
 
 
 # Supported source file extensions
@@ -80,7 +83,11 @@ def analyze_behavioral(
 
     import anthropic
 
-    client = anthropic.Anthropic()
+    try:
+        client = anthropic.Anthropic(timeout=60.0)
+    except Exception as e:
+        logger.error("Failed to create Anthropic client: %s", e)
+        return []
 
     # Read source files
     source_code = _read_source_files(source_path)
@@ -239,8 +246,8 @@ def _analyze_with_llm(
             temperature=0,
             messages=[{"role": "user", "content": prompt}],
         )
-    except Exception:
-        # API error, rate limit, network — fail gracefully
+    except Exception as e:
+        logger.error("LLM API call failed: %s", e)
         return []
 
     if not response.content:
