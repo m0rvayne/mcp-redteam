@@ -1,0 +1,39 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      scanPath:
+        type: string
+        title: Scan Path
+        description: Path to the MCP server directory to scan.
+        default: "."
+      noLlm:
+        type: boolean
+        title: Disable LLM Analysis
+        description: Run deterministic Semgrep-only scan without LLM behavioral analysis.
+        default: true
+      failOn:
+        type: string
+        title: Fail On Severity
+        description: Exit with code 1 if findings at this severity or above are found.
+        enum: ["critical", "high", "medium", "low"]
+      format:
+        type: string
+        title: Output Format
+        description: Output format for scan results.
+        enum: ["terminal", "sarif", "json", "html"]
+        default: "terminal"
+    required: []
+  commandFunction: |
+    function(config) {
+      const args = ["scan", config.scanPath || "."];
+      if (config.noLlm) args.push("--no-llm");
+      if (config.failOn) args.push("--fail-on", config.failOn);
+      if (config.format) args.push("--format", config.format);
+      return {
+        command: "mcp-redteam",
+        args: args,
+        env: {}
+      };
+    }
