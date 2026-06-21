@@ -46,10 +46,10 @@ Two modes of operation:
 | Claude Code plugin | Working | AI-driven deep audit with HTML report |
 | HTML report output | Working | `--format html` generates self-contained terminal-styled report |
 | 95+ tests | Passing | Unit, security, stress, edge cases, Hypothesis fuzzing |
+| Audit history | Working | JSONL baseline storage, cross-run comparison (new/confirmed/fixed) |
 
 ## What doesn't work yet
 
-- Audit history (JSONL log, cross-run comparison of new/confirmed/fixed findings)
 - Cross-server chain detection in CLI (exists in Claude Code plugin only)
 - Auto-fix in CLI (exists in Claude Code plugin only)
 - MCPTox benchmark validation
@@ -92,6 +92,30 @@ mcp-redteam scan ./server --fail-on critical --format sarif -o results.sarif
 
 # Use a different LLM model for behavioral analysis
 MCP_REDTEAM_MODEL=claude-haiku-4-5 mcp-redteam scan ./server
+```
+
+## Example
+
+```
+$ mcp-redteam scan ./my-mcp-server --no-llm
+
+Phase 0: Config validation...
+  2 config issues found
+Phase 1: Semgrep analysis...
+  5 code findings
+
+┌──────────┬────────┬───────────────────┬──────────────────────────────────┐
+│ Severity │ Rule   │ File:Line         │ Title                            │
+├──────────┼────────┼───────────────────┼──────────────────────────────────┤
+│ CRITICAL │ MRT001 │ server.py:42      │ Shell Injection                  │
+│ HIGH     │ MRT002 │ handlers.py:15    │ Path Traversal                   │
+│ HIGH     │ MRT003 │ api.py:88         │ SSRF                             │
+│ MEDIUM   │ MRT012 │ .mcp.json         │ Unpinned Package                 │
+│ MEDIUM   │ MRT010 │ settings.json     │ Scope Conflict                   │
+└──────────┴────────┴───────────────────┴──────────────────────────────────┘
+
+7 findings (1 critical, 2 high, 2 medium, 0 low)
+Risk score: 60/100
 ```
 
 ## What it checks
@@ -153,9 +177,9 @@ Real findings mcp-scan cannot detect (they live in code, not descriptions):
 - AppleScript injection via unescaped clipboard input
 - Google OAuth tokens with permissions `644`
 
-## Audit History (planned for v1.0)
+## Audit History
 
-Audit history is not yet implemented. The planned design: each audit saves a JSONL log, and subsequent runs compare results to classify findings as **confirmed**, **new**, or **fixed** — turning LLM non-determinism into an advantage.
+Each scan saves a JSONL baseline to `~/.mcp-redteam/baselines/`. Subsequent runs compare results and classify findings as **new**, **confirmed**, or **fixed** — turning LLM non-determinism into an advantage.
 
 ## Architecture
 
@@ -228,6 +252,7 @@ The `docs/` folder is useful independently:
 - **[attack-playbook.md](docs/attack-playbook.md)** — 18 attack categories, 48+ CVEs, payloads and detection methods
 - **[best-practices.md](docs/best-practices.md)** — MCP server security checklist
 - **[reference-server.md](docs/reference-server.md)** — secure server templates (Python + Node.js)
+- **[troubleshooting.md](docs/troubleshooting.md)** — common issues and fixes
 
 ## References
 

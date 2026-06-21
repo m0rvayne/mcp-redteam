@@ -2,10 +2,13 @@
 import json
 import re
 from datetime import datetime
+from io import StringIO
+from rich.console import Console
 from mcp_redteam.models import Finding, Severity, FindingCategory, ScanResult, ScanMetadata, Location
 from mcp_redteam.formatters.sarif import format_sarif
 from mcp_redteam.formatters.json_fmt import format_json
 from mcp_redteam.formatters.html_fmt import format_html
+from mcp_redteam.formatters.terminal import format_terminal
 
 def _make_result():
     return ScanResult(
@@ -103,3 +106,35 @@ def test_html_details_closed():
     output = format_html(result)
     assert "<details " in output or "<details>" in output
     assert "<details open" not in output
+
+
+# --- Terminal formatter tests ---
+
+def test_terminal_ansi_injection():
+    """ANSI codes in finding titles/paths don't manipulate terminal output."""
+    ansi_payload = '\x1b[1;31m[HACKED]\x1b[0m Safe Title'
+    ansi_path = '\x1b[32m/etc/passwd\x1b[0m'
+    result = ScanResult(
+        metadata=ScanMetadata(scan_start=datetime.now(), target_path="."),
+        findings=[
+            Finding(
+                id="MRT001", title=ansi_payload, severity=Severity.CRITICAL,
+                category=FindingCategory.security, description="test",
+                evidence="test",
+                location=Location(file=ansi_path, line=42),
+                rule_id='\x1b[33mFAKE\x1b[0m',
+            )
+        ]
+    )
+    buf = StringIO()
+    console = Console(file=buf, force_terminal=True, no_color=True)
+    format_terminal(result, console)
+    output = buf.getvalue()
+    # Raw ANSI escape sequences must not appear in the output
+    assert '\x1b[1;31m' not in output
+    assert '\x1b[32m' not in output
+    assert '\x1b[33m' not in output
+    # The sanitized text should still be present
+    assert '[HACKED]' in output or 'Safe Title' in output
+    assert '/etc/passwd' in output
+    assert 'FAKE' in output

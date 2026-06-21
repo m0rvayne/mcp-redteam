@@ -1,10 +1,20 @@
 """Terminal formatter for mcp-redteam scan results using rich."""
 
+import re
+
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
 from mcp_redteam.models import Finding, ScanResult, Severity
+
+# Regex to match ANSI escape sequences (CSI and OSC)
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[^[\]()]')
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove ANSI escape sequences from user-controlled text."""
+    return _ANSI_RE.sub('', text)
 
 # Severity -> (color, style)
 _SEVERITY_STYLES: dict[Severity, str] = {
@@ -26,9 +36,10 @@ def _location_str(finding: Finding) -> str:
     if not finding.location:
         return "-"
     loc = finding.location
+    file_path = _strip_ansi(loc.file)
     if loc.line:
-        return f"{loc.file}:{loc.line}"
-    return loc.file
+        return f"{file_path}:{loc.line}"
+    return file_path
 
 
 def format_terminal(result: ScanResult, console: Console) -> None:
@@ -68,12 +79,12 @@ def format_terminal(result: ScanResult, console: Console) -> None:
     )
 
     for finding in sorted_findings:
-        rule_id = finding.rule_id or finding.id
+        rule_id = _strip_ansi(finding.rule_id or finding.id)
         table.add_row(
             _severity_text(finding.severity),
             rule_id,
             _location_str(finding),
-            finding.title,
+            _strip_ansi(finding.title),
         )
 
     console.print(table)

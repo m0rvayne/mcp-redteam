@@ -523,7 +523,7 @@ class TestVuln09FindSubprocess:
         from mcp_redteam.engine.config_scanner import _collect_configs
 
         source = inspect.getsource(_collect_configs)
-        assert "[:100]" in source or "islice" in source, (
+        assert "[:100]" in source or "MAX_FIND_RESULTS" in source or "islice" in source, (
             "find results must be capped"
         )
 

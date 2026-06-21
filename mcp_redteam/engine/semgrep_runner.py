@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+from mcp_redteam.constants import SEMGREP_TIMEOUT_SECONDS
 from mcp_redteam.models import Finding, Severity, FindingCategory, Location, RULE_REGISTRY
 
 logger = logging.getLogger(__name__)
@@ -55,9 +56,15 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
             "--json",
             "--quiet",  # suppress progress bar
             "--no-git-ignore",  # scan everything
+            "--max-target-bytes", "1000000",  # skip files >1MB (binaries, minified JS)
             "--exclude", "*test*",
             "--exclude", "*__tests__*",
             "--exclude", "*spec*",
+            "--exclude", "tests",
+            "--exclude", "test",
+            "--exclude", "fixtures",
+            "--exclude", "examples",
+            "--exclude", "mocks",
             "--exclude", "node_modules",
             "--exclude", ".venv",
             "--exclude", "__pycache__",
@@ -69,10 +76,10 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=120,  # 2 min timeout
+                timeout=SEMGREP_TIMEOUT_SECONDS,
             )
         except subprocess.TimeoutExpired:
-            logger.error("Semgrep timed out after 120s on %s", target_path)
+            logger.error("Semgrep timed out after %ds on %s", SEMGREP_TIMEOUT_SECONDS, target_path)
             return []
         except FileNotFoundError:
             logger.error("Semgrep binary not found")
@@ -173,6 +180,7 @@ def _extract_rule_id(match: dict) -> str:
         if key in check_id.lower():
             return mrt_id
 
+    logger.warning("Unmapped semgrep rule: %s", check_id)
     return "MRT000"  # Unknown rule
 
 

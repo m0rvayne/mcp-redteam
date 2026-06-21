@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from mcp_redteam.constants import AUDIT_HISTORY_RETENTION
 from mcp_redteam.models import ScanResult, Finding
 
 
@@ -58,8 +59,8 @@ def save_run(result: ScanResult) -> Path:
     with open(filepath, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    # Rotate: keep last 20 runs
-    _rotate(filepath, max_runs=20)
+    # Rotate: keep last N runs
+    _rotate(filepath, max_runs=AUDIT_HISTORY_RETENTION)
 
     return filepath
 
@@ -124,7 +125,7 @@ def compare_runs(previous: dict, current: dict) -> dict:
     }
 
 
-def _rotate(filepath: Path, max_runs: int = 20) -> None:
+def _rotate(filepath: Path, max_runs: int = AUDIT_HISTORY_RETENTION) -> None:
     """Keep only the last N runs in a JSONL file."""
     lines = filepath.read_text(encoding="utf-8").strip().splitlines()
     if len(lines) <= max_runs:

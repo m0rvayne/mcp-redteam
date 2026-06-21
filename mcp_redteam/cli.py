@@ -6,6 +6,8 @@ from typing import Optional
 from enum import Enum
 from datetime import datetime
 
+from mcp_redteam.constants import MAX_SOURCE_FILES, SKIP_DIRS
+
 app = typer.Typer(
     name="mcp-redteam",
     help="MCP server security auditor — deterministic engine + AI-native behavioral analysis",
@@ -65,6 +67,8 @@ def scan(
         semgrep_findings = run_semgrep(path)
         findings.extend(semgrep_findings)
         console.print(f"  {len(semgrep_findings)} code findings")
+    elif quick:
+        console.print("[yellow]Phase 1:[/yellow] Skipped (quick mode)")
     else:
         console.print("[yellow]Phase 1:[/yellow] Semgrep not installed — skipping deterministic code scan")
         console.print("  Install: [dim]pip install semgrep[/dim]")
@@ -128,14 +132,13 @@ def scan(
     _output_and_exit(result, format, output, fail_on, console)
 
 
-def _count_source_files(path: Path, cap: int = 10000) -> int:
+def _count_source_files(path: Path, cap: int = MAX_SOURCE_FILES) -> int:
     """Count source files with cap to avoid DoS on huge dirs."""
     if not path.is_dir():
         return 1
     count = 0
-    skip = {".venv", "venv", "node_modules", "__pycache__", ".git"}
     for root, dirs, files in os.walk(path):
-        dirs[:] = [d for d in dirs if d not in skip]
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
         for f in files:
             if f.endswith((".py", ".ts", ".js")):
                 count += 1

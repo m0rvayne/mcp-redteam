@@ -16,6 +16,11 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from mcp_redteam.constants import (
+    EMBEDDING_THRESHOLD_CRITICAL,
+    EMBEDDING_THRESHOLD_HIGH,
+    EMBEDDING_THRESHOLD_MEDIUM,
+)
 from mcp_redteam.models import Finding, Severity, FindingCategory, Location
 
 logger = logging.getLogger(__name__)
@@ -184,11 +189,11 @@ def scan_descriptions(descriptions: dict[str, str]) -> list[Finding]:
 
             score, matched_pattern = check_description(model, pattern_embeddings, description)
 
-            if score > 0.85:
+            if score > EMBEDDING_THRESHOLD_CRITICAL:
                 severity = Severity.CRITICAL
-            elif score > 0.7:
+            elif score > EMBEDDING_THRESHOLD_HIGH:
                 severity = Severity.HIGH
-            elif score > 0.55:
+            elif score > EMBEDDING_THRESHOLD_MEDIUM:
                 severity = Severity.MEDIUM
             else:
                 continue  # below threshold

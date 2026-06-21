@@ -20,6 +20,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Optional deps: `[embedding]`, `[all]`
 - 52 new tests (total: 139 passing)
 
+### Migration from v0.3.0
+- Audit history enabled by default — baselines stored in `~/.mcp-redteam/baselines/`
+- New CLI flags: `--quick` / `-q`, `--format html`
+- No breaking changes to existing scan behavior
+
 ### Fixed
 - Rule ID collision: MRT018-020 remapped to MRT029-031
 - SARIF evidence HTML escaping (complete XSS prevention)

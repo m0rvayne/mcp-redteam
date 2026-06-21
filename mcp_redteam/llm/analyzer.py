@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from mcp_redteam.constants import MAX_SOURCE_CHARS, LLM_API_TIMEOUT_SECONDS
 from mcp_redteam.models import Finding, Severity, FindingCategory, Location
 
 logger = logging.getLogger(__name__)
@@ -84,7 +85,7 @@ def analyze_behavioral(
     import anthropic
 
     try:
-        client = anthropic.Anthropic(timeout=60.0)
+        client = anthropic.Anthropic(timeout=float(LLM_API_TIMEOUT_SECONDS))
     except Exception as e:
         logger.error("Failed to create Anthropic client: %s", e)
         return []
@@ -101,7 +102,7 @@ def analyze_behavioral(
     return findings
 
 
-def _read_source_files(path: Path, max_chars: int = 50_000) -> str:
+def _read_source_files(path: Path, max_chars: int = MAX_SOURCE_CHARS) -> str:
     """
     Read source files from path, respecting size limit.
 

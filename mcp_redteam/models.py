@@ -139,7 +139,7 @@ def severity_score(severity: Severity) -> int:
 # --- Rule registry ---
 
 RULE_REGISTRY: dict[str, Rule] = {
-    "MRT000": Rule(id="MRT000", name="Unknown Rule", description="Semgrep finding with unrecognized rule ID", severity=Severity.MEDIUM, category=FindingCategory.security),
+    "MRT000": Rule(id="MRT000", name="Unknown Rule", description="Semgrep finding with unrecognized rule ID", severity=Severity.INFO, category=FindingCategory.security),
     "MRT001": Rule(id="MRT001", name="Shell Injection", description="Tool argument reaches shell command (subprocess with shell=True)", severity=Severity.CRITICAL, category=FindingCategory.security),
     "MRT002": Rule(id="MRT002", name="Path Traversal", description="Tool argument used in file path without normalization", severity=Severity.HIGH, category=FindingCategory.security),
     "MRT003": Rule(id="MRT003", name="SSRF", description="Tool argument used as URL in HTTP request without validation", severity=Severity.HIGH, category=FindingCategory.security),

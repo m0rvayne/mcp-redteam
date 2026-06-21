@@ -17,6 +17,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+from mcp_redteam.constants import MAX_CONFIG_FILE_BYTES, MAX_FIND_RESULTS
 from mcp_redteam.models import (
     Finding,
     FindingCategory,
@@ -118,7 +119,7 @@ def _collect_configs(project_dir: Optional[str] = None) -> dict[str, dict]:
             timeout=10,
         )
         if result.returncode == 0:
-            for line in result.stdout.strip().splitlines()[:100]:  # VULN-09 fix: cap results
+            for line in result.stdout.strip().splitlines()[:MAX_FIND_RESULTS]:  # VULN-09 fix: cap results
                 line = line.strip()
                 if line:
                     _try_load(Path(line).resolve(), configs)
@@ -137,7 +138,7 @@ def _try_load(path: Path, target: dict[str, dict]) -> None:
         if path.is_symlink():
             return  # VULN-02 fix: don't follow symlinks
         if path.is_file():
-            if path.stat().st_size > 10_000_000:  # VULN-04 fix: 10MB max
+            if path.stat().st_size > MAX_CONFIG_FILE_BYTES:  # VULN-04 fix: 10MB max
                 return
             data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
@@ -173,7 +174,7 @@ def _raw_text(path: str) -> str:
     """Read file as raw text. Returns '' on error."""
     try:
         p = Path(path)
-        if p.stat().st_size > 10_000_000:  # VULN-04 fix: 10MB max
+        if p.stat().st_size > MAX_CONFIG_FILE_BYTES:  # VULN-04 fix: 10MB max
             return ""
         return p.read_text(encoding="utf-8", errors="replace")
     except OSError:
