@@ -156,3 +156,19 @@ def test_scan_html_output_to_file(tmp_path):
     assert out.exists()
     content = out.read_text()
     assert "<!DOCTYPE html>" in content
+
+
+def test_badge_command(tmp_path):
+    """Badge command generates a shields.io badge URL."""
+    (tmp_path / "server.py").write_text("def hello(): return 'world'")
+    result = runner.invoke(app, ["badge", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "img.shields.io" in result.output
+    assert "mcp--security" in result.output
+
+
+def test_badge_nonexistent_path():
+    """Badge command fails for nonexistent path."""
+    result = runner.invoke(app, ["badge", "/nonexistent/path/xyz"])
+    assert result.exit_code == 2
+    assert "does not exist" in result.output

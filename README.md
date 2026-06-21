@@ -82,6 +82,29 @@ mcp-redteam scan-remote https://your-server.com/mcp --token <bearer>
 
 Requires Python 3.10+. Semgrep installed separately for code analysis: `pip install semgrep`.
 
+## CI/CD Integration
+
+Add to your GitHub Actions workflow:
+
+```yaml
+# .github/workflows/mcp-security.yml
+name: MCP Security Scan
+on: [push, pull_request]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: m0rvayne/mcp-redteam@v0.4
+        with:
+          path: ./your-mcp-server
+          fail-on: critical
+```
+
+Results appear in GitHub's Security tab. See [action.yml](action.yml) for all options.
+
 **More examples:**
 ```bash
 # HTML report

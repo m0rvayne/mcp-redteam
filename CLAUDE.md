@@ -59,6 +59,8 @@ Before any source analysis, validate the health and security of MCP configuratio
 claude mcp list
 ```
 
+**Note:** The output format of `claude mcp list` may vary across Claude Code versions. Parse output line-by-line and handle format variations — look for server names and status keywords rather than relying on exact column positions.
+
 For EVERY server in output:
 - `Connected` = OK
 - `Failed to connect` / `Disconnected` / any other status = **finding**
@@ -206,12 +208,16 @@ Spawn one Agent per MCP server. Each agent:
 
 Agents run in parallel. 10 servers = 10 agents.
 
+**Fallback:** If the Agent tool is unavailable (e.g., older Claude Code version or restricted environment), process servers sequentially in the main conversation. Prioritize servers by risk: file/filesystem and HTTP/API servers first.
+
 ### Phase 2 — Chain Analyzer (single coordinator agent)
 
 After all Phase 1 agents complete, spawn ONE coordinator agent that:
 - Receives ALL Phase 1 outputs (findings + chainable assets)
 - Builds cross-server attack chains from chainable assets (analytical — maps paths, does not execute)
 - Generates the final HTML report
+
+**Context-limited fallback:** If running sequentially or context is constrained, prioritize cross-server credential relay chains and CRITICAL-severity chains only. Skip speculative MEDIUM/LOW chains to preserve context for report generation.
 
 ---
 
@@ -676,3 +682,28 @@ After presenting the report, user may say "fix it" or "fix [server]".
 - **Every finding needs code evidence** — show the vulnerable code path
 - **Chainable assets are mandatory** — every agent outputs them
 - **Defended checks matter** — list what you analyzed and confirmed safe
+
+---
+
+## Usage Modes
+
+This project supports two independent usage modes:
+
+### Plugin Mode (AI-native deep audit — this file)
+
+CLAUDE.md serves as the instructions for Claude Code's plugin mode. When a user runs `/mcp-redteam` inside Claude Code, Claude reads this file and follows the 3-phase audit process described above.
+
+```bash
+# 1. Clone or download this repo
+# 2. cd into the project directory
+# 3. Run: /mcp-redteam
+```
+
+### CLI Mode (deterministic, no Claude Code needed)
+
+The CLI scanner runs Semgrep rules, config scanning, and optional LLM analysis as standalone Python tooling. It does not use CLAUDE.md.
+
+```bash
+pip install redteam-mcp
+mcp-redteam scan ./your-server --no-llm
+```

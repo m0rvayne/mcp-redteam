@@ -256,6 +256,73 @@ def scan_remote(
 
 
 @app.command()
+def badge(
+    path: Path = typer.Argument(..., help="Path to MCP server source code"),
+):
+    """Generate a security badge after scanning (config + semgrep, no LLM)."""
+    from mcp_redteam.models import ScanResult, ScanMetadata, Severity
+    from mcp_redteam.engine.semgrep_runner import run_semgrep, is_semgrep_available
+    from mcp_redteam.engine.config_scanner import scan_config
+
+    scan_start = datetime.now()
+
+    path = path.resolve()
+    if not path.exists():
+        console.print(f"[red]Error:[/red] path {path} does not exist")
+        raise typer.Exit(code=2)
+
+    findings = []
+
+    # Config checks
+    console.print("[bold cyan]Config check...[/bold cyan]")
+    config_findings = scan_config()
+    findings.extend(config_findings)
+
+    # Semgrep checks
+    if is_semgrep_available():
+        console.print("[bold cyan]Semgrep analysis...[/bold cyan]")
+        semgrep_findings = run_semgrep(path)
+        findings.extend(semgrep_findings)
+    else:
+        console.print("[yellow]Semgrep not installed — running config checks only[/yellow]")
+
+    result = ScanResult(
+        metadata=ScanMetadata(
+            scan_start=scan_start,
+            scan_end=datetime.now(),
+            target_path=str(path),
+            mode="badge",
+            semgrep_available=is_semgrep_available(),
+            files_scanned=_count_source_files(path),
+        ),
+        findings=findings,
+    )
+
+    critical = result.critical_count
+    high = result.high_count
+    medium = sum(1 for f in result.findings if f.severity == Severity.MEDIUM)
+
+    # Determine badge
+    if critical > 0:
+        label = f"{critical}%20critical"
+        color = "red"
+    elif high > 0:
+        label = f"{high}%20high"
+        color = "orange"
+    else:
+        label = "passing"
+        color = "green"
+
+    badge_url = f"https://img.shields.io/badge/mcp--security-{label}-{color}"
+    badge_link = "https://github.com/m0rvayne/mcp-redteam"
+    markdown = f"[![MCP Security]({badge_url})]({badge_link})"
+
+    console.print(f"\nScan complete: {critical} critical, {high} high, {medium} medium\n")
+    console.print("Add this badge to your README:\n")
+    console.print(markdown)
+
+
+@app.command()
 def version():
     """Show version."""
     from mcp_redteam import __version__

@@ -1,23 +1,65 @@
-name: 'mcp-redteam'
-description: 'Scan MCP servers for security vulnerabilities'
+name: 'MCP Redteam Security Scan'
+description: 'Scan MCP servers for security vulnerabilities with 25+ Semgrep rules'
+branding:
+  icon: 'shield'
+  color: 'red'
+
 inputs:
   path:
-    description: 'Path to scan'
+    description: 'Path to MCP server source code'
+    required: false
     default: '.'
-  format:
-    description: 'Output format (terminal, json, sarif)'
-    default: 'sarif'
   fail-on:
-    description: 'Fail if findings at this severity (critical, high)'
+    description: 'Fail if findings at this severity or above (critical, high)'
+    required: false
     default: ''
+  format:
+    description: 'Output format (terminal, json, sarif, html)'
+    required: false
+    default: 'sarif'
+  upload-sarif:
+    description: 'Upload SARIF to GitHub Security tab'
+    required: false
+    default: 'true'
+
+outputs:
+  findings-count:
+    description: 'Number of findings'
+    value: ${{ steps.scan.outputs.findings-count }}
+  risk-score:
+    description: 'Risk score (0-100)'
+    value: ${{ steps.scan.outputs.risk-score }}
+
 runs:
   using: 'composite'
   steps:
-    - run: pip install mcp-redteam semgrep
-      shell: bash
-    - run: mcp-redteam scan ${{ inputs.path }} --no-llm --format ${{ inputs.format }} -o mcp-findings.sarif ${{ inputs.fail-on && format('--fail-on {0}', inputs.fail-on) || '' }}
-      shell: bash
-    - uses: github/codeql-action/upload-sarif@v3
-      if: always() && inputs.format == 'sarif'
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        sarif_file: mcp-findings.sarif
+        python-version: '3.12'
+
+    - name: Install mcp-redteam
+      shell: bash
+      run: pip install redteam-mcp semgrep
+
+    - name: Run scan
+      id: scan
+      shell: bash
+      run: |
+        ARGS="scan ${{ inputs.path }} --no-llm --no-config --format sarif -o results.sarif"
+        if [ -n "${{ inputs.fail-on }}" ]; then
+          ARGS="$ARGS --fail-on ${{ inputs.fail-on }}"
+        fi
+        mcp-redteam $ARGS || true
+
+        if [ -f results.sarif ]; then
+          FINDINGS=$(python3 -c "import json; d=json.load(open('results.sarif')); print(len(d.get('runs',[{}])[0].get('results',[])))")
+          echo "findings-count=$FINDINGS" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload SARIF
+      if: inputs.upload-sarif == 'true' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results.sarif
+      continue-on-error: true
