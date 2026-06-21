@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "redteam-mcp"
-version = "0.4.1"
+version = "1.0.0"
 description = "MCP security scanner — source code audit with 25+ Semgrep rules, config health checks, SARIF output for CI/CD"
 readme = "README.md"
 license = "MIT"
@@ -20,7 +20,7 @@ keywords = [
     "mcp-server", "prompt-injection", "supply-chain-security",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Security",
     "License :: OSI Approved :: MIT License",

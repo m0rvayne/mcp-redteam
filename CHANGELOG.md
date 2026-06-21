@@ -4,6 +4,23 @@ All notable changes to mcp-redteam are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-06-21
+
+### Milestone
+First stable release. CLI interface, output formats, and rule IDs are now frozen.
+Semantic versioning enforced: breaking changes require major version bump.
+
+### Highlights
+- 177 tests across 13 test files (test:code ratio 1.02)
+- 32 rules in RULE_REGISTRY (25 Semgrep + 6 config + 1 fallback)
+- 55 embedding poisoning patterns across 12 attack categories
+- 8/10 self-security vulnerabilities fixed, 1 mitigated, 1 accepted
+- 4 output formats: terminal, JSON, SARIF, HTML
+- GitHub Action for CI/CD: `uses: m0rvayne/mcp-redteam@v1.0.0`
+- Audit history with cross-run comparison
+- Quick-scan mode for <30s triage
+- Production/Stable classifier on PyPI
+
 ## [0.4.1] - 2026-06-21
 
 ### Added
