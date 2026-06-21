@@ -29,7 +29,7 @@ mcp_redteam/
 rules/
   python/                # 14 Semgrep rules for Python MCP servers
   javascript/            # 11 Semgrep rules for JS/TS MCP servers
-tests/                   # 170+ tests across 12 test files
+tests/                   # 177 tests across 13 test files
 ```
 
 ## Adding a Semgrep Rule

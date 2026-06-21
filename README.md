@@ -42,10 +42,10 @@ Two modes of operation:
 | Terminal output | Working | Rich colored tables with risk scores |
 | CI exit codes | Working | `--fail-on critical` returns exit 1 |
 | LLM behavioral analysis | Working | Anthropic SDK, behavioral mismatch detection (optional) |
-| Self-security audit | Working | 10 vulnerabilities audited — 5 fixed, 5 documented with mitigations |
+| Self-security audit | Working | 10 vulnerabilities audited — 8 fixed, 1 mitigated, 1 accepted |
 | Claude Code plugin | Working | AI-driven deep audit with HTML report |
 | HTML report output | Working | `--format html` generates self-contained terminal-styled report |
-| 95+ tests | Passing | Unit, security, stress, edge cases, Hypothesis fuzzing |
+| 177 tests | Passing | Unit, security, stress, edge cases, Hypothesis fuzzing |
 | Audit history | Working | JSONL baseline storage, cross-run comparison (new/confirmed/fixed) |
 
 ## What doesn't work yet
@@ -97,7 +97,7 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: m0rvayne/mcp-redteam@v0.4
+      - uses: m0rvayne/mcp-redteam@v0.4.1
         with:
           path: ./your-mcp-server
           fail-on: critical
@@ -112,6 +112,9 @@ mcp-redteam scan ./server --format html -o report.html
 
 # Fail CI on critical findings
 mcp-redteam scan ./server --fail-on critical --format sarif -o results.sarif
+
+# Generate shields.io security badge
+mcp-redteam badge ./your-server
 
 # Use a different LLM model for behavioral analysis
 MCP_REDTEAM_MODEL=claude-haiku-4-5 mcp-redteam scan ./server
@@ -185,7 +188,7 @@ Based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of 
 | Behavioral mismatch | No | No | **Yes (LLM layer)** |
 | SARIF output | No | No | **Yes** |
 | CI exit codes | Yes | No | **Yes** |
-| Self-tested | Unknown | Unknown | **95+ tests, self-security audit** |
+| Self-tested | Unknown | Unknown | **177 tests, self-security audit** |
 | Cloud dependency | Snyk API required | Cisco API (optional) | **No — fully local in deterministic mode. LLM mode uses Anthropic API** |
 
 ### Why not just use mcp-scan?
@@ -241,7 +244,7 @@ Each scan saves a JSONL baseline to `~/.mcp-redteam/baselines/`. Subsequent runs
 
 ## Tests
 
-95+ tests across 9 test files:
+177 tests across 13 test files:
 
 - **test_semgrep.py** — each vulnerable fixture detected, each benign fixture clean
 - **test_self_security.py** — 21 tests: our own code audited for vulnerabilities

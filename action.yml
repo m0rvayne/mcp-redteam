@@ -55,6 +55,8 @@ runs:
         if [ -f results.sarif ]; then
           FINDINGS=$(python3 -c "import json; d=json.load(open('results.sarif')); print(len(d.get('runs',[{}])[0].get('results',[])))")
           echo "findings-count=$FINDINGS" >> $GITHUB_OUTPUT
+          RISK=$(python3 -c "import json; d=json.load(open('results.sarif')); print(min(100, sum(25 if r.get('level')=='error' else 5 if r.get('level')=='warning' else 1 for r in d['runs'][0]['results'])))" 2>/dev/null || echo "0")
+          echo "risk-score=$RISK" >> $GITHUB_OUTPUT
         fi
 
     - name: Upload SARIF

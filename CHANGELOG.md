@@ -4,6 +4,15 @@ All notable changes to mcp-redteam are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-06-21
+
+### Added
+- GitHub Action for CI/CD integration
+- Badge command (`mcp-redteam badge`)
+- Demo server for showcasing detections
+- CLAUDE.md cleanup with fallback handling
+- Awesome-list submission templates
+
 ## [0.4.0] - 2026-06-21
 
 ### Added
