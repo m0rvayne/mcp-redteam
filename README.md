@@ -27,29 +27,29 @@ Open-sourced because if my connectors had these problems, so do yours.
 Two modes of operation:
 
 - **Claude Code plugin** — reads source code, probes tools, detects behavioral mismatches, maps cross-server attack chains. Interactive HTML report.
-- **Standalone CLI** — deterministic scan. 25 Semgrep rules, config health checks, SARIF output. Works in CI/CD without Claude.
+- **Standalone CLI** — deterministic scan. 25 Semgrep rules + 6 config health checks, SARIF output. Works in CI/CD without Claude.
 
 ## What works today
 
 | Feature | Status | How |
 |---------|--------|-----|
 | Config health scanner | Working | Dead servers, scope conflicts, credential exposure, supply chain, CVE checks |
-| Semgrep code analysis | Working | 14 rules (Python + JS/TS): injection, traversal, SSRF, eval, secrets, stdout |
+| Semgrep code analysis | Working | 25 rules (Python + JS/TS): injection, traversal, SSRF, eval, secrets, stdout |
 | SARIF output | Working | GitHub Security tab integration |
 | JSON output | Working | Machine-readable for CI/CD |
 | Terminal output | Working | Rich colored tables with risk scores |
 | CI exit codes | Working | `--fail-on critical` returns exit 1 |
 | LLM behavioral analysis | Working | Anthropic SDK, behavioral mismatch detection (optional) |
-| Audit history | Working | JSONL log, cross-run comparison (new/confirmed/fixed) |
-| Self-security audit | Working | 10 vulnerabilities found and fixed in own code |
+| Self-security audit | Working | 10 vulnerabilities audited — 5 fixed, 5 documented with mitigations |
 | Claude Code plugin | Working | AI-driven deep audit with HTML report |
-| 75+ tests | Passing | Unit, security, stress, edge cases, Hypothesis fuzzing |
+| HTML report output | Working | `--format html` generates self-contained terminal-styled report |
+| 95+ tests | Passing | Unit, security, stress, edge cases, Hypothesis fuzzing |
 
 ## What doesn't work yet
 
+- Audit history (JSONL log, cross-run comparison of new/confirmed/fixed findings)
 - Cross-server chain detection in CLI (exists in Claude Code plugin only)
 - Auto-fix in CLI (exists in Claude Code plugin only)
-- HTML report generation in CLI
 - MCPTox benchmark validation
 - Community rule contributions
 
@@ -57,8 +57,12 @@ Two modes of operation:
 
 **Claude Code plugin** (deep AI-native audit):
 ```bash
-claude plugin marketplace add m0rvayne/mcp-redteam
-claude plugin install mcp-redteam
+# Clone to your projects directory
+git clone https://github.com/m0rvayne/mcp-redteam.git
+cd mcp-redteam
+
+# The CLAUDE.md file activates as a skill automatically
+# From any project with MCP servers connected:
 /mcp-redteam
 ```
 
@@ -70,10 +74,23 @@ mcp-redteam scan ./your-mcp-server --no-llm
 
 **Remote MCP server** (via URL, OAuth or token):
 ```bash
+pip install 'redteam-mcp[remote]'
 mcp-redteam scan-remote https://your-server.com/mcp --token <bearer>
 ```
 
 Requires Python 3.10+. Semgrep installed separately for code analysis: `pip install semgrep`.
+
+**More examples:**
+```bash
+# HTML report
+mcp-redteam scan ./server --format html -o report.html
+
+# Fail CI on critical findings
+mcp-redteam scan ./server --fail-on critical --format sarif -o results.sarif
+
+# Use a different LLM model for behavioral analysis
+MCP_REDTEAM_MODEL=claude-haiku-4-5 mcp-redteam scan ./server
+```
 
 ## What it checks
 
@@ -119,7 +136,7 @@ Based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of 
 | Behavioral mismatch | No | No | **Yes (LLM layer)** |
 | SARIF output | No | No | **Yes** |
 | CI exit codes | Yes | No | **Yes** |
-| Self-tested | Unknown | Unknown | **75+ tests, self-security audit** |
+| Self-tested | Unknown | Unknown | **95+ tests, self-security audit** |
 | Cloud dependency | Snyk API required | Cisco API (optional) | **No — fully local** |
 
 ### Why not just use mcp-scan?
@@ -134,15 +151,9 @@ Real findings mcp-scan cannot detect (they live in code, not descriptions):
 - AppleScript injection via unescaped clipboard input
 - Google OAuth tokens with permissions `644`
 
-## Audit History
+## Audit History (planned for v1.0)
 
-Each audit saves a compact JSONL log to `~/Desktop/redteam-results/`. On the next run, mcp-redteam reads previous results and compares:
-
-- **confirmed** — found again, higher confidence
-- **new** — first time seeing this
-- **fixed** — was in previous audit, now gone
-
-This turns LLM non-determinism into an advantage: each run is a new perspective, the intersection is ground truth.
+Audit history is not yet implemented. The planned design: each audit saves a JSONL log, and subsequent runs compare results to classify findings as **confirmed**, **new**, or **fixed** — turning LLM non-determinism into an advantage.
 
 ## Architecture
 
@@ -181,7 +192,7 @@ This turns LLM non-determinism into an advantage: each run is a new perspective,
 
 ## Tests
 
-75+ tests across 6 test files:
+95+ tests across 9 test files:
 
 - **test_semgrep.py** — each vulnerable fixture detected, each benign fixture clean
 - **test_self_security.py** — 21 tests: our own code audited for vulnerabilities
@@ -189,6 +200,8 @@ This turns LLM non-determinism into an advantage: each run is a new perspective,
 - **test_fuzzing.py** — Hypothesis property-based: any input, no crash
 - **test_edge_cases.py** — corrupt JSON, missing files, null bytes, timeouts
 - **test_models.py** + **test_formatters.py** — unit tests for core logic
+- **test_cli.py** — 11 tests: CLI argument parsing, output formats, exit codes
+- **test_config_scanner.py** — 13 tests: config health checks, scope conflicts, credential detection
 
 ## Current Limitations
 

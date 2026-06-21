@@ -5,6 +5,8 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+from mcp_redteam import __version__
+
 
 class Severity(str, Enum):
     """Vulnerability severity levels."""
@@ -58,7 +60,7 @@ class Finding(BaseModel):
 class ScanMetadata(BaseModel):
     """Metadata about the scan run."""
     tool_name: str = "mcp-redteam"
-    tool_version: str = "0.2.0"
+    tool_version: str = __version__
     scan_start: datetime
     scan_end: Optional[datetime] = None
     target_path: str
@@ -137,6 +139,7 @@ def severity_score(severity: Severity) -> int:
 # --- Rule registry ---
 
 RULE_REGISTRY: dict[str, Rule] = {
+    "MRT000": Rule(id="MRT000", name="Unknown Rule", description="Semgrep finding with unrecognized rule ID", severity=Severity.MEDIUM, category=FindingCategory.security),
     "MRT001": Rule(id="MRT001", name="Shell Injection", description="Tool argument reaches shell command (subprocess with shell=True)", severity=Severity.CRITICAL, category=FindingCategory.security),
     "MRT002": Rule(id="MRT002", name="Path Traversal", description="Tool argument used in file path without normalization", severity=Severity.HIGH, category=FindingCategory.security),
     "MRT003": Rule(id="MRT003", name="SSRF", description="Tool argument used as URL in HTTP request without validation", severity=Severity.HIGH, category=FindingCategory.security),
@@ -165,4 +168,7 @@ RULE_REGISTRY: dict[str, Rule] = {
     "MRT026": Rule(id="MRT026", name="JS Missing Error Handling", description="Async function without try/catch error handling", severity=Severity.HIGH, category=FindingCategory.health),
     "MRT027": Rule(id="MRT027", name="JS Credential in Response", description="Return object contains credential fields (token, password, secret)", severity=Severity.HIGH, category=FindingCategory.security),
     "MRT028": Rule(id="MRT028", name="No Timeout Spawn", description="spawn()/execFile() without timeout in options", severity=Severity.MEDIUM, category=FindingCategory.health),
+    "MRT029": Rule(id="MRT029", name="Over-Privileged Server", description="Remote MCP server exposes excessive number of tools", severity=Severity.HIGH, category=FindingCategory.architecture, engine="remote"),
+    "MRT030": Rule(id="MRT030", name="Remote Dangerous Params", description="Remote tool input schema contains dangerous parameter names (cmd, exec, eval, code)", severity=Severity.HIGH, category=FindingCategory.security, engine="remote"),
+    "MRT031": Rule(id="MRT031", name="No TLS", description="MCP server uses HTTP without TLS — all traffic including tokens is unencrypted", severity=Severity.CRITICAL, category=FindingCategory.security, engine="remote"),
 }

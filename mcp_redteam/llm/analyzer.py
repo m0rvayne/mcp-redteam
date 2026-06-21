@@ -29,6 +29,8 @@ SOURCE CODE:
 
 {descriptions_block}
 
+{descriptions_instruction}
+
 Find the following categories of issues:
 
 1. **BEHAVIORAL MISMATCH** (rule MRT015): Tool description says one thing but the code does something different or additional.
@@ -85,8 +87,9 @@ def analyze_behavioral(
     if not source_code:
         return []
 
-    # Run analysis
-    findings = _analyze_with_llm(client, source_code, "")
+    # Extract tool descriptions from source and run analysis
+    descriptions_block = _extract_tool_descriptions(source_code)
+    findings = _analyze_with_llm(client, source_code, descriptions_block)
 
     return findings
 
@@ -143,21 +146,96 @@ def _read_source_files(path: Path, max_chars: int = 50_000) -> str:
     return "".join(collected)
 
 
+def _extract_tool_descriptions(source_code: str) -> str:
+    """
+    Extract tool descriptions from MCP server source code using regex patterns.
+
+    Supports common patterns:
+    - Python FastMCP: @mcp.tool() decorator with docstring
+    - Python raw SDK: {"name": "...", "description": "..."}
+    - JS/TS: server.tool("name", "description", ...) or {name: "...", description: "..."}
+
+    Returns a formatted block for prompt injection, or empty string if nothing found.
+    """
+    descriptions: list[tuple[str, str]] = []
+
+    # Pattern 1: Python FastMCP — @mcp.tool() followed by def name(): """docstring"""
+    for m in re.finditer(
+        r'@\w+\.tool\([^)]*\)\s*'           # decorator
+        r'(?:async\s+)?def\s+(\w+)\s*\([^)]*\)\s*'  # function name
+        r'(?:->.*?)?\s*:\s*'                 # optional return type + colon
+        r'\s*(?:r)?"""(.*?)"""',             # docstring (non-greedy)
+        source_code,
+        re.DOTALL,
+    ):
+        name = m.group(1)
+        doc = m.group(2).strip().split("\n")[0].strip()  # first line only
+        if doc:
+            descriptions.append((name, doc))
+
+    # Pattern 2: Python/JS dict — "name": "tool_name" ... "description": "desc"
+    # or name: "tool_name" ... description: "desc" (JS object literal)
+    for m in re.finditer(
+        r'["\']?name["\']?\s*[:=]\s*["\'](\w+)["\']'
+        r'.*?'
+        r'["\']?description["\']?\s*[:=]\s*["\']([^"\']+)["\']',
+        source_code,
+        re.DOTALL,
+    ):
+        name = m.group(1)
+        desc = m.group(2).strip()
+        # Avoid duplicates
+        if desc and not any(n == name for n, _ in descriptions):
+            descriptions.append((name, desc))
+
+    # Pattern 3: JS/TS — server.tool("name", "description", ...)
+    for m in re.finditer(
+        r'\.tool\(\s*["\'](\w+)["\']\s*,\s*["\']([^"\']+)["\']',
+        source_code,
+    ):
+        name = m.group(1)
+        desc = m.group(2).strip()
+        if desc and not any(n == name for n, _ in descriptions):
+            descriptions.append((name, desc))
+
+    if not descriptions:
+        return ""
+
+    lines = ["TOOL DESCRIPTIONS (extracted from source):"]
+    for name, desc in descriptions:
+        lines.append(f"- {name}: \"{desc}\"")
+    return "\n".join(lines)
+
+
 def _analyze_with_llm(
     client,
     source_code: str,
     descriptions_block: str,
 ) -> list[Finding]:
     """Send source code to Claude for behavioral analysis."""
+    if descriptions_block:
+        descriptions_instruction = (
+            "Compare each tool's description against its implementation. "
+            "Flag any mismatches where the description claims one behavior but the code does something different or additional."
+        )
+    else:
+        descriptions_instruction = (
+            "No tool descriptions were extracted from the source. "
+            "Focus on hidden operations and credential handling."
+        )
+
     prompt = _ANALYSIS_PROMPT.format(
         source_code=source_code,
         descriptions_block=descriptions_block,
+        descriptions_instruction=descriptions_instruction,
     )
+
+    model = os.environ.get("MCP_REDTEAM_MODEL", "claude-sonnet-4-6")
 
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=2000,
+            model=model,
+            max_tokens=4000,
             temperature=0,
             messages=[{"role": "user", "content": prompt}],
         )

@@ -142,6 +142,22 @@ def _extract_rule_id(match: dict) -> str:
         "stdout": "MRT006",
         "error-handling": "MRT007",
         "response": "MRT008",
+        # New mappings for MRT018-028
+        "signal-handler": "MRT018",
+        "signal": "MRT018",
+        "blocking": "MRT019",
+        "sync-call": "MRT019",
+        "oauth": "MRT020",
+        "overprivilege": "MRT020",
+        "env-secret": "MRT021",
+        "rotation": "MRT021",
+        "no-timeout-http": "MRT022",
+        "no-timeout-subprocess": "MRT023",
+        "no-timeout-fetch": "MRT024",
+        "dangerous-param": "MRT025",
+        "missing-error": "MRT026",
+        "credential-in-response": "MRT027",
+        "no-timeout-spawn": "MRT028",
     }
     for key, mrt_id in mapping.items():
         if key in check_id.lower():

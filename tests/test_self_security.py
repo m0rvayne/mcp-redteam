@@ -29,6 +29,11 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 
+# Compute project paths relative to this test file so tests work in CI
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_SRC_DIR = _PROJECT_ROOT / "mcp_redteam"
+_PYPROJECT = _PROJECT_ROOT / "pyproject.toml"
+
 import pytest
 
 # ---------------------------------------------------------------------------
@@ -418,10 +423,16 @@ class TestVuln07XssInFindingFields:
         )
 
         sarif_str = format_sarif(result)
-        # SARIF is JSON so <script> is string-escaped, not rendered.
-        # But if SARIF viewer renders markdown (help.markdown field), it could execute.
-        # The key issue: no sanitization layer exists.
-        assert xss in json.loads(sarif_str)["runs"][0]["results"][0]["message"]["text"]
+        message_text = json.loads(sarif_str)["runs"][0]["results"][0]["message"]["text"]
+        # FIX: title, description, and evidence are now html.escape()'d in SARIF output.
+        # Raw XSS payload must NOT appear; escaped version must appear instead.
+        assert xss not in message_text, (
+            "Raw XSS payload must be escaped in SARIF output"
+        )
+        import html as _html
+        assert _html.escape(xss) in message_text, (
+            "Evidence field must contain HTML-escaped content"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -513,7 +524,7 @@ class TestVuln10Dependencies:
 
     def test_dependencies_are_floor_pinned_only(self):
         """Dependencies use >= (minimum) without upper bound."""
-        pyproject = Path("/Users/daniil/Работа/Проекты/Личное/mcp-redteam/pyproject.toml")
+        pyproject = _PYPROJECT
         if not pyproject.exists():
             pytest.skip("pyproject.toml not found")
 
@@ -542,7 +553,7 @@ class TestSubprocessSafety:
         """Ensure no subprocess call uses shell=True."""
         import ast
 
-        src_dir = Path("/Users/daniil/Работа/Проекты/Личное/mcp-redteam/mcp_redteam")
+        src_dir = _SRC_DIR
         if not src_dir.exists():
             pytest.skip("Source directory not found")
 
@@ -565,7 +576,7 @@ class TestSubprocessSafety:
         """All subprocess.run calls use list (not string) for command."""
         import ast
 
-        src_dir = Path("/Users/daniil/Работа/Проекты/Личное/mcp-redteam/mcp_redteam")
+        src_dir = _SRC_DIR
         if not src_dir.exists():
             pytest.skip("Source directory not found")
 

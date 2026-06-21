@@ -1,5 +1,4 @@
 import os
-import sys
 import typer
 from rich.console import Console
 from pathlib import Path
@@ -19,6 +18,7 @@ class OutputFormat(str, Enum):
     terminal = "terminal"
     json = "json"
     sarif = "sarif"
+    html = "html"
 
 
 @app.command()
@@ -31,12 +31,9 @@ def scan(
     fail_on: Optional[str] = typer.Option(None, "--fail-on", help="Exit 1 if findings at this severity or above (critical, high)"),
 ):
     """Scan MCP server for security vulnerabilities."""
-    from mcp_redteam.models import ScanResult, ScanMetadata, Severity
+    from mcp_redteam.models import ScanResult, ScanMetadata
     from mcp_redteam.engine.semgrep_runner import run_semgrep, is_semgrep_available
     from mcp_redteam.engine.config_scanner import scan_config
-    from mcp_redteam.formatters import format_sarif, format_json, format_terminal
-    from mcp_redteam.formatters.sarif import write_sarif
-    from mcp_redteam.formatters.json_fmt import write_json
 
     scan_start = datetime.now()
 
@@ -91,31 +88,7 @@ def scan(
         findings=findings,
     )
 
-    # Output
-    if format == OutputFormat.terminal:
-        format_terminal(result, console)
-    elif format == OutputFormat.sarif:
-        sarif_str = format_sarif(result)
-        if output:
-            write_sarif(result, output)
-            console.print(f"[green]SARIF written to {output}[/green]")
-        else:
-            print(sarif_str)
-    elif format == OutputFormat.json:
-        json_str = format_json(result)
-        if output:
-            write_json(result, output)
-            console.print(f"[green]JSON written to {output}[/green]")
-        else:
-            print(json_str)
-
-    # Exit code for CI
-    if fail_on:
-        threshold = {"critical": Severity.CRITICAL, "high": Severity.HIGH}.get(fail_on.lower())
-        if threshold:
-            failing = [f for f in findings if _severity_rank(f.severity) >= _severity_rank(threshold)]
-            if failing:
-                raise typer.Exit(code=1)
+    _output_and_exit(result, format, output, fail_on, console)
 
 
 def _count_source_files(path: Path, cap: int = 10000) -> int:
@@ -139,6 +112,52 @@ def _severity_rank(severity) -> int:
     ranks = {Severity.INFO: 0, Severity.LOW: 1, Severity.MEDIUM: 2, Severity.HIGH: 3, Severity.CRITICAL: 4}
     return ranks.get(severity, 0)
 
+
+def _output_and_exit(
+    result: "ScanResult",
+    format: OutputFormat,
+    output: Optional[Path],
+    fail_on: Optional[str],
+    console: Console,
+) -> None:
+    """Format output, write to file if requested, and exit with CI code if needed."""
+    from mcp_redteam.models import Severity
+    from mcp_redteam.formatters import format_sarif, format_json, format_terminal, format_html
+    from mcp_redteam.formatters.sarif import write_sarif
+    from mcp_redteam.formatters.json_fmt import write_json
+    from mcp_redteam.formatters.html_fmt import write_html
+
+    if format == OutputFormat.terminal:
+        format_terminal(result, console)
+    elif format == OutputFormat.sarif:
+        sarif_str = format_sarif(result)
+        if output:
+            write_sarif(result, output)
+            console.print(f"[green]SARIF written to {output}[/green]")
+        else:
+            print(sarif_str)
+    elif format == OutputFormat.json:
+        json_str = format_json(result)
+        if output:
+            write_json(result, output)
+            console.print(f"[green]JSON written to {output}[/green]")
+        else:
+            print(json_str)
+    elif format == OutputFormat.html:
+        html_str = format_html(result)
+        if output:
+            write_html(result, output)
+            console.print(f"[green]HTML report written to {output}[/green]")
+        else:
+            print(html_str)
+
+    if fail_on:
+        threshold = {"critical": Severity.CRITICAL, "high": Severity.HIGH}.get(fail_on.lower())
+        if threshold:
+            failing = [f for f in result.findings if _severity_rank(f.severity) >= _severity_rank(threshold)]
+            if failing:
+                raise typer.Exit(code=1)
+
 @app.command()
 def scan_remote(
     url: str = typer.Argument(..., help="Remote MCP server URL (https://...)"),
@@ -150,10 +169,7 @@ def scan_remote(
 ):
     """Scan a remote MCP server for security issues."""
     from mcp_redteam.engine.remote_scanner import scan_remote as do_scan
-    from mcp_redteam.models import ScanResult, ScanMetadata, Severity
-    from mcp_redteam.formatters import format_sarif, format_json, format_terminal
-    from mcp_redteam.formatters.sarif import write_sarif
-    from mcp_redteam.formatters.json_fmt import write_json
+    from mcp_redteam.models import ScanResult, ScanMetadata
 
     scan_start = datetime.now()
 
@@ -196,31 +212,7 @@ def scan_remote(
         findings=findings,
     )
 
-    # Output
-    if format == OutputFormat.terminal:
-        format_terminal(result, console)
-    elif format == OutputFormat.sarif:
-        sarif_str = format_sarif(result)
-        if output:
-            write_sarif(result, output)
-            console.print(f"[green]SARIF written to {output}[/green]")
-        else:
-            print(sarif_str)
-    elif format == OutputFormat.json:
-        json_str = format_json(result)
-        if output:
-            write_json(result, output)
-            console.print(f"[green]JSON written to {output}[/green]")
-        else:
-            print(json_str)
-
-    # Exit code for CI
-    if fail_on:
-        threshold = {"critical": Severity.CRITICAL, "high": Severity.HIGH}.get(fail_on.lower())
-        if threshold:
-            failing = [f for f in findings if _severity_rank(f.severity) >= _severity_rank(threshold)]
-            if failing:
-                raise typer.Exit(code=1)
+    _output_and_exit(result, format, output, fail_on, console)
 
 
 @app.command()

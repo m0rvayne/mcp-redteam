@@ -1,9 +1,11 @@
 """Test output formatters."""
 import json
+import re
 from datetime import datetime
 from mcp_redteam.models import Finding, Severity, FindingCategory, ScanResult, ScanMetadata, Location
 from mcp_redteam.formatters.sarif import format_sarif
 from mcp_redteam.formatters.json_fmt import format_json
+from mcp_redteam.formatters.html_fmt import format_html
 
 def _make_result():
     return ScanResult(
@@ -51,3 +53,53 @@ def test_empty_result():
     sarif = format_sarif(result)
     data = json.loads(sarif)
     assert len(data["runs"][0]["results"]) == 0
+
+
+# --- HTML formatter tests ---
+
+def test_html_valid_output():
+    """HTML formatter produces valid HTML with required sections."""
+    result = _make_result()
+    output = format_html(result)
+    assert output.startswith("<!DOCTYPE html>")
+    assert "<html" in output
+    assert "</html>" in output
+    assert "mcp-redteam" in output
+    assert "Risk Score" in output
+    assert "Findings" in output
+
+
+def test_html_escapes_xss():
+    """HTML formatter escapes XSS payloads in all user-controlled fields."""
+    xss = '<script>alert("xss")</script>'
+    result = ScanResult(
+        metadata=ScanMetadata(scan_start=datetime.now(), target_path="."),
+        findings=[
+            Finding(
+                id="XSS001", title=xss, severity=Severity.HIGH,
+                category=FindingCategory.security, description=xss,
+                evidence=xss, location=Location(file="server.py", line=1)
+            )
+        ]
+    )
+    output = format_html(result)
+    assert "<script>" not in output
+    assert "&lt;script&gt;" in output
+
+
+def test_html_empty_result():
+    """HTML formatter handles zero findings gracefully."""
+    result = ScanResult(
+        metadata=ScanMetadata(scan_start=datetime.now(), target_path="."),
+        findings=[]
+    )
+    output = format_html(result)
+    assert "No findings" in output
+
+
+def test_html_details_closed():
+    """All <details> elements are closed by default (no open attribute)."""
+    result = _make_result()
+    output = format_html(result)
+    assert "<details " in output or "<details>" in output
+    assert "<details open" not in output

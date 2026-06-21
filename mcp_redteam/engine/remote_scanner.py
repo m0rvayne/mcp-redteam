@@ -11,6 +11,8 @@ from urllib.parse import urlparse, parse_qs
 from typing import Optional
 import logging
 
+from mcp_redteam import __version__
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +60,8 @@ def scan_remote(url: str, token: Optional[str] = None) -> tuple[list, dict]:
 
     if len(tools) > 200:
         findings.append(Finding(
-            id="MRT018",
+            id="MRT029",
+            rule_id="MRT029",
             title=f"Over-privileged: {len(tools)} tools",
             severity=Severity.HIGH,
             category=FindingCategory.architecture,
@@ -69,7 +72,8 @@ def scan_remote(url: str, token: Optional[str] = None) -> tuple[list, dict]:
         ))
     elif len(tools) > 50:
         findings.append(Finding(
-            id="MRT018",
+            id="MRT029",
+            rule_id="MRT029",
             title=f"Many tools: {len(tools)}",
             severity=Severity.MEDIUM,
             category=FindingCategory.architecture,
@@ -89,7 +93,8 @@ def scan_remote(url: str, token: Optional[str] = None) -> tuple[list, dict]:
         for param_name in props:
             if param_name.lower() in dangerous_params:
                 findings.append(Finding(
-                    id="MRT019",
+                    id="MRT030",
+                    rule_id="MRT030",
                     title=f"Dangerous parameter '{param_name}' in '{tool['name']}'",
                     severity=Severity.HIGH,
                     category=FindingCategory.security,
@@ -103,7 +108,8 @@ def scan_remote(url: str, token: Optional[str] = None) -> tuple[list, dict]:
     parsed = urlparse(url)
     if parsed.scheme == "http":
         findings.append(Finding(
-            id="MRT020",
+            id="MRT031",
+            rule_id="MRT031",
             title="No TLS — HTTP connection",
             severity=Severity.CRITICAL,
             category=FindingCategory.security,
@@ -140,7 +146,7 @@ def _fetch_tools_list(url: str, token: str) -> list:
         "params": {
             "protocolVersion": "2025-11-25",
             "capabilities": {"tools": {}},
-            "clientInfo": {"name": "mcp-redteam", "version": "0.2.0"},
+            "clientInfo": {"name": "mcp-redteam", "version": __version__},
         },
     }
 

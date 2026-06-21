@@ -3,7 +3,9 @@
 Generates valid SARIF JSON for upload to GitHub Security tab (Code Scanning alerts).
 """
 
+import html
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -80,12 +82,11 @@ def _build_result(finding: Finding) -> dict[str, Any]:
     level = _SEVERITY_TO_LEVEL[finding.severity]
 
     # VULN-07 fix: sanitize to prevent XSS if SARIF rendered in HTML viewer
-    import html
     message_parts = [html.escape(finding.title)]
     if finding.description and finding.description != finding.title:
         message_parts.append(html.escape(finding.description))
     if finding.evidence:
-        message_parts.append(f"Evidence: {finding.evidence}")
+        message_parts.append(f"Evidence: {html.escape(finding.evidence)}")
 
     result: dict[str, Any] = {
         "ruleId": rule_id,
@@ -97,7 +98,6 @@ def _build_result(finding: Finding) -> dict[str, Any]:
     if finding.location:
         loc = finding.location
         # VULN-06 fix: make paths relative to avoid PII (username) leak
-        import os
         try:
             uri = os.path.relpath(loc.file)
         except ValueError:

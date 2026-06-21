@@ -34,7 +34,9 @@ dependencies = [
 [project.optional-dependencies]
 llm = ["anthropic>=0.40", "instructor>=1.0"]
 remote = ["requests>=2.31"]
+embedding = ["sentence-transformers>=2.0", "numpy>=1.24"]
 dev = ["pytest>=8.0", "hypothesis>=6.0"]
+all = ["anthropic>=0.40", "instructor>=1.0", "requests>=2.31", "sentence-transformers>=2.0", "numpy>=1.24"]
 
 [project.scripts]
 mcp-redteam = "mcp_redteam.cli:app"

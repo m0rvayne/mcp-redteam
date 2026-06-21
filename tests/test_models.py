@@ -37,7 +37,7 @@ def test_scan_result_counts():
     assert result.risk_score == 45  # 25 + 15 + 5
 
 def test_rule_registry():
-    assert len(RULE_REGISTRY) == 28
+    assert len(RULE_REGISTRY) == 32
     assert "MRT001" in RULE_REGISTRY
     assert RULE_REGISTRY["MRT001"].name == "Shell Injection"
 
