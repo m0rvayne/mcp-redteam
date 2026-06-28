@@ -63,19 +63,28 @@ _KNOWN_CONFIG_PATHS: list[Path] = [
 # ---------------------------------------------------------------------------
 
 
-def scan_config(project_dir: Optional[str] = None) -> list[Finding]:
+def scan_config(project_dir: Optional[str] = None, target_server: Optional[str] = None) -> list[Finding]:
     """Run all config health checks. Returns findings.
 
     Args:
         project_dir: Optional project directory to look for .mcp.json.
                      Defaults to cwd.
+        target_server: Optional server name to filter scope conflict findings.
+                       When set, only scope conflicts for this server are returned.
+                       Global checks (MRT013, MRT014, MRT009) are always included.
     """
     try:
         findings: list[Finding] = []
 
         configs = _collect_configs(project_dir=project_dir)
 
-        findings.extend(_check_scope_conflicts(configs))
+        scope_findings = _check_scope_conflicts(configs)
+        if target_server:
+            scope_findings = [
+                f for f in scope_findings
+                if target_server.lower() in f.title.lower()
+            ]
+        findings.extend(scope_findings)
         findings.extend(_check_credential_exposure(configs))
         findings.extend(_check_supply_chain(configs))
         findings.extend(_check_dangerous_settings(configs))
@@ -514,27 +523,34 @@ def _check_dead_servers() -> list[Finding]:
     if result.returncode != 0:
         return findings
 
-    # Parse output lines. Expected format (may vary):
-    #   <name>: <status> (type: <type>, ...)
-    # or ANSI-colored variants
+    # Parse output lines. Format:
+    #   <name>: <command/url> - ✓ Connected
+    #   <name>: <command/url> - ✗ Failed to connect
+    #   <name>: <command/url> - ! Needs authentication
+    # Names may contain spaces, colons, dots (e.g. "claude.ai AiS. Fathom", "plugin:vercel:vercel")
     for line in result.stdout.splitlines():
         line_clean = _strip_ansi(line).strip()
         if not line_clean:
             continue
 
-        # Try to detect status — look for common patterns
-        # e.g. "server-name: Disconnected" or "server-name  not connected"
-        name_match = re.match(r"^([^\s:]+)\s*:\s*(.+)", line_clean)
-        if not name_match:
+        # Split on status markers: " - ✓", " - ✗", " - !"
+        status_match = re.search(r"\s-\s([✓✗!])\s*(.*)$", line_clean)
+        if not status_match:
             continue
 
-        server_name = name_match.group(1)
-        rest = name_match.group(2).lower()
+        status_icon = status_match.group(1)
+        status_text = status_match.group(2).strip()
+        prefix = line_clean[:status_match.start()].strip()
 
-        if "connected" in rest and "not connected" not in rest and "disconnected" not in rest:
+        # Extract server name: everything before first ": "
+        name_sep = prefix.find(": ")
+        if name_sep < 0:
+            continue
+        server_name = prefix[:name_sep].strip()
+
+        if status_icon == "✓":
             continue  # healthy
 
-        # Any other status is suspicious
         findings.append(
             Finding(
                 id="MRT009",
@@ -544,7 +560,7 @@ def _check_dead_servers() -> list[Finding]:
                 category=FindingCategory.config,
                 description=(
                     f"Server '{server_name}' is configured but not in Connected state. "
-                    f"Status line: {line_clean.strip()}"
+                    f"Status: {status_text}"
                 ),
                 evidence=line_clean.strip(),
                 location=Location(file="claude mcp list"),

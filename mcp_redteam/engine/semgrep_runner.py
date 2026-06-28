@@ -67,7 +67,18 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
             "--exclude", "mocks",
             "--exclude", "node_modules",
             "--exclude", ".venv",
+            "--exclude", "venv",
+            "--exclude", "*.venv/*",
+            "--exclude", "*/venv/*",
+            "--exclude", "site-packages",
+            "--exclude", "dist-packages",
+            "--exclude", ".tox",
+            "--exclude", ".nox",
+            "--exclude", ".eggs",
+            "--exclude", "build",
+            "--exclude", "dist",
             "--exclude", "__pycache__",
+            "--exclude", ".git",
             str(target_path),
         ]
 

@@ -1,9 +1,9 @@
 rules:
   - id: mcp-js-ssrf-fetch
     message: >
-      Non-literal URL passed to fetch(). In MCP servers, tool arguments may contain
-      URLs pointing to internal services (127.0.0.1, metadata endpoints, etc.).
-      Validate the URL against an allowlist of domains/schemes before making requests.
+      User-controlled URL passed to fetch(). Tool arguments named url/uri/link/endpoint
+      may point to internal services (127.0.0.1, metadata endpoints).
+      Validate the URL scheme and host against an allowlist before making requests.
     severity: ERROR
     languages: [javascript, typescript]
     metadata:
@@ -15,12 +15,15 @@ rules:
     patterns:
       - pattern: fetch($URL, ...)
       - pattern-not: fetch("...", ...)
+      # Exclude template literals with hardcoded scheme (API base + param)
+      - pattern-not: fetch(`https://${...}...`, ...)
+      - pattern-not: fetch(`http://${...}...`, ...)
 
   - id: mcp-js-ssrf-axios
     message: >
-      Non-literal URL passed to axios request. In MCP servers, tool arguments may
-      contain URLs pointing to internal services. Validate the URL against an
-      allowlist of domains/schemes before making requests.
+      User-controlled URL passed to axios request. Tool arguments named url/uri/link/endpoint
+      may point to internal services. Validate the URL scheme and host against
+      an allowlist before making requests.
     severity: ERROR
     languages: [javascript, typescript]
     metadata:
@@ -43,12 +46,20 @@ rules:
       - pattern-not: axios.delete("...", ...)
       - pattern-not: axios.patch("...", ...)
       - pattern-not: axios("...", ...)
+      # Exclude template literals with hardcoded scheme
+      - pattern-not: axios.get(`https://${...}...`, ...)
+      - pattern-not: axios.get(`http://${...}...`, ...)
+      - pattern-not: axios.post(`https://${...}...`, ...)
+      - pattern-not: axios.post(`http://${...}...`, ...)
+      - pattern-not: axios.put(`https://${...}...`, ...)
+      - pattern-not: axios.delete(`https://${...}...`, ...)
+      - pattern-not: axios.patch(`https://${...}...`, ...)
 
   - id: mcp-js-ssrf-got
     message: >
-      Non-literal URL passed to got(). In MCP servers, tool arguments may contain
-      URLs pointing to internal services. Validate the URL against an allowlist
-      of domains/schemes before making requests.
+      User-controlled URL passed to got(). Tool arguments named url/uri/link/endpoint
+      may point to internal services. Validate the URL scheme and host against
+      an allowlist before making requests.
     severity: ERROR
     languages: [javascript, typescript]
     metadata:
@@ -65,21 +76,8 @@ rules:
       - pattern-not: got("...", ...)
       - pattern-not: got.get("...", ...)
       - pattern-not: got.post("...", ...)
-
-  - id: mcp-js-ssrf-template-url
-    message: >
-      Template literal used as URL in HTTP request. This is an SSRF risk.
-      Validate the constructed URL against an allowlist before making the request.
-    severity: ERROR
-    languages: [javascript, typescript]
-    metadata:
-      category: security
-      rule_id: MRT003
-      confidence: HIGH
-      owasp: "MCP07: SSRF"
-      cwe: "CWE-918: Server-Side Request Forgery"
-    pattern-either:
-      - pattern: fetch(`...${...}...`, ...)
-      - pattern: axios.get(`...${...}...`, ...)
-      - pattern: axios.post(`...${...}...`, ...)
-      - pattern: got(`...${...}...`, ...)
+      # Exclude template literals with hardcoded scheme
+      - pattern-not: got(`https://${...}...`, ...)
+      - pattern-not: got(`http://${...}...`, ...)
+      - pattern-not: got.get(`https://${...}...`, ...)
+      - pattern-not: got.post(`https://${...}...`, ...)

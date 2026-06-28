@@ -4,7 +4,7 @@ rules:
       MCP tool function lacks try/except error handling. Unhandled exceptions
       crash the MCP server or leak stack traces. Wrap tool logic in try/except
       and return structured error responses.
-    severity: WARNING
+    severity: INFO
     languages: [python]
     metadata:
       category: health

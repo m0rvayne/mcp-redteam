@@ -25,7 +25,6 @@ pytestmark = pytest.mark.skipif(not is_semgrep_available(), reason="semgrep not 
     ("vulnerable/eval_injection.js", ["MRT004"]),
     ("vulnerable/secrets_in_code.js", ["MRT005"]),
     ("vulnerable/dangerous_params.js", ["MRT025"]),
-    ("vulnerable/missing_error_handling.js", ["MRT026"]),
     ("vulnerable/credential_in_response.js", ["MRT027"]),
 ])
 def test_vulnerable_detected(fixture_file, expected_rules):
@@ -43,6 +42,7 @@ def test_vulnerable_detected(fixture_file, expected_rules):
     "benign/file_reader_safe.py",
     "benign/echo_server.py",
     "benign/safe_server.js",
+    "benign/config_paths.py",
 ])
 def test_benign_no_critical(fixture_file):
     """Benign fixtures must not trigger CRITICAL or HIGH findings."""
@@ -55,6 +55,7 @@ def test_benign_no_critical(fixture_file):
 # INFO/MEDIUM severity JS rules — tested separately from CRITICAL/HIGH
 @pytest.mark.parametrize("fixture_file,expected_rules", [
     ("vulnerable/stdout_pollution.js", ["MRT006"]),
+    ("vulnerable/missing_error_handling.js", ["MRT026"]),
     ("vulnerable/no_timeout_fetch.js", ["MRT024"]),
     ("vulnerable/no_timeout_spawn.js", ["MRT028"]),
 ])

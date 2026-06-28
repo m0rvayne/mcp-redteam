@@ -1,29 +1,54 @@
 rules:
-  - id: mcp-js-missing-error-handling
+  # Detect MCP tool handlers registered via server.tool() or
+  # server.setRequestHandler() that lack try/catch.  Helper functions called
+  # by a dispatcher with its own try/catch are intentionally excluded to
+  # avoid false positives (Semgrep cannot see caller context).
+  #
+  # Matched registration patterns:
+  #   server.tool("name", async (...) => { ... })          — inline arrow
+  #   server.tool("name", "desc", async (...) => { ... })  — with description
+  #   server.setRequestHandler(..., async (...) => { ... }) — SDK handler
+  #   server.tool("name", async function (...) { ... })     — inline named fn
+  #   server.setRequestHandler(..., async function (...) { ... })
+
+  - id: mcp-js-missing-error-handling-arrow
     message: >
-      Async function without try/catch error handling. Unhandled exceptions in MCP
-      server tool handlers crash the server or leak stack traces to the client.
-      Wrap the function body in try/catch and return structured error responses.
-    severity: ERROR
+      MCP tool handler (arrow function) without try/catch error handling.
+      Unhandled exceptions in directly-registered tool handlers crash the
+      server or leak stack traces to the client.  Wrap the function body in
+      try/catch and return structured error responses.
+    severity: WARNING
     languages: [javascript, typescript]
     metadata:
       category: health
       rule_id: MRT026
-      confidence: MEDIUM
+      confidence: HIGH
       owasp: "MCP08: Missing Error Handling"
       cwe: "CWE-755: Improper Handling of Exceptional Conditions"
     patterns:
-      - pattern: |
-          async function $FUNC(...) {
+      - pattern-either:
+          - pattern: |
+              $SERVER.tool($NAME, async ($ARGS) => { ... })
+          - pattern: |
+              $SERVER.tool($NAME, $DESC, async ($ARGS) => { ... })
+          - pattern: |
+              $SERVER.setRequestHandler($SCHEMA, async ($ARGS) => { ... })
+      - pattern-not:
+          $SERVER.tool($NAME, async ($ARGS) => {
             ...
-          }
-      - pattern-not: |
-          async function $FUNC(...) {
+            try { ... } catch($E) { ... }
             ...
-            try {
-              ...
-            } catch($E) {
-              ...
-            }
+          })
+      - pattern-not:
+          $SERVER.tool($NAME, $DESC, async ($ARGS) => {
             ...
-          }
+            try { ... } catch($E) { ... }
+            ...
+          })
+      - pattern-not:
+          $SERVER.setRequestHandler($SCHEMA, async ($ARGS) => {
+            ...
+            try { ... } catch($E) { ... }
+            ...
+          })
+

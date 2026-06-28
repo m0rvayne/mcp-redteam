@@ -12,28 +12,39 @@ rules:
       owasp: "MCP03: Server-Side Request Forgery"
     mode: taint
     pattern-sources:
-      - pattern: $ARGS["$KEY"]
-      - pattern: $ARGS.get("$KEY")
-      - pattern: $ARGS.get("$KEY", ...)
-      - patterns:
-          - pattern: |
-              def $FUNC(..., $ARG: str, ...):
-                  ...
-          - focus-metavariable: $ARG
+      # Function params with URL-like names (sync)
       - patterns:
           - pattern: |
               def $FUNC(..., $ARG, ...):
                   ...
+          - metavariable-regex:
+              metavariable: $ARG
+              regex: "^(url|uri|link|endpoint|href|webhook|callback|redirect|target_url|webhook_url|callback_url|redirect_url)$"
+          - focus-metavariable: $ARG
+      - patterns:
+          - pattern: |
+              def $FUNC(..., $ARG: str, ...):
+                  ...
+          - metavariable-regex:
+              metavariable: $ARG
+              regex: "^(url|uri|link|endpoint|href|webhook|callback|redirect|target_url|webhook_url|callback_url|redirect_url)$"
+          - focus-metavariable: $ARG
+      # Function params with URL-like names (async)
+      - patterns:
+          - pattern: |
+              async def $FUNC(..., $ARG, ...):
+                  ...
+          - metavariable-regex:
+              metavariable: $ARG
+              regex: "^(url|uri|link|endpoint|href|webhook|callback|redirect|target_url|webhook_url|callback_url|redirect_url)$"
           - focus-metavariable: $ARG
       - patterns:
           - pattern: |
               async def $FUNC(..., $ARG: str, ...):
                   ...
-          - focus-metavariable: $ARG
-      - patterns:
-          - pattern: |
-              async def $FUNC(..., $ARG, ...):
-                  ...
+          - metavariable-regex:
+              metavariable: $ARG
+              regex: "^(url|uri|link|endpoint|href|webhook|callback|redirect|target_url|webhook_url|callback_url|redirect_url)$"
           - focus-metavariable: $ARG
     pattern-sinks:
       - pattern: requests.get($URL, ...)
@@ -60,3 +71,29 @@ rules:
         focus-metavariable: $URL
     pattern-sanitizers:
       - pattern: urllib.parse.urlparse(...)
+      - pattern: urllib.parse.urljoin(...)
+      # URL validated with startswith check
+      - pattern: $URL.startswith("https://")
+      - pattern: $URL.startswith("http://")
+      - pattern: $URL.startswith(...)
+      # f-string with hardcoded scheme — API base + param, not raw user URL
+      - pattern: f"https://{...}"
+      - pattern: f"http://{...}"
+      # API response data — not user-controlled
+      - pattern: $RESPONSE.json()
+      - pattern: $RESPONSE.json().get(...)
+      - pattern: $RESPONSE.json()[...]
+      # Display-only: URL flows to print/logging, not HTTP request
+      - pattern: print(...)
+      - pattern: logging.debug(...)
+      - pattern: logging.info(...)
+      - pattern: logging.warning(...)
+      - pattern: logging.error(...)
+      - pattern: logging.critical(...)
+      - pattern: logging.log(...)
+      - pattern: $LOGGER.debug(...)
+      - pattern: $LOGGER.info(...)
+      - pattern: $LOGGER.warning(...)
+      - pattern: $LOGGER.error(...)
+      - pattern: $LOGGER.critical(...)
+      - pattern: $LOGGER.log(...)

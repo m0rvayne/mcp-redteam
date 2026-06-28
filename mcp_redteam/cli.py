@@ -1,4 +1,5 @@
 import os
+import sys
 import typer
 from rich.console import Console
 from pathlib import Path
@@ -13,7 +14,7 @@ app = typer.Typer(
     help="MCP server security auditor — deterministic engine + AI-native behavioral analysis",
     no_args_is_help=True,
 )
-console = Console()
+console = Console(stderr=True)
 
 
 class OutputFormat(str, Enum):
@@ -54,7 +55,9 @@ def scan(
     # Phase 0: Config health
     if config:
         console.print("[bold cyan]Phase 0:[/bold cyan] Config validation...")
-        config_findings = scan_config()
+        # Derive server name from target path for filtering scope conflicts
+        target_server = path.name.lower().replace("mcp_", "").replace("mcp-", "").replace("_", "-")
+        config_findings = scan_config(target_server=target_server)
         findings.extend(config_findings)
         console.print(f"  {len(config_findings)} config issues found")
 

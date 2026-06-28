@@ -19,4 +19,8 @@ EMBEDDING_THRESHOLD_HIGH = 0.70  # > 0.70 = HIGH
 EMBEDDING_THRESHOLD_MEDIUM = 0.55  # > 0.55 = MEDIUM
 
 # --- Directories to skip ---
-SKIP_DIRS = {".venv", "venv", "node_modules", "__pycache__", ".git"}
+SKIP_DIRS = {
+    ".venv", "venv", "node_modules", "__pycache__", ".git",
+    "site-packages", "dist-packages",
+    ".tox", ".nox", ".eggs", "build", "dist",
+}

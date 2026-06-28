@@ -1,10 +1,12 @@
 rules:
   - id: mcp-python-missing-signal-handler
     message: >
-      MCP server runs without SIGTERM/SIGINT signal handlers. Without graceful
-      shutdown handling, the server may leave orphan processes, open connections,
-      or corrupt state on termination. Add signal.signal(SIGTERM, handler) and
-      signal.signal(SIGINT, handler) before server.run().
+      MCP server entry point runs without SIGTERM/SIGINT signal handlers.
+      Without graceful shutdown handling, the server may leave orphan processes,
+      open connections, or corrupt state on termination. Add
+      signal.signal(SIGTERM, handler) and signal.signal(SIGINT, handler)
+      before server.run(). Note: FastMCP and some frameworks handle signals
+      internally — verify before adding manual handlers.
     severity: WARNING
     languages: [python]
     metadata:
@@ -14,9 +16,33 @@ rules:
       owasp: "MCP11: Missing Graceful Shutdown"
     patterns:
       - pattern-either:
-          - pattern: $SERVER.run(...)
-          - pattern: asyncio.run(...)
+          # Only match .run() inside if __name__ == "__main__" guard (entry points)
+          - pattern: |
+              if __name__ == "__main__":
+                  ...
+                  $SERVER.run(...)
+          - pattern: |
+              if __name__ == '__main__':
+                  ...
+                  $SERVER.run(...)
+          - pattern: |
+              if __name__ == "__main__":
+                  ...
+                  asyncio.run(...)
+          - pattern: |
+              if __name__ == '__main__':
+                  ...
+                  asyncio.run(...)
       - pattern-not-inside: |
           ...
           signal.signal(...)
           ...
+    paths:
+      exclude:
+        - "*test*"
+        - "*fixture*"
+        - "*example*"
+        - "*mock*"
+        - "*__pycache__*"
+        - "*/cli/*"
+        - "*cli.py"

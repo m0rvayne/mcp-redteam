@@ -1,6 +1,6 @@
 # FIXTURE: vulnerable
 # EXPECTED_RULES: ["MRT007"]
-# EXPECTED_SEVERITY: ["HIGH"]
+# EXPECTED_SEVERITY: ["MEDIUM"]
 # DESCRIPTION: MCP tool functions without try/except error handling.
 #   Unhandled exceptions crash the server or leak stack traces to clients.
 #   Real-world pattern: quick-and-dirty tool implementations.

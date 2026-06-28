@@ -11,12 +11,25 @@ rules:
       rule_id: MRT006
       confidence: MEDIUM
       owasp: "MCP07: Protocol Pollution"
-    pattern-either:
-      - pattern: print(...)
-      - pattern: sys.stdout.write(...)
+    patterns:
+      - pattern-either:
+          - pattern: print(...)
+          - pattern: sys.stdout.write(...)
+      - pattern-not: print(..., file=sys.stderr, ...)
+      - pattern-not: print(..., file=sys.stderr)
+      - pattern-not-inside: |
+          if __name__ == "__main__":
+              ...
+      - pattern-not-inside: |
+          if __name__ == '__main__':
+              ...
     paths:
       exclude:
         - "*http*"
         - "*transport*"
         - "*streamable*"
         - "*sse*"
+        - "*cli*"
+        - "*__main__*"
+        - "*setup*"
+        - "*config*"

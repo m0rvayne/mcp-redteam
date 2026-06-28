@@ -27,6 +27,19 @@ rules:
       - pattern-not: $FS.readFile("...", ...)
       - pattern-not: $FS.readFileSync("...", ...)
       - pattern-not: $FS.createReadStream("...", ...)
+      # Safe path sources — not user-controlled
+      - pattern-not: fs.readFile(path.join(__dirname, ...), ...)
+      - pattern-not: fs.readFileSync(path.join(__dirname, ...), ...)
+      - pattern-not: fs.createReadStream(path.join(__dirname, ...), ...)
+      - pattern-not: $FS.readFile(path.join(__dirname, ...), ...)
+      - pattern-not: $FS.readFileSync(path.join(__dirname, ...), ...)
+      - pattern-not: $FS.createReadStream(path.join(__dirname, ...), ...)
+      - pattern-not: fs.readFile(path.resolve(__dirname, ...), ...)
+      - pattern-not: fs.readFileSync(path.resolve(__dirname, ...), ...)
+      - pattern-not: fs.createReadStream(path.resolve(__dirname, ...), ...)
+      - pattern-not: $FS.readFile(path.resolve(__dirname, ...), ...)
+      - pattern-not: $FS.readFileSync(path.resolve(__dirname, ...), ...)
+      - pattern-not: $FS.createReadStream(path.resolve(__dirname, ...), ...)
 
   - id: mcp-js-path-traversal-write
     message: >
@@ -56,6 +69,19 @@ rules:
       - pattern-not: $FS.writeFile("...", ...)
       - pattern-not: $FS.writeFileSync("...", ...)
       - pattern-not: $FS.createWriteStream("...", ...)
+      # Safe path sources — not user-controlled
+      - pattern-not: fs.writeFile(path.join(__dirname, ...), ...)
+      - pattern-not: fs.writeFileSync(path.join(__dirname, ...), ...)
+      - pattern-not: fs.createWriteStream(path.join(__dirname, ...), ...)
+      - pattern-not: $FS.writeFile(path.join(__dirname, ...), ...)
+      - pattern-not: $FS.writeFileSync(path.join(__dirname, ...), ...)
+      - pattern-not: $FS.createWriteStream(path.join(__dirname, ...), ...)
+      - pattern-not: fs.writeFile(path.resolve(__dirname, ...), ...)
+      - pattern-not: fs.writeFileSync(path.resolve(__dirname, ...), ...)
+      - pattern-not: fs.createWriteStream(path.resolve(__dirname, ...), ...)
+      - pattern-not: $FS.writeFile(path.resolve(__dirname, ...), ...)
+      - pattern-not: $FS.writeFileSync(path.resolve(__dirname, ...), ...)
+      - pattern-not: $FS.createWriteStream(path.resolve(__dirname, ...), ...)
 
   - id: mcp-js-path-traversal-template
     message: >
