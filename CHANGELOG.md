@@ -4,6 +4,22 @@ All notable changes to mcp-redteam are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-06-28
+
+### Fixed
+- **MRT003 (SSRF):** removed raw dict access sources (`$ARGS.get("url")`) that matched API responses as false positives; narrowed to function parameter sources only; added `response.json()` sanitizers
+- **MRT002 (Path traversal):** added multi-level chain sanitizers for `Path.home() / x / y / z` (up to 4 levels), `Path.cwd()`, `os.path.expanduser()`
+- **MRT026 (Error handling JS):** removed `mcp-js-missing-error-handling-fn` rule — Semgrep cannot see caller-level try/catch, causing false positives on helper function declarations
+- **MRT018 (Signal handlers):** narrowed to `if __name__ == "__main__"` entry points only; added path excludes for test/fixture/cli files
+
+### Changed
+- FP rate: 222 → 90 findings on 15 production servers (59% further reduction)
+- All 4 fixed rules now show 0 false positives on production servers
+- 197 tests passing (was 196)
+
+### Added
+- Benign test fixture: `config_paths.py` (chained config paths + API response URLs)
+
 ## [0.5.0] - 2026-06-28
 
 ### Changed
@@ -17,10 +33,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 55 embedding poisoning patterns across 12 attack categories
 - 8/10 self-security vulnerabilities fixed, 1 mitigated, 1 accepted
 - 4 output formats: terminal, JSON, SARIF, HTML
-- GitHub Action for CI/CD: `uses: m0rvayne/mcp-redteam@v1.0.0`
+- GitHub Action for CI/CD: `uses: m0rvayne/mcp-redteam@v0.5.1`
 - Audit history with cross-run comparison
 - Quick-scan mode for <30s triage
-- Production/Stable classifier on PyPI
 
 ## [0.4.1] - 2026-06-21
 
