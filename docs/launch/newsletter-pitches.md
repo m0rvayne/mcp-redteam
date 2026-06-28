@@ -48,7 +48,7 @@ Install: `pip install redteam-mcp`
 
 **Submit:** https://tldr.tech/submit (Open Source section)
 
-**Subject:** mcp-redteam — open-source security scanner for MCP servers (v0.3.0)
+**Subject:** mcp-redteam — open-source security scanner for MCP servers (v0.5.1)
 
 Hi,
 
@@ -58,7 +58,7 @@ Key facts:
 - CI/CD ready: SARIF output, GitHub Action, `--fail-on critical` exit codes
 - Found 7 RCE vulnerabilities across 106 public MCP servers
 - Works fully local in deterministic mode, no cloud dependency
-- 177 tests including fuzzing; ran its own scanner on its own code
+- 197 tests including fuzzing; ran its own scanner on its own code
 
 Link: https://github.com/m0rvayne/mcp-redteam
 Install: `pip install redteam-mcp`
@@ -76,11 +76,11 @@ Hi,
 You already track MCP security tools — mcp-redteam fills the CI/CD gap. It's an open-source scanner with a GitHub Action that runs 25 Semgrep rules against MCP server code, outputs SARIF for the GitHub Security tab, and returns exit codes for pipeline gating.
 
 Key facts:
-- GitHub Action: `uses: m0rvayne/mcp-redteam@v0.4.1` with `fail-on: critical`
+- GitHub Action: `uses: m0rvayne/mcp-redteam@v0.5.1` with `fail-on: critical`
 - SARIF output integrates directly with GitHub Security tab
 - 25 rules covering OWASP MCP Top 10: injection, traversal, SSRF, credential exposure, stdout pollution
 - Config health checks detect dead servers, scope conflicts, unpinned supply chain packages
-- Self-tested: 177 tests + published self-security audit
+- Self-tested: 197 tests + published self-security audit
 
 Link: https://github.com/m0rvayne/mcp-redteam
 Install: `pip install redteam-mcp`

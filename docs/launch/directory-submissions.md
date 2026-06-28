@@ -137,7 +137,7 @@ pip install redteam-mcp
 **URL:** https://github.com/m0rvayne/mcp-redteam
 
 **Description:**
-MCP security scanner that reads source code to find vulnerabilities other scanners miss. 25 Semgrep rules for Python and JS/TS cover injection, traversal, SSRF, eval, secrets, and stdout pollution. Config health scanner detects dead servers, scope conflicts, credential exposure, and unpinned packages. SARIF output for GitHub Security tab. 177 tests including fuzzing. Also runs as a Claude Code plugin for AI-driven deep audit with HTML reports.
+MCP security scanner that reads source code to find vulnerabilities other scanners miss. 25 Semgrep rules for Python and JS/TS cover injection, traversal, SSRF, eval, secrets, and stdout pollution. Config health scanner detects dead servers, scope conflicts, credential exposure, and unpinned packages. SARIF output for GitHub Security tab. 197 tests including fuzzing. Also runs as a Claude Code plugin for AI-driven deep audit with HTML reports.
 
 **Install:**
 ```bash
@@ -205,7 +205,7 @@ pip install redteam-mcp
 **URL:** https://github.com/m0rvayne/mcp-redteam
 
 **Description:**
-Security scanner that audits MCP servers by analyzing source code, not just descriptions. 25 Semgrep rules for Python and JS/TS detect shell injection, path traversal, SSRF, eval, hardcoded secrets, and stdout pollution. Config health checks catch dead servers, scope conflicts, credential exposure (including CVE detection), and unpinned supply chain packages. Outputs SARIF for GitHub Security tab, plus JSON, HTML, and terminal formats. 177 tests with fuzzing. Also functions as a Claude Code plugin for AI-driven audit with cross-server attack chain analysis.
+Security scanner that audits MCP servers by analyzing source code, not just descriptions. 25 Semgrep rules for Python and JS/TS detect shell injection, path traversal, SSRF, eval, hardcoded secrets, and stdout pollution. Config health checks catch dead servers, scope conflicts, credential exposure (including CVE detection), and unpinned supply chain packages. Outputs SARIF for GitHub Security tab, plus JSON, HTML, and terminal formats. 197 tests with fuzzing. Also functions as a Claude Code plugin for AI-driven audit with cross-server attack chain analysis.
 
 **Install:**
 ```bash

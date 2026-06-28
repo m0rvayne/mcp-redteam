@@ -24,7 +24,7 @@ Went looking for a security scanner. Found nothing that reads source code.
 
 So I built one. Scanned 106 public MCP servers. 7 had RCE. One had 25K GitHub stars.
 
-Open-sourced today: mcp-redteam v1.0 🧵
+Open-sourced today: mcp-redteam v0.5.1 🧵
 
 ### Tweet 2 (the problem)
 
@@ -71,8 +71,8 @@ test_self_security.py — the test file that audits the auditor.
 
 ### Tweet 6 (stats)
 
-v1.0.0:
-- 177 tests (test:code ratio 1.02)
+v0.5.1:
+- 197 tests (test:code ratio 1.02)
 - 25 Semgrep rules
 - 55 embedding poisoning patterns
 - 4 output formats (terminal, SARIF, JSON, HTML)
@@ -132,7 +132,7 @@ Scanned 106 public MCP servers. 7 had remote code execution via shell injection 
 | SARIF output | No | No | Yes |
 | Cloud dependency | Invariant Labs API | Cisco API (optional) | None (deterministic mode) |
 
-177 tests. MIT licensed. Rules based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of Bits, Palo Alto Unit 42, and OX Security.
+197 tests. MIT licensed. Rules based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of Bits, Palo Alto Unit 42, and OX Security.
 
 GitHub: https://github.com/m0rvayne/mcp-redteam
 
@@ -170,7 +170,7 @@ No API key needed for deterministic mode. 25 Semgrep rules, SARIF output for Git
 - Session cookies stored in plaintext with 644 permissions
 - Config issues: dead servers still consuming resources, scope conflicts where project config silently overrides user config
 
-**Stats:** 177 tests, 25 rules covering Python + JS/TS, 4 output formats, audit history with cross-run comparison.
+**Stats:** 197 tests, 25 rules covering Python + JS/TS, 4 output formats, audit history with cross-run comparison.
 
 Ran it on 106 public MCP servers. 7 had remote code execution. One had 25K GitHub stars.
 
@@ -206,7 +206,7 @@ Also checks MCP configuration health: dead servers, scope conflicts (same server
 
 **Output:** SARIF for GitHub Security tab, JSON for CI pipelines, HTML reports, terminal tables with risk scores. GitHub Action available for automated scanning on push/PR.
 
-**Self-audit:** We ran the scanner on its own codebase. Found 10 vulnerabilities, fixed 8, documented 2 with mitigations. 177 tests including a dedicated test_self_security.py that continuously audits the auditor.
+**Self-audit:** We ran the scanner on its own codebase. Found 10 vulnerabilities, fixed 8, documented 2 with mitigations. 197 tests including a dedicated test_self_security.py that continuously audits the auditor.
 
 Rules are based on 48+ CVEs, OWASP MCP Top 10, and published research from Trail of Bits, Palo Alto Unit 42, OX Security, and Invariant Labs.
 
@@ -237,7 +237,7 @@ I built mcp-redteam to close this gap. It is an open-source security scanner tha
 
 Results from scanning 106 public MCP servers: 7 had remote code execution vulnerabilities. One had 25,000 GitHub stars.
 
-We practice what we build: the scanner audits its own codebase with 177 tests, including a dedicated self-security test suite.
+We practice what we build: the scanner audits its own codebase with 197 tests, including a dedicated self-security test suite.
 
 MIT licensed. Available on PyPI: `pip install redteam-mcp`
 
@@ -269,7 +269,7 @@ Scanned 106 public servers. 7 had remote code execution. One had 25K GitHub star
 - Config health: dead servers, scope conflicts, supply chain risks
 - Behavioral mismatches (tool says one thing, code does another)
 
-**Key stats:** 25 Semgrep rules, 177 tests, SARIF output for GitHub Security tab, zero cloud dependencies in deterministic mode.
+**Key stats:** 25 Semgrep rules, 197 tests, SARIF output for GitHub Security tab, zero cloud dependencies in deterministic mode.
 
 Full writeup coming soon. In the meantime:
 
@@ -293,7 +293,7 @@ Scanned 106 public servers. 7 had RCE. Self-audited: found 10 vulnerabilities in
 
 SARIF output for GitHub Security tab. GitHub Action for CI/CD. Zero cloud dependencies in deterministic mode.
 
-177 tests. MIT licensed.
+197 tests. MIT licensed.
 
 https://github.com/m0rvayne/mcp-redteam
 
@@ -320,7 +320,7 @@ All claims in this content are sourced from the README:
 - [x] 7 had RCE -- README intro paragraph ("7 had remote code execution")
 - [x] 25K stars server -- README intro paragraph
 - [x] 25 Semgrep rules -- README "What it checks" section
-- [x] 177 tests -- README "Tests" section
+- [x] 197 tests -- README "Tests" section
 - [x] 10 vulnerabilities self-audited, 8 fixed -- README feature table ("10 vulnerabilities audited -- 8 fixed, 1 mitigated, 1 accepted")
 - [x] SARIF output -- README feature table
 - [x] 4 output formats -- README (terminal, SARIF, JSON, HTML)

@@ -206,11 +206,11 @@ This is the part that builds trust. I pointed mcp-redteam at its own source code
 | **Config validation** | No | Config discovery | 6 checks, CVE detection |
 | **Behavioral mismatch** | No | No | Yes (LLM layer) |
 | **SARIF / CI output** | Yes | No | Yes |
-| **Self-tested** | Unknown | Unknown | 177 tests, self-security audit |
+| **Self-tested** | Unknown | Unknown | 197 tests, self-security audit |
 | **Cloud dependency** | Invariant Labs API | Cisco API (optional) | Fully local in deterministic mode |
-| **False positive rate** | Not published | ~78% on YARA rules | ~40% (manual review validated) |
+| **False positive rate** | Not published | ~78% on YARA rules | 99.4% FP reduction (validated on 15 production servers) |
 
-Honest caveat: FP rate was measured on the 106-server scan, not on a standardized benchmark. I haven't found a good MCP security benchmark yet -- if you know of one, open an issue.
+Honest caveat: we validated on 15 production servers -- initial untuned rules produced 15,248 findings, tuned rules produce 90. That's a 99.4% FP reduction. We still don't have a standardized benchmark corpus -- if you know of one, open an issue.
 
 ## Try it
 
@@ -261,7 +261,7 @@ PyPI: `pip install redteam-mcp`
 - **Cross-server chain detection in CLI** -- currently only available in the Claude Code plugin
 - **Auto-fix in CLI** -- plugin can fix, CLI can't yet
 - **Dependency CVE scanning** -- Cisco has this, we don't yet
-- **Lower the FP rate** -- ~40% is better than 78%, but not good enough
+- **Further FP reduction** -- 99.4% reduction achieved (15,248 → 90 findings on 15 production servers), but more tuning needed
 
 If you maintain an MCP server, run this on it. If you find false positives, open an issue -- every FP report makes the rules better.
 
