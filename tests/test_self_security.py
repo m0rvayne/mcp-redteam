@@ -173,10 +173,12 @@ class TestVuln03RulesDirInjection:
         """When bundled rules don't exist, CWD rules/ is NOT used."""
         from mcp_redteam.engine import semgrep_runner
 
-        # Make the package-relative path not exist
+        # Make the package-relative path not exist. The fake path must mirror the
+        # real nesting (<root>/mcp_redteam/engine/semgrep_runner.py) so the
+        # package-relative candidates land under pkgroot/, not under the CWD.
         monkeypatch.setattr(
             semgrep_runner, "__file__",
-            str(tmp_path / "fake" / "semgrep_runner.py"),
+            str(tmp_path / "pkgroot" / "mcp_redteam" / "engine" / "semgrep_runner.py"),
         )
 
         # Create attacker-controlled rules dir in "CWD"
@@ -199,7 +201,7 @@ class TestVuln03RulesDirInjection:
 
         monkeypatch.setattr(
             semgrep_runner, "__file__",
-            str(tmp_path / "fake" / "semgrep_runner.py"),
+            str(tmp_path / "pkgroot" / "mcp_redteam" / "engine" / "semgrep_runner.py"),
         )
 
         attacker_rules = tmp_path / "rules"

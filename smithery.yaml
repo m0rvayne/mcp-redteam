@@ -17,7 +17,7 @@ startCommand:
         type: string
         title: Fail On Severity
         description: Exit with code 1 if findings at this severity or above are found.
-        enum: ["critical", "high", "medium", "low"]
+        enum: ["critical", "high"]
       format:
         type: string
         title: Output Format

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "redteam-mcp"
-version = "0.5.1"
+version = "0.5.2"
 description = "MCP security scanner — source code audit with 25+ Semgrep rules, config health checks, SARIF output for CI/CD"
 readme = "README.md"
 license = "MIT"
@@ -41,7 +41,9 @@ dependencies = [
 llm = ["anthropic>=0.40", "instructor>=1.0"]
 remote = ["requests>=2.31"]
 embedding = ["sentence-transformers>=2.0", "numpy>=1.24"]
-dev = ["pytest>=8.0", "hypothesis>=6.0"]
+# `build` is required by tests/test_packaging.py — without it that test skips,
+# and the packaging regression it guards would ship unnoticed.
+dev = ["pytest>=8.0", "hypothesis>=6.0", "build>=1.0"]
 all = ["anthropic>=0.40", "instructor>=1.0", "requests>=2.31", "sentence-transformers>=2.0", "numpy>=1.24"]
 
 [project.scripts]
@@ -53,7 +55,10 @@ packages = ["mcp_redteam"]
 [tool.hatch.build.targets.sdist]
 include = ["mcp_redteam/", "rules/"]
 
-[tool.hatch.build.targets.wheel.shared-data]
+# Rules must live INSIDE the package: get_rules_dir() resolves them relative to
+# mcp_redteam/__file__. shared-data would install them under sys.prefix, where
+# the runtime never looks — the scanner would then silently find 0 code issues.
+[tool.hatch.build.targets.wheel.force-include]
 "rules" = "mcp_redteam/rules"
 
 [project.urls]

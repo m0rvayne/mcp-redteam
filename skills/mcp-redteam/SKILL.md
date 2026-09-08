@@ -39,7 +39,7 @@ Immediately after determining the mode and language, output the following banner
   █ █  █    █  █  █  █    █  █ █   █
   █  █ ████ ███   █  ████ █  █ █   █
   ─────────────────────────────────────
-     mcp-redteam v0.1.0 · m0rvayne
+     mcp-redteam v0.5.2 · m0rvayne
      {MODE} · Security · Health
 ```
 

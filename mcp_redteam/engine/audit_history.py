@@ -41,8 +41,29 @@ def _compact_finding(f: Finding) -> dict:
     }
 
 
-def save_run(result: ScanResult) -> Path:
-    """Save scan result to JSONL baseline. Returns path to baseline file."""
+def _description_hashes(descriptions: dict[str, str]) -> dict[str, str]:
+    """Hash tool descriptions for rug-pull comparison.
+
+    Only the digest is stored: descriptions can be long, and the baseline file
+    is append-only.
+    """
+    return {
+        name: hashlib.sha256((text or "").encode("utf-8")).hexdigest()[:16]
+        for name, text in descriptions.items()
+    }
+
+
+def save_run(
+    result: ScanResult, tool_descriptions: Optional[dict[str, str]] = None
+) -> Path:
+    """Save scan result to JSONL baseline. Returns path to baseline file.
+
+    Args:
+        result: the scan result to record.
+        tool_descriptions: {tool_name: description} when the scan had access to
+            them (remote scans). Stored as hashes so a later run can detect a
+            description that changed after approval — MRT016.
+    """
     target = result.metadata.target_path
     baseline_dir = get_baseline_dir()
     filepath = baseline_dir / f"{_target_hash(target)}.jsonl"
@@ -55,6 +76,9 @@ def save_run(result: ScanResult) -> Path:
         "total": result.total_findings,
         "risk_score": result.risk_score,
     }
+
+    if tool_descriptions:
+        entry["tool_hashes"] = _description_hashes(tool_descriptions)
 
     with open(filepath, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -132,3 +156,70 @@ def _rotate(filepath: Path, max_runs: int = AUDIT_HISTORY_RETENTION) -> None:
         return
     # Keep last max_runs lines
     filepath.write_text("\n".join(lines[-max_runs:]) + "\n", encoding="utf-8")
+
+
+def detect_description_changes(
+    target: str, descriptions: dict[str, str]
+) -> list["Finding"]:
+    """Detect tool descriptions that changed since the last recorded run (MRT016).
+
+    A rug pull is a server that ships a benign description, gets approved, then
+    swaps in instructions for the agent. Nothing in a single scan can catch it —
+    it is only visible as a diff across runs.
+
+    Compares against the most recent prior run that recorded hashes; returns []
+    on the first run, when no baseline has hashes, or when nothing changed.
+    """
+    from mcp_redteam.models import Finding, FindingCategory, Location, Severity
+
+    if not descriptions:
+        return []
+
+    baseline: Optional[dict[str, str]] = None
+    for run in reversed(load_history(target)):
+        hashes = run.get("tool_hashes")
+        if hashes:
+            baseline = hashes
+            break
+
+    if not baseline:
+        return []  # first run with descriptions — nothing to compare against
+
+    current = _description_hashes(descriptions)
+    findings: list[Finding] = []
+
+    for name, digest in sorted(current.items()):
+        previous = baseline.get(name)
+        if previous is None or previous == digest:
+            continue  # newly added tool, or unchanged
+        findings.append(
+            Finding(
+                id="MRT016",
+                rule_id="MRT016",
+                title=f"Tool description changed since last scan: '{name}'",
+                severity=Severity.HIGH,
+                category=FindingCategory.security,
+                description=(
+                    f"The description of tool '{name}' differs from the previously "
+                    "recorded baseline. A description that changes after the server "
+                    "was approved is the rug-pull pattern: review the new text for "
+                    "injected instructions before trusting this server again."
+                ),
+                evidence=(
+                    f"Tool: {name}\n"
+                    f"Baseline digest: {previous}\n"
+                    f"Current digest:  {digest}\n"
+                    f"Current description: {descriptions[name][:300]}"
+                ),
+                location=Location(file=target),
+                fix=(
+                    "Diff the description against the version you approved. If the "
+                    "change is unexpected, disconnect the server and contact its "
+                    "maintainer."
+                ),
+                confidence=1.0,
+                source="history",
+            )
+        )
+
+    return findings

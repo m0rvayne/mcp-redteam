@@ -4,6 +4,7 @@ import json
 import logging
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -19,13 +20,28 @@ def is_semgrep_available() -> bool:
 
 
 def get_rules_dir() -> Path:
-    """Get the path to our bundled semgrep rules."""
-    # Rules are in the project root /rules/ directory
-    # When installed via pip, they should be included in package data
+    """Locate the bundled semgrep rules directory.
+
+    Candidates are tried in order; every one is anchored to the package location
+    or sys.prefix, never to the CWD (VULN-03 — prevents rule substitution):
+
+    1. ``mcp_redteam/rules``            — installed wheel (force-included)
+    2. ``<repo root>/rules``            — editable install / git checkout
+    3. ``<sys.prefix>/mcp_redteam/rules`` — legacy shared-data wheels (<= 1.0.0)
+
+    Returns the first candidate that exists, else candidate 1 (caller reports
+    the miss).
+    """
     package_dir = Path(__file__).parent.parent
-    rules_dir = package_dir.parent / "rules"
-    # VULN-03 fix: no CWD fallback — prevents rule substitution attack
-    return rules_dir
+    candidates = [
+        package_dir / "rules",
+        package_dir.parent / "rules",
+        Path(sys.prefix) / "mcp_redteam" / "rules",
+    ]
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return candidates[0]
 
 
 def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Finding]:
@@ -46,7 +62,13 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
         if rules_dir is None:
             rules_dir = get_rules_dir()
 
-        if not rules_dir.exists():
+        if not rules_dir.is_dir():
+            logger.error(
+                "Semgrep rules not found at %s — code analysis skipped. "
+                "This usually means a broken install; reinstall with "
+                "'pip install --force-reinstall redteam-mcp'.",
+                rules_dir,
+            )
             return []
 
         # Run semgrep with JSON output

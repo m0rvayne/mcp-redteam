@@ -67,6 +67,7 @@ def scan(
         semgrep_available = False  # skip semgrep in quick mode
     if semgrep_available:
         console.print("[bold cyan]Phase 1:[/bold cyan] Semgrep analysis...")
+        _warn_if_rules_missing(console)
         semgrep_findings = run_semgrep(path)
         findings.extend(semgrep_findings)
         console.print(f"  {len(semgrep_findings)} code findings")
@@ -133,6 +134,21 @@ def scan(
         )
 
     _output_and_exit(result, format, output, fail_on, console)
+
+
+def _warn_if_rules_missing(console: Console) -> None:
+    """Surface a broken install loudly — a silent 0 findings is worse than an error."""
+    from mcp_redteam.engine.semgrep_runner import get_rules_dir
+
+    rules_dir = get_rules_dir()
+    if not rules_dir.is_dir():
+        console.print(
+            f"[bold red]  Semgrep rules not found[/bold red] at {rules_dir} — "
+            "no code rules will run."
+        )
+        console.print(
+            "  Broken install. Fix: [dim]pip install --force-reinstall redteam-mcp[/dim]"
+        )
 
 
 def _count_source_files(path: Path, cap: int = MAX_SOURCE_FILES) -> int:
@@ -242,6 +258,19 @@ def scan_remote(
 
     tool_count = metadata.get("tool_count", 0)
     console.print(f"tools found: {tool_count}")
+
+    # MRT016: a rug pull is invisible within one scan — compare descriptions
+    # against the recorded baseline before writing the new one.
+    from mcp_redteam.engine.audit_history import detect_description_changes, save_run
+
+    descriptions = metadata.get("descriptions") or {}
+    rug_pulls = detect_description_changes(url, descriptions)
+    if rug_pulls:
+        console.print(
+            f"[bold red]{len(rug_pulls)} tool description(s) changed since last scan[/bold red]"
+        )
+    findings.extend(rug_pulls)
+
     console.print(f"findings: {len(findings)}")
 
     # Build result
@@ -254,6 +283,8 @@ def scan_remote(
         ),
         findings=findings,
     )
+
+    save_run(result, tool_descriptions=descriptions)
 
     _output_and_exit(result, format, output, fail_on, console)
 
@@ -284,6 +315,7 @@ def badge(
     # Semgrep checks
     if is_semgrep_available():
         console.print("[bold cyan]Semgrep analysis...[/bold cyan]")
+        _warn_if_rules_missing(console)
         semgrep_findings = run_semgrep(path)
         findings.extend(semgrep_findings)
     else:

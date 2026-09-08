@@ -124,6 +124,9 @@ def scan_remote(url: str, token: Optional[str] = None) -> tuple[list, dict]:
             "url": url,
             "tool_count": len(tools),
             "tools": [t["name"] for t in tools],
+            # Returned so the caller can baseline them for rug-pull detection
+            # (MRT016) — a description swap is only visible across runs.
+            "descriptions": descriptions,
         }
 
         return findings, metadata
