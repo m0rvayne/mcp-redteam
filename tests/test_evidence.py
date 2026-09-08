@@ -114,3 +114,54 @@ def test_evidence_is_bounded(tmp_path):
     }]}
 
     assert len(_map_semgrep_results(data)[0].evidence) <= MAX_EVIDENCE_CHARS + 1
+
+
+def test_evidence_refuses_paths_outside_the_scan_target(tmp_path):
+    """Evidence paths come from semgrep's output, not from us — confine them.
+
+    This is the resolve() + containment check the scanner recommends to every
+    server it audits; its own evidence reader has to pass it too.
+    """
+    from mcp_redteam.engine.semgrep_runner import _map_semgrep_results
+
+    target = tmp_path / "project"
+    target.mkdir()
+    (target / "ok.py").write_text("inside = 1\n", encoding="utf-8")
+
+    outside = tmp_path / "secret.txt"
+    outside.write_text("TOP SECRET\n", encoding="utf-8")
+
+    def result(path):
+        return {"check_id": "x", "path": str(path),
+                "start": {"line": 1}, "end": {"line": 1},
+                "extra": {"lines": "requires login", "message": "m",
+                          "metadata": {"rule_id": "MRT001"}}}
+
+    findings = _map_semgrep_results(
+        {"results": [result(target / "ok.py"), result(outside)]},
+        target_root=target,
+    )
+
+    assert "inside = 1" in findings[0].evidence
+    assert findings[1].evidence == "", "read a file outside the scan target"
+    assert "TOP SECRET" not in findings[1].evidence
+
+
+def test_traversal_path_from_semgrep_output_is_contained(tmp_path):
+    """A ../ path in semgrep output must not escape the scan target."""
+    from mcp_redteam.engine.semgrep_runner import _map_semgrep_results
+
+    target = tmp_path / "project"
+    target.mkdir()
+    (tmp_path / "outside.py").write_text("leaked = 1\n", encoding="utf-8")
+
+    findings = _map_semgrep_results(
+        {"results": [{"check_id": "x", "path": str(target / ".." / "outside.py"),
+                      "start": {"line": 1}, "end": {"line": 1},
+                      "extra": {"lines": "requires login", "message": "m",
+                                "metadata": {"rule_id": "MRT001"}}}]},
+        target_root=target,
+    )
+
+    assert findings[0].evidence == ""
+    assert "leaked" not in findings[0].evidence

@@ -128,7 +128,7 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
             logger.error("Failed to parse semgrep JSON output")
             return []
 
-        return _map_semgrep_results(data)
+        return _map_semgrep_results(data, target_root=target_path)
     except Exception as e:
         logger.error("Semgrep scan failed: %s", e)
         return []
@@ -162,17 +162,41 @@ def _redact_secrets(text: str) -> str:
     return text
 
 
-def _read_source_lines(path: str, start: Optional[int], end: Optional[int]) -> str:
+def _read_source_lines(
+    path: str,
+    start: Optional[int],
+    end: Optional[int],
+    target_root: Optional[Path] = None,
+) -> str:
     """Read the flagged lines from disk.
 
     Semgrep only returns the matched source to authenticated users, so relying on
     its `extra.lines` leaves every finding without evidence. The location it
     reports is enough to recover the code ourselves.
+
+    The path comes from semgrep's output rather than from us, so it is
+    canonicalized and confined to the scan target — the same resolve() +
+    containment check this scanner tells everyone else to apply.
     """
     if not path or not start:
         return ""
     try:
-        with open(path, encoding="utf-8", errors="replace") as fh:
+        resolved = Path(path).resolve()
+    except (OSError, ValueError):
+        return ""
+
+    if target_root is not None:
+        try:
+            root = target_root.resolve()
+            root = root if root.is_dir() else root.parent
+            if not resolved.is_relative_to(root):
+                logger.warning("Refusing to read evidence outside scan target: %s", resolved)
+                return ""
+        except (OSError, ValueError):
+            return ""
+
+    try:
+        with resolved.open(encoding="utf-8", errors="replace") as fh:
             lines = fh.readlines()
     except OSError:
         return ""
@@ -185,7 +209,7 @@ def _read_source_lines(path: str, start: Optional[int], end: Optional[int]) -> s
     return _redact_secrets(snippet)
 
 
-def _evidence_for(match: dict) -> str:
+def _evidence_for(match: dict, target_root: Optional[Path] = None) -> str:
     """Best available evidence: semgrep's own lines, else the file itself."""
     lines = (match.get("extra", {}).get("lines") or "").strip()
     if lines and lines.lower() not in _REDACTED_MARKERS:
@@ -194,16 +218,17 @@ def _evidence_for(match: dict) -> str:
         match.get("path", ""),
         match.get("start", {}).get("line"),
         match.get("end", {}).get("line"),
+        target_root,
     )
 
 
-def _map_semgrep_results(data: dict) -> list[Finding]:
+def _map_semgrep_results(data: dict, target_root: Optional[Path] = None) -> list[Finding]:
     """Map semgrep JSON output to Finding objects."""
     findings = []
 
     for match in data.get("results", []):
         rule_id = _extract_rule_id(match)
-        evidence = _evidence_for(match)
+        evidence = _evidence_for(match, target_root)
         # Use severity from RULE_REGISTRY if available (more accurate than semgrep mapping)
         if rule_id in RULE_REGISTRY:
             severity = RULE_REGISTRY[rule_id].severity

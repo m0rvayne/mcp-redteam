@@ -20,6 +20,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   so its evidence line contains one by definition, and SARIF frequently lands in a
   shared Security tab. The prefix is kept so the credential type stays identifiable.
 
+- Evidence paths come from semgrep's output rather than from us, so they are canonicalized
+  and confined to the scan target — the same `resolve()` + containment check this scanner
+  recommends to every server it audits. Caught by running the scanner on its own diff.
+
 ### Added
 - `tests/test_evidence.py` — deliberately independent of whether semgrep is installed,
   because the bug is only visible to users who are *not* logged into semgrep.
