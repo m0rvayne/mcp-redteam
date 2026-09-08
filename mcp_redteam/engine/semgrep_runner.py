@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 import shutil
 import subprocess
 import sys
@@ -133,12 +134,76 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
         return []
 
 
+# Semgrep redacts `extra.lines` to this string for unauthenticated users, so the
+# evidence we would otherwise show is not the code — it is an advert.
+_REDACTED_MARKERS = {"requires login", "requires login."}
+
+MAX_EVIDENCE_LINES = 12
+MAX_EVIDENCE_CHARS = 2000
+
+# Evidence is read straight from source, so a hardcoded-secret finding would
+# otherwise print the secret into the report (and into SARIF, which often lands
+# in a shared Security tab). Mask the value, keep the shape.
+_SECRET_IN_SOURCE = [
+    re.compile(r"(sk-[a-zA-Z0-9_\-]{8})[a-zA-Z0-9_\-]{6,}"),
+    re.compile(r"(ghp_[a-zA-Z0-9]{4})[a-zA-Z0-9]{28,}"),
+    re.compile(r"(AKIA[0-9A-Z]{4})[0-9A-Z]{8,}"),
+    re.compile(
+        r"((?i:api[_-]?key|token|password|passwd|secret|bearer)"
+        r"\s*[=:]\s*[\"\'])([^\"\']{6,})"
+    ),
+]
+
+
+def _redact_secrets(text: str) -> str:
+    """Mask credential values in source evidence, preserving surrounding code."""
+    for rx in _SECRET_IN_SOURCE:
+        text = rx.sub(lambda m: m.group(1) + "\u2026REDACTED", text)
+    return text
+
+
+def _read_source_lines(path: str, start: Optional[int], end: Optional[int]) -> str:
+    """Read the flagged lines from disk.
+
+    Semgrep only returns the matched source to authenticated users, so relying on
+    its `extra.lines` leaves every finding without evidence. The location it
+    reports is enough to recover the code ourselves.
+    """
+    if not path or not start:
+        return ""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            lines = fh.readlines()
+    except OSError:
+        return ""
+
+    first = max(start - 1, 0)
+    last = min(end or start, first + MAX_EVIDENCE_LINES)
+    snippet = "".join(lines[first:last]).rstrip("\n")
+    if len(snippet) > MAX_EVIDENCE_CHARS:
+        snippet = snippet[:MAX_EVIDENCE_CHARS] + "\u2026"
+    return _redact_secrets(snippet)
+
+
+def _evidence_for(match: dict) -> str:
+    """Best available evidence: semgrep's own lines, else the file itself."""
+    lines = (match.get("extra", {}).get("lines") or "").strip()
+    if lines and lines.lower() not in _REDACTED_MARKERS:
+        return _redact_secrets(lines)
+    return _read_source_lines(
+        match.get("path", ""),
+        match.get("start", {}).get("line"),
+        match.get("end", {}).get("line"),
+    )
+
+
 def _map_semgrep_results(data: dict) -> list[Finding]:
     """Map semgrep JSON output to Finding objects."""
     findings = []
 
     for match in data.get("results", []):
         rule_id = _extract_rule_id(match)
+        evidence = _evidence_for(match)
         # Use severity from RULE_REGISTRY if available (more accurate than semgrep mapping)
         if rule_id in RULE_REGISTRY:
             severity = RULE_REGISTRY[rule_id].severity
@@ -153,13 +218,13 @@ def _map_semgrep_results(data: dict) -> list[Finding]:
             severity=severity,
             category=category,
             description=match.get("extra", {}).get("message", ""),
-            evidence=match.get("extra", {}).get("lines", ""),
+            evidence=evidence,
             location=Location(
                 file=match.get("path", ""),
                 line=match.get("start", {}).get("line"),
                 end_line=match.get("end", {}).get("line"),
                 column=match.get("start", {}).get("col"),
-                snippet=match.get("extra", {}).get("lines", ""),
+                snippet=evidence,
             ),
             confidence=1.0,  # Deterministic = 100% confidence
             source="semgrep",
