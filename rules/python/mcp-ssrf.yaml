@@ -63,22 +63,17 @@ rules:
         focus-metavariable: $URL
       - pattern: httpx.put($URL, ...)
         focus-metavariable: $URL
-      # Generic client sinks. $CLIENT must look like an HTTP client and the
-      # argument must not be a literal: `metadata.get("key")` is a dict lookup,
-      # not a request, and no real SSRF sink targets a hardcoded string.
+      # Generic client sinks: the receiver can be named anything, so do NOT
+      # filter on its name — that loses real SSRF (http_client, sess, c, ...).
+      # Discriminate on the argument instead: `metadata.get("key")` is a dict
+      # lookup, and no real SSRF sink targets a hardcoded string literal.
       - patterns:
           - pattern: $CLIENT.get($URL, ...)
           - pattern-not: $CLIENT.get("...", ...)
-          - metavariable-regex:
-              metavariable: $CLIENT
-              regex: "^(client|session|http|https|httpx|requests|aiohttp|urllib3|api|conn|connection|_client|_session|self)$"
           - focus-metavariable: $URL
       - patterns:
           - pattern: $CLIENT.post($URL, ...)
           - pattern-not: $CLIENT.post("...", ...)
-          - metavariable-regex:
-              metavariable: $CLIENT
-              regex: "^(client|session|http|https|httpx|requests|aiohttp|urllib3|api|conn|connection|_client|_session|self)$"
           - focus-metavariable: $URL
       - pattern: urllib.request.urlopen($URL, ...)
         focus-metavariable: $URL

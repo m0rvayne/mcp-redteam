@@ -67,3 +67,25 @@ def test_info_medium_detected(fixture_file, expected_rules):
     found_rules = {f.id for f in findings}
     for rule in expected_rules:
         assert rule in found_rules, f"Expected {rule} in {fixture_file}, got {found_rules}"
+
+
+def test_ssrf_detected_regardless_of_client_variable_name():
+    """Every SSRF in the fixture must be found, not just one of them.
+
+    Regression guard: narrowing MRT003 with a name allowlist on the receiver
+    cut detection from 8/8 to 3/8 while removing only 2 false positives. The
+    parametrized test above cannot catch that — it only asserts the rule fires
+    somewhere in the file. This one counts.
+    """
+    path = FIXTURES_DIR / "vulnerable" / "ssrf_client_names.py"
+    findings = run_semgrep(path, RULES_DIR)
+    ssrf_lines = {f.location.line for f in findings if f.id == "MRT003"}
+
+    expected = len([
+        line for line in path.read_text(encoding="utf-8").splitlines()
+        if ".get(url)" in line or ".post(url," in line
+    ])
+    assert len(ssrf_lines) == expected, (
+        f"detected {len(ssrf_lines)} of {expected} SSRF sinks — a client variable "
+        f"name must not determine whether SSRF is found. Found at lines: {sorted(ssrf_lines)}"
+    )
