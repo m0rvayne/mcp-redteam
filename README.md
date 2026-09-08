@@ -20,9 +20,15 @@ I build MCP connectors and AI automation for businesses. 70+ connectors deployed
 
 Went looking for something to audit this. Found mcp-scan — only reads tool descriptions, doesn't touch source code. Cisco's scanner — 78% false positives. Nothing that actually reads the server code and says "line 42, you have exec() with unsanitized input."
 
-Built my own. Ran it on 106 public MCP servers. 7 had remote code execution. One of them had 25K GitHub stars.
+Built my own. Ran it on 106 public MCP servers. 4 had confirmed remote code execution after manual review. The biggest had 25K GitHub stars.
 
 Open-sourced because if my connectors had these problems, so do yours.
+
+<div align="center">
+
+<img src="assets/demo.gif" alt="mcp-redteam scanning a vulnerable MCP server" width="800">
+
+</div>
 
 ---
 
@@ -45,7 +51,7 @@ Two modes of operation:
 | Self-security audit | Working | 10 vulnerabilities audited — 8 fixed, 1 mitigated, 1 accepted |
 | Claude Code plugin | Working | AI-driven deep audit with HTML report |
 | HTML report output | Working | `--format html` generates self-contained terminal-styled report |
-| 197 tests | Passing | Unit, security, stress, edge cases, Hypothesis fuzzing |
+| 217 tests | Passing | Unit, security, stress, edge cases, packaging, Hypothesis fuzzing |
 | Audit history | Working | JSONL baseline storage, cross-run comparison (new/confirmed/fixed) |
 
 ## What doesn't work yet
@@ -97,7 +103,7 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: m0rvayne/mcp-redteam@v0.5.1
+      - uses: m0rvayne/mcp-redteam@v0.5.2
         with:
           path: ./your-mcp-server
           fail-on: critical
@@ -188,7 +194,7 @@ Based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of 
 | Behavioral mismatch | No | No | **Yes (LLM layer)** |
 | SARIF output | No | No | **Yes** |
 | CI exit codes | Yes | No | **Yes** |
-| Self-tested | Unknown | Unknown | **197 tests, self-security audit** |
+| Self-tested | Unknown | Unknown | **217 tests, self-security audit** |
 | Cloud dependency | Invariant Labs API | Cisco API (optional) | **No — fully local in deterministic mode. LLM mode uses Anthropic API** |
 
 ### Why not just use mcp-scan?
@@ -244,16 +250,18 @@ Each scan saves a JSONL baseline to `~/.mcp-redteam/baselines/`. Subsequent runs
 
 ## Tests
 
-197 tests across 13 test files:
+217 tests across 15 test files:
 
 - **test_semgrep.py** — each vulnerable fixture detected, each benign fixture clean
-- **test_self_security.py** — 21 tests: our own code audited for vulnerabilities
+- **test_self_security.py** — 24 tests: our own code audited for vulnerabilities
 - **test_stress.py** — 1000/10000 findings, concurrent scans, unicode
 - **test_fuzzing.py** — Hypothesis property-based: any input, no crash
 - **test_edge_cases.py** — corrupt JSON, missing files, null bytes, timeouts
 - **test_models.py** + **test_formatters.py** — unit tests for core logic
-- **test_cli.py** — 11 tests: CLI argument parsing, output formats, exit codes
-- **test_config_scanner.py** — 13 tests: config health checks, scope conflicts, credential detection
+- **test_cli.py** — 17 tests: CLI argument parsing, output formats, exit codes
+- **test_config_scanner.py** — config health checks, scope conflicts, credential detection, scan scoping
+- **test_packaging.py** — builds a wheel and asserts the Semgrep rules ship where the runtime looks
+- **test_version_consistency.py** — every version declaration (package, plugin, skill banner, docs) stays in sync
 
 ## Current Limitations
 
@@ -273,6 +281,7 @@ The `docs/` folder is useful independently:
 - **[best-practices.md](docs/best-practices.md)** — MCP server security checklist
 - **[reference-server.md](docs/reference-server.md)** — secure server templates (Python + Node.js)
 - **[troubleshooting.md](docs/troubleshooting.md)** — common issues and fixes
+- **[research/scan-106-servers.md](docs/research/scan-106-servers.md)** — results of scanning 106 public MCP servers: 4 confirmed RCE, disclosure outcomes, what static analysis misses
 
 ## References
 

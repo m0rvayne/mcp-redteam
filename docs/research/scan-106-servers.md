@@ -52,12 +52,15 @@ func: (code) => new Function(code)()  // browser MAIN world
 
 ## Responsible disclosure
 
-We reported two findings before publishing:
+We reported two findings before publishing. Both were closed as `not_planned`:
 
-| Server | Issue | Status |
-|--------|-------|--------|
-| [serena #1569](https://github.com/oraios/serena/issues/1569) | shell=True with unsanitized LLM input | Open, confirmed |
-| [mcp-use #1718](https://github.com/mcp-use/mcp-use/issues/1718) | exec() sandbox bypass via asyncio | Open, confirmed |
+| Server | Issue | Reported | Outcome |
+|--------|-------|----------|---------|
+| [serena #1569](https://github.com/oraios/serena/issues/1569) | shell=True with unsanitized LLM input | 2026-06-11 | Closed same day as `not_planned` — "`shell=True` is necessary; this is intentional. The arguments for the executions do not come from user inputs." |
+| [mcp-use #1718](https://github.com/mcp-use/mcp-use/issues/1718) | exec() sandbox bypass via asyncio | 2026-06-11 | Closed 2026-08-23 as `not_planned`, without a reply |
+
+Neither is fixed. Both servers are still shipping the behavior described above, so treat the
+table at the top of this post as current, not historical.
 
 We also reported ha-mcp (3.3K stars) but after deeper review found their `python_sandbox.py` has proper AST validation, dunder-attribute blocking, and method whitelisting. We closed the issue with an apology — that's what honest scanning looks like. Not every `exec()` is a vulnerability.
 
@@ -184,4 +187,12 @@ Built this in a week by orchestrating AI agents — same approach [Karpathy desc
 
 ---
 
-*Scan performed with redteam-mcp v0.2.0. 106 local servers + 1 remote (246 tools). Static analysis + embedding detection. Responsible disclosure sent to affected maintainers before publication.*
+*Scan performed with redteam-mcp v0.2.0 in June 2026. 106 local servers + 1 remote (246 tools).
+Static analysis + embedding detection. Responsible disclosure sent to affected maintainers before
+publication; disclosure outcomes above were re-checked before this post went out.*
+
+*The ~40% false positive rate above is what v0.2.0 produced on this corpus. Rule precision has
+since been tuned over three rounds — on a separate set of 15 production servers, 15,248 initial
+findings came down to 90, all manually confirmed. That is a different measurement on a different
+corpus, not a restatement of the 40% figure, and this scan has not been re-run on the current
+rules.*
