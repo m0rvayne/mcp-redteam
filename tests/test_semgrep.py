@@ -43,6 +43,7 @@ def test_vulnerable_detected(fixture_file, expected_rules):
     "benign/echo_server.py",
     "benign/safe_server.js",
     "benign/config_paths.py",
+    "benign/url_param_dict_get.py",
 ])
 def test_benign_no_critical(fixture_file):
     """Benign fixtures must not trigger CRITICAL or HIGH findings."""

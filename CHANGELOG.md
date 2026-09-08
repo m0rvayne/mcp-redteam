@@ -32,6 +32,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   current models reject sampling parameters. `max_tokens` raised 4000 → 16000 so a long
   findings array cannot truncate into unparseable JSON and vanish.
 - `smithery.yaml` advertised `fail-on: medium|low`, which the CLI silently ignores.
+- **MRT003 (SSRF) false positive, found by dogfooding.** The generic `$CLIENT.get($URL, ...)`
+  sink matched any `.get()` on any object, so a plain `dict.get("key")` inside a function that
+  happened to take a `url` parameter was reported as SSRF — a very common shape in MCP servers.
+  The generic sinks now require an HTTP-client-looking receiver and reject literal arguments.
+  Removed 2 false positives from this project's own `cli.py`; the vulnerable SSRF fixture is
+  still detected. New benign fixture `url_param_dict_get.py` locks the regression.
 
 ### Added
 - **MRT016 (Rug Pull Risk) is now implemented.** It was in `RULE_REGISTRY` but nothing ever
