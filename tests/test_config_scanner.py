@@ -260,3 +260,74 @@ def test_no_dangerous_settings(tmp_path):
     findings = _check_dangerous_settings(configs)
     dangerous = [f for f in findings if f.id in ("MRT013", "MRT014")]
     assert len(dangerous) == 0
+
+
+# ---------------------------------------------------------------------------
+# Config collection scoping
+# ---------------------------------------------------------------------------
+
+
+def test_collect_configs_skips_home_sweep_when_disabled(monkeypatch):
+    """discover_home=False must not shell out to `find` at all."""
+    from mcp_redteam.engine import config_scanner
+
+    calls = []
+
+    def fake_run(cmd, *args, **kwargs):
+        calls.append(cmd)
+        raise FileNotFoundError("blocked")
+
+    monkeypatch.setattr(config_scanner.subprocess, "run", fake_run)
+    config_scanner._collect_configs(discover_home=False)
+
+    assert not any(c and c[0] == "find" for c in calls), (
+        "home sweep ran despite discover_home=False"
+    )
+
+
+def test_collect_configs_runs_home_sweep_by_default(monkeypatch):
+    """The sweep still runs by default — scope-conflict detection needs it."""
+    from mcp_redteam.engine import config_scanner
+
+    calls = []
+
+    def fake_run(cmd, *args, **kwargs):
+        calls.append(cmd)
+        raise FileNotFoundError("blocked")
+
+    monkeypatch.setattr(config_scanner.subprocess, "run", fake_run)
+    config_scanner._collect_configs()
+
+    assert any(c and c[0] == "find" for c in calls), "home sweep did not run"
+
+
+def test_content_checks_ignore_swept_configs(monkeypatch, tmp_path):
+    """A stray .mcp.json found by the sweep must not produce content findings.
+
+    Credentials in an unrelated project's config are not a finding about the
+    target being scanned — only scope conflicts are.
+    """
+    from mcp_redteam.engine import config_scanner
+
+    stray = tmp_path / "unrelated-project" / ".mcp.json"
+    stray.parent.mkdir(parents=True)
+    stray.write_text('{"mcpServers": {"other": {"command": "npx", "args": ["some-pkg"],'
+                     ' "env": {"API_KEY": "sk-aaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}}}')
+
+    def fake_run(cmd, *args, **kwargs):
+        if cmd and cmd[0] == "find":
+            class R:
+                returncode = 0
+                stdout = str(stray) + "\n"
+            return R()
+        raise FileNotFoundError("no claude cli")
+
+    monkeypatch.setattr(config_scanner.subprocess, "run", fake_run)
+    monkeypatch.setattr(config_scanner, "_KNOWN_CONFIG_PATHS", [])
+
+    findings = config_scanner.scan_config()
+
+    stray_findings = [f for f in findings if f.location and str(stray) in f.location.file]
+    assert not [f for f in stray_findings if f.id in ("MRT011", "MRT012", "MRT013", "MRT014")], (
+        f"content checks leaked findings from a swept config: {stray_findings}"
+    )

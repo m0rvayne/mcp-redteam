@@ -76,18 +76,23 @@ def scan_config(project_dir: Optional[str] = None, target_server: Optional[str] 
     try:
         findings: list[Finding] = []
 
-        configs = _collect_configs(project_dir=project_dir)
+        # Every config anywhere under $HOME — needed to see a server defined in
+        # two scopes at once.
+        all_configs = _collect_configs(project_dir=project_dir)
+        # Only the configs that actually govern this scan. Content checks run
+        # against these, so scanning project A never reports project B's keys.
+        primary_configs = _collect_configs(project_dir=project_dir, discover_home=False)
 
-        scope_findings = _check_scope_conflicts(configs)
+        scope_findings = _check_scope_conflicts(all_configs)
         if target_server:
             scope_findings = [
                 f for f in scope_findings
                 if target_server.lower() in f.title.lower()
             ]
         findings.extend(scope_findings)
-        findings.extend(_check_credential_exposure(configs))
-        findings.extend(_check_supply_chain(configs))
-        findings.extend(_check_dangerous_settings(configs))
+        findings.extend(_check_credential_exposure(primary_configs))
+        findings.extend(_check_supply_chain(primary_configs))
+        findings.extend(_check_dangerous_settings(primary_configs))
         findings.extend(_check_dead_servers())
 
         return findings
@@ -101,8 +106,18 @@ def scan_config(project_dir: Optional[str] = None, target_server: Optional[str] 
 # ---------------------------------------------------------------------------
 
 
-def _collect_configs(project_dir: Optional[str] = None) -> dict[str, dict]:
-    """Collect all MCP config files from known locations.
+def _collect_configs(
+    project_dir: Optional[str] = None, discover_home: bool = True
+) -> dict[str, dict]:
+    """Collect MCP config files.
+
+    Args:
+        project_dir: Optional project directory to look for .mcp.json.
+        discover_home: When True, also sweep $HOME for stray .mcp.json files.
+            That sweep exists to find scope conflicts across projects, so its
+            results feed conflict detection only — running the content checks
+            over it would report the user's unrelated personal configs as
+            findings about whatever target they happen to be scanning.
 
     Returns:
         dict mapping absolute path (str) -> parsed JSON content.
@@ -118,6 +133,9 @@ def _collect_configs(project_dir: Optional[str] = None) -> dict[str, dict]:
     for p in paths:
         resolved = p.expanduser().resolve()
         _try_load(resolved, configs)
+
+    if not discover_home:
+        return configs
 
     # Discover orphaned .mcp.json files under $HOME (max depth 4)
     try:

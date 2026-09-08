@@ -22,9 +22,9 @@ I build 70+ MCP connectors for clients. Some started acting up.
 
 Went looking for a security scanner. Found nothing that reads source code.
 
-So I built one. Scanned 106 public MCP servers. 7 had RCE. One had 25K GitHub stars.
+So I built one. Scanned 106 public MCP servers. 4 had confirmed RCE. The biggest had 25K GitHub stars.
 
-Open-sourced today: mcp-redteam v0.5.1 🧵
+Open-sourced today: mcp-redteam v0.5.2 🧵
 
 ### Tweet 2 (the problem)
 
@@ -71,8 +71,8 @@ test_self_security.py — the test file that audits the auditor.
 
 ### Tweet 6 (stats)
 
-v0.5.1:
-- 197 tests (test:code ratio 1.02)
+v0.5.2:
+- 217 tests (test:code ratio 1.02)
 - 25 Semgrep rules
 - 55 embedding poisoning patterns
 - 4 output formats (terminal, SARIF, JSON, HTML)
@@ -121,7 +121,7 @@ We ran the scanner on its own codebase. Found 10 vulnerabilities, fixed 8, docum
 
 **What it found in the wild:**
 
-Scanned 106 public MCP servers. 7 had remote code execution via shell injection or eval. Real findings that description-only scanners cannot detect: Trello API keys committed in .env, Instagram session cookies stored in plaintext, AppleScript injection via unescaped clipboard input, Google OAuth tokens with 644 permissions.
+Scanned 106 public MCP servers. 4 had confirmed remote code execution via shell injection or eval. Real findings that description-only scanners cannot detect: Trello API keys committed in .env, Instagram session cookies stored in plaintext, AppleScript injection via unescaped clipboard input, Google OAuth tokens with 644 permissions.
 
 **Comparison with existing tools:**
 
@@ -132,7 +132,7 @@ Scanned 106 public MCP servers. 7 had remote code execution via shell injection 
 | SARIF output | No | No | Yes |
 | Cloud dependency | Invariant Labs API | Cisco API (optional) | None (deterministic mode) |
 
-197 tests. MIT licensed. Rules based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of Bits, Palo Alto Unit 42, and OX Security.
+217 tests. MIT licensed. Rules based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of Bits, Palo Alto Unit 42, and OX Security.
 
 GitHub: https://github.com/m0rvayne/mcp-redteam
 
@@ -170,9 +170,9 @@ No API key needed for deterministic mode. 25 Semgrep rules, SARIF output for Git
 - Session cookies stored in plaintext with 644 permissions
 - Config issues: dead servers still consuming resources, scope conflicts where project config silently overrides user config
 
-**Stats:** 197 tests, 25 rules covering Python + JS/TS, 4 output formats, audit history with cross-run comparison.
+**Stats:** 217 tests, 25 rules covering Python + JS/TS, 4 output formats, audit history with cross-run comparison.
 
-Ran it on 106 public MCP servers. 7 had remote code execution. One had 25K GitHub stars.
+Ran it on 106 public MCP servers. 4 had confirmed remote code execution. The biggest had 25K GitHub stars.
 
 GitHub: https://github.com/m0rvayne/mcp-redteam
 
@@ -182,7 +182,7 @@ Looking for beta testers with production MCP setups. What servers are you runnin
 
 ### r/cybersecurity
 
-**Title:** Scanned 106 MCP servers for vulnerabilities. 7 had RCE. Open-sourced the scanner.
+**Title:** Scanned 106 MCP servers for vulnerabilities. 4 had RCE. Open-sourced the scanner.
 
 **Body:**
 
@@ -192,8 +192,8 @@ I maintain 70+ MCP connectors. When I went looking for a security scanner, exist
 
 **Findings from scanning 106 public servers:**
 
-- 7 servers had remote code execution (shell injection, eval with user input)
-- One server with 25K GitHub stars had RCE
+- 4 servers had confirmed remote code execution (shell injection, eval with user input)
+- The largest, at 25K GitHub stars, had RCE
 - Multiple servers had API keys committed in .env files
 - Several stored session tokens with world-readable permissions (644)
 - AppleScript injection via unescaped input in macOS-native servers
@@ -206,7 +206,7 @@ Also checks MCP configuration health: dead servers, scope conflicts (same server
 
 **Output:** SARIF for GitHub Security tab, JSON for CI pipelines, HTML reports, terminal tables with risk scores. GitHub Action available for automated scanning on push/PR.
 
-**Self-audit:** We ran the scanner on its own codebase. Found 10 vulnerabilities, fixed 8, documented 2 with mitigations. 197 tests including a dedicated test_self_security.py that continuously audits the auditor.
+**Self-audit:** We ran the scanner on its own codebase. Found 10 vulnerabilities, fixed 8, documented 2 with mitigations. 217 tests including a dedicated test_self_security.py that continuously audits the auditor.
 
 Rules are based on 48+ CVEs, OWASP MCP Top 10, and published research from Trail of Bits, Palo Alto Unit 42, OX Security, and Invariant Labs.
 
@@ -235,9 +235,9 @@ I built mcp-redteam to close this gap. It is an open-source security scanner tha
 
 3. **Configuration health.** Beyond code analysis, it audits your MCP configuration: dead servers consuming resources, scope conflicts where project configs silently override user settings, credentials in git-tracked config files, unpinned packages creating supply chain risk.
 
-Results from scanning 106 public MCP servers: 7 had remote code execution vulnerabilities. One had 25,000 GitHub stars.
+Results from scanning 106 public MCP servers: 4 had confirmed remote code execution vulnerabilities. The largest had 25,000 GitHub stars.
 
-We practice what we build: the scanner audits its own codebase with 197 tests, including a dedicated self-security test suite.
+We practice what we build: the scanner audits its own codebase with 217 tests, including a dedicated self-security test suite.
 
 MIT licensed. Available on PyPI: `pip install redteam-mcp`
 
@@ -261,7 +261,7 @@ MCP (Model Context Protocol) is how AI models connect to tools. It is growing fa
 
 I built mcp-redteam -- an open-source scanner that reads MCP server source code (not just tool descriptions) and traces vulnerability paths using Semgrep taint tracking.
 
-Scanned 106 public servers. 7 had remote code execution. One had 25K GitHub stars.
+Scanned 106 public servers. 4 had confirmed remote code execution. The largest had 25K GitHub stars.
 
 **What it detects:**
 - Shell injection, path traversal, SSRF, eval injection
@@ -269,7 +269,7 @@ Scanned 106 public servers. 7 had remote code execution. One had 25K GitHub star
 - Config health: dead servers, scope conflicts, supply chain risks
 - Behavioral mismatches (tool says one thing, code does another)
 
-**Key stats:** 25 Semgrep rules, 197 tests, SARIF output for GitHub Security tab, zero cloud dependencies in deterministic mode.
+**Key stats:** 25 Semgrep rules, 217 tests, SARIF output for GitHub Security tab, zero cloud dependencies in deterministic mode.
 
 Full writeup coming soon. In the meantime:
 
@@ -289,11 +289,11 @@ I maintain 70+ MCP connectors. Went looking for a security scanner, found that e
 
 25 Semgrep taint-tracking rules trace user input to dangerous sinks (exec, open, httpx.get, eval) in Python and JS/TS. Also checks MCP config health: dead servers, scope conflicts, credential exposure, unpinned packages.
 
-Scanned 106 public servers. 7 had RCE. Self-audited: found 10 vulnerabilities in our own code, fixed 8, documented 2.
+Scanned 106 public servers. 4 had confirmed RCE. Self-audited: found 10 vulnerabilities in our own code, fixed 8, documented 2.
 
 SARIF output for GitHub Security tab. GitHub Action for CI/CD. Zero cloud dependencies in deterministic mode.
 
-197 tests. MIT licensed.
+217 tests. MIT licensed.
 
 https://github.com/m0rvayne/mcp-redteam
 
@@ -317,10 +317,10 @@ All claims in this content are sourced from the README:
 
 - [x] 70+ connectors deployed -- README intro paragraph
 - [x] 106 public servers scanned -- README intro paragraph
-- [x] 7 had RCE -- README intro paragraph ("7 had remote code execution")
+- [x] 4 confirmed RCE -- README intro paragraph and docs/research/scan-106-servers.md
 - [x] 25K stars server -- README intro paragraph
 - [x] 25 Semgrep rules -- README "What it checks" section
-- [x] 197 tests -- README "Tests" section
+- [x] 217 tests -- README "Tests" section
 - [x] 10 vulnerabilities self-audited, 8 fixed -- README feature table ("10 vulnerabilities audited -- 8 fixed, 1 mitigated, 1 accepted")
 - [x] SARIF output -- README feature table
 - [x] 4 output formats -- README (terminal, SARIF, JSON, HTML)
@@ -332,4 +332,4 @@ All claims in this content are sourced from the README:
 - [x] GitHub Action available -- README CI/CD section
 - [x] mcp-scan comparison (descriptions only) -- README "Why not just use mcp-scan?"
 
-**Note on Tweet 1:** Changed from "4 had RCE" to "7 had RCE" to match README. The README says "7 had remote code execution."
+**Note on Tweet 1:** Use 4, not 7. 4 is the number that survived manual review (docs/research/scan-106-servers.md): two flagged servers were by-design risk, one was retracted. The README was briefly out of step with the research and has been corrected.

@@ -355,6 +355,53 @@ class TestAnalyzeWithLlm:
         prompt_content = call_args.kwargs["messages"][0]["content"]
         assert "Compare each tool" in prompt_content
 
+    def test_request_omits_sampling_params(self, monkeypatch):
+        """No temperature/top_p: current models reject sampling params with a 400."""
+        monkeypatch.delenv("MCP_REDTEAM_MODEL", raising=False)
+        mock_content = MagicMock()
+        mock_content.text = "[]"
+        mock_response = MagicMock()
+        mock_response.content = [mock_content]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+
+        _analyze_with_llm(mock_client, "code", "")
+
+        kwargs = mock_client.messages.create.call_args.kwargs
+        assert "temperature" not in kwargs
+        assert "top_p" not in kwargs
+        assert "top_k" not in kwargs
+
+    def test_default_model_used_when_env_unset(self, monkeypatch):
+        """Falls back to DEFAULT_MODEL, not a hardcoded stale id."""
+        from mcp_redteam.llm.analyzer import DEFAULT_MODEL
+
+        monkeypatch.delenv("MCP_REDTEAM_MODEL", raising=False)
+        mock_content = MagicMock()
+        mock_content.text = "[]"
+        mock_response = MagicMock()
+        mock_response.content = [mock_content]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+
+        _analyze_with_llm(mock_client, "code", "")
+
+        assert mock_client.messages.create.call_args.kwargs["model"] == DEFAULT_MODEL
+
+    def test_model_env_override_respected(self, monkeypatch):
+        """MCP_REDTEAM_MODEL overrides the default."""
+        monkeypatch.setenv("MCP_REDTEAM_MODEL", "claude-haiku-4-5")
+        mock_content = MagicMock()
+        mock_content.text = "[]"
+        mock_response = MagicMock()
+        mock_response.content = [mock_content]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+
+        _analyze_with_llm(mock_client, "code", "")
+
+        assert mock_client.messages.create.call_args.kwargs["model"] == "claude-haiku-4-5"
+
     def test_analyze_no_descriptions_instruction(self):
         """When descriptions_block is empty, prompt focuses on hidden ops."""
         mock_content = MagicMock()

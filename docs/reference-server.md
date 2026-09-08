@@ -1,13 +1,13 @@
-# Эталонный MCP-сервер (Python)
+# Reference MCP Server (Python)
 
-**Версия:** 1.0
-**Последнее обновление:** 7 июня 2026
+**Version:** 1.0
+**Last updated:** June 7, 2026
 
-Этот файл — шаблон идеального MCP-сервера со всеми best practices. Копируй и адаптируй.
+A template for a well-built MCP server with every best practice applied. Copy it and adapt.
 
 ---
 
-## Минимальный эталон (Raw MCP SDK)
+## Minimal Reference (Raw MCP SDK)
 
 ```python
 """
@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
 ---
 
-## Минимальный эталон (FastMCP)
+## Minimal Reference (FastMCP)
 
 ```python
 """
@@ -293,7 +293,7 @@ async def download(url: str, filename: str = "download") -> str:
 
 ---
 
-## Эталон Node.js
+## Node.js Reference
 
 ```typescript
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -326,7 +326,7 @@ await server.connect(transport);
 
 ---
 
-## Анти-паттерны (НЕ делать)
+## Anti-Patterns (Do NOT Do This)
 
 ```python
 # 1. NEVER: print to stdout

@@ -13,6 +13,10 @@ from mcp_redteam.models import Finding, Severity, FindingCategory, Location
 logger = logging.getLogger(__name__)
 
 
+# Default analysis model. Override per-run with MCP_REDTEAM_MODEL — e.g.
+# `MCP_REDTEAM_MODEL=claude-haiku-4-5` to trade depth for cost on large targets.
+DEFAULT_MODEL = "claude-opus-5"
+
 # Supported source file extensions
 _SOURCE_EXTENSIONS = {".py", ".ts", ".js", ".mjs", ".mts", ".jsx", ".tsx"}
 
@@ -238,13 +242,15 @@ def _analyze_with_llm(
         descriptions_instruction=descriptions_instruction,
     )
 
-    model = os.environ.get("MCP_REDTEAM_MODEL", "claude-sonnet-4-6")
+    model = os.environ.get("MCP_REDTEAM_MODEL", DEFAULT_MODEL)
 
     try:
+        # No temperature: sampling parameters are rejected (400) on current
+        # models. max_tokens is generous because a truncated JSON array parses
+        # to nothing — a vulnerable server would silently report 0 findings.
         response = client.messages.create(
             model=model,
-            max_tokens=4000,
-            temperature=0,
+            max_tokens=16000,
             messages=[{"role": "user", "content": prompt}],
         )
     except Exception as e:

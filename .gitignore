@@ -18,3 +18,5 @@ dist/
 build/
 *.egg-info/
 .pytest_cache/
+.hypothesis/
+.ruff_cache/

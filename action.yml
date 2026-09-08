@@ -50,13 +50,23 @@ runs:
         if [ -n "${{ inputs.fail-on }}" ]; then
           ARGS="$ARGS --fail-on ${{ inputs.fail-on }}"
         fi
-        mcp-redteam $ARGS || true
+
+        # Record the exit code instead of discarding it: `|| true` here would
+        # make --fail-on a no-op. The failure is raised in a later step so the
+        # SARIF still gets uploaded first.
+        set +e
+        mcp-redteam $ARGS
+        SCAN_EXIT=$?
+        set -e
+        echo "exit-code=$SCAN_EXIT" >> $GITHUB_OUTPUT
 
         if [ -f results.sarif ]; then
           FINDINGS=$(python3 -c "import json; d=json.load(open('results.sarif')); print(len(d.get('runs',[{}])[0].get('results',[])))")
           echo "findings-count=$FINDINGS" >> $GITHUB_OUTPUT
           RISK=$(python3 -c "import json; d=json.load(open('results.sarif')); print(min(100, sum(25 if r.get('level')=='error' else 5 if r.get('level')=='warning' else 1 for r in d['runs'][0]['results'])))" 2>/dev/null || echo "0")
           echo "risk-score=$RISK" >> $GITHUB_OUTPUT
+        elif [ "$SCAN_EXIT" -ne 0 ]; then
+          echo "::error::mcp-redteam exited $SCAN_EXIT and produced no SARIF file"
         fi
 
     - name: Upload SARIF
@@ -65,3 +75,22 @@ runs:
       with:
         sarif_file: results.sarif
       continue-on-error: true
+
+    - name: Enforce fail-on threshold
+      if: always()
+      shell: bash
+      run: |
+        EXIT="${{ steps.scan.outputs.exit-code }}"
+        if [ -z "$EXIT" ]; then
+          echo "::error::The scan step did not report an exit code — it never ran to completion."
+          exit 1
+        fi
+        if [ "$EXIT" = "0" ]; then
+          exit 0
+        fi
+        if [ "$EXIT" = "1" ]; then
+          echo "::error::Findings at or above '${{ inputs.fail-on }}' severity — failing the build."
+          exit 1
+        fi
+        echo "::error::mcp-redteam failed to run (exit $EXIT)."
+        exit 1

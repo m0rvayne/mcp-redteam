@@ -7,7 +7,7 @@ Tuesday and Wednesday historically perform best for security/devtool posts.
 
 ## Variant A: The Personal Story Angle
 
-**Title:** Show HN: I audit MCP servers for clients. 7 of 106 had RCE. So I open-sourced the tool
+**Title:** Show HN: I audit MCP servers for clients. 4 of 106 had RCE. So I open-sourced the tool
 
 **Body:**
 
@@ -21,7 +21,7 @@ So I built mcp-redteam. It has two modes:
 
 2. **Claude Code plugin** -- reads source code, maps cross-server attack chains, generates HTML reports with fix suggestions. Uses the CLAUDE.md file as a structured audit playbook.
 
-Ran it on 106 public MCP servers. 7 had remote code execution -- subprocess with shell=True and unsanitized input, eval() on user parameters, AppleScript injection via unescaped strings. One of those servers had 25K GitHub stars.
+Ran it on 106 public MCP servers. 4 had confirmed remote code execution -- subprocess with shell=True and unsanitized input, eval() on user parameters, AppleScript injection via unescaped strings. The largest of those had 25K GitHub stars.
 
 Real findings that description-only scanners cannot detect:
 - Trello API keys in .env committed to git
@@ -29,13 +29,13 @@ Real findings that description-only scanners cannot detect:
 - Google OAuth tokens with excessive permissions
 - AppleScript injection via unescaped clipboard input
 
-The tool audits itself too: 197 tests including self-security checks, Hypothesis fuzzing, and a documented self-audit (10 vulnerabilities found, 8 fixed, 1 mitigated, 1 accepted with rationale). Validated on 15 production servers with 90 findings -- false positive rate reduced by 99.4% compared to initial untuned rules.
+The tool audits itself too: 217 tests including self-security checks, Hypothesis fuzzing, and a documented self-audit (10 vulnerabilities found, 8 fixed, 1 mitigated, 1 accepted with rationale). Validated on 15 production servers: initial untuned rules produced 15,248 findings, three rounds of rule tuning brought that to 90, and all 90 were manually confirmed real.
 
 Limitations I should be honest about: LLM mode requires Anthropic API key. Plugin needs Claude Code. Code analysis only covers Python and JS/TS -- no Go, Rust, or Java MCP servers yet.
 
 https://github.com/m0rvayne/mcp-redteam
 
-**Expected engagement:** 150-300 points. Personal narrative + concrete data (7/106 RCE) + self-honesty about limitations plays well on HN. Security tool posts with real findings consistently outperform those with only feature lists. Risk: commenters will ask about the 25K-star server name.
+**Expected engagement:** 150-300 points. Personal narrative + concrete data (4/106 confirmed RCE) + self-honesty about limitations plays well on HN. Security tool posts with real findings consistently outperform those with only feature lists. Risk: commenters will ask about the 25K-star server name.
 
 ---
 
@@ -63,9 +63,9 @@ How it compares to what exists:
 
 What mcp-redteam does NOT do (yet): no runtime proxy, no dependency CVE scanning, no Go/Rust/Java support, no OWASP/MITRE mapping.
 
-I tested it on 106 public MCP servers. 7 had remote code execution in their source code that no description scanner would catch.
+I tested it on 106 public MCP servers. 4 had confirmed remote code execution in their source code that no description scanner would catch.
 
-197 tests. Self-security audit included. MIT license. Validated on 15 production servers with 90 findings (99.4% FP reduction).
+217 tests. Self-security audit included. MIT license. Validated on 15 production servers: 15,248 raw findings tuned down to 90, all manually confirmed.
 
 https://github.com/m0rvayne/mcp-redteam
 
@@ -75,14 +75,14 @@ https://github.com/m0rvayne/mcp-redteam
 
 ## Variant C: The Data Angle
 
-**Title:** Show HN: We scanned 106 MCP servers -- 7 had remote code execution
+**Title:** Show HN: We scanned 106 MCP servers -- 4 had remote code execution
 
 **Body:**
 
 MCP (Model Context Protocol) is how AI agents talk to tools. There are now thousands of MCP servers on GitHub. We scanned 106 of the most popular ones for security issues.
 
 Results:
-- 7 servers had remote code execution (subprocess with shell=True + user input, eval() on parameters, AppleScript injection)
+- 4 servers had confirmed remote code execution (subprocess with shell=True + user input, eval() on parameters, AppleScript injection)
 - One of those had 25,000+ GitHub stars
 - Multiple servers had API keys committed to git, session cookies stored world-readable (644), OAuth tokens with excessive scopes
 - None of these were detectable by scanning tool descriptions alone -- they all lived in the source code
@@ -95,7 +95,7 @@ The tool: mcp-redteam. Two modes:
 
 The methodology: Semgrep taint tracking for code-level issues + 6 config health checks (dead servers, scope conflicts, credential exposure in config files, unpinned packages, CVE-2025-59536 / CVE-2026-21852 detection).
 
-We eat our own dogfood: 197 tests including a self-security audit. Found 10 vulnerabilities in our own code. Fixed 8, mitigated 1, accepted 1 with documented rationale. Validated on 15 production servers with 90 findings -- false positive rate reduced from 15,248 to 90 findings (99.4% reduction).
+We eat our own dogfood: 217 tests including a self-security audit. Found 10 vulnerabilities in our own code. Fixed 8, mitigated 1, accepted 1 with documented rationale. Validated on 15 production servers: 15,248 raw findings from untuned rules, down to 90 after three rounds of tuning, each of the 90 manually confirmed real.
 
 What we don't cover yet: Go/Rust/Java servers, runtime monitoring, dependency CVE scanning.
 
@@ -155,7 +155,7 @@ The LLM mode is best thought of as an additional layer on top of deterministic s
 
 Fair. It's a solo project today. Here's what mitigates that:
 
-- 197 tests with CI (GitHub Actions), so regressions are caught automatically
+- 217 tests with CI (GitHub Actions), so regressions are caught automatically
 - Semgrep rules are plain YAML -- anyone can read, modify, or fork them
 - The CLAUDE.md plugin is a structured prompt, not compiled code -- fully auditable
 - MIT license, no telemetry, no cloud dependency in deterministic mode
@@ -167,7 +167,7 @@ I'd welcome contributors. The rules/ directory is the easiest place to start -- 
 
 ### 5. "What's the false positive rate?"
 
-We validated on 15 production MCP servers. Initial untuned rules produced 15,248 findings. After iterating on rule precision -- adding sanitizers, tightening taint sources, excluding safe patterns -- we got to 90 findings. That's a 99.4% FP reduction.
+We validated on 15 production MCP servers. Initial untuned rules produced 15,248 findings. After iterating on rule precision -- adding sanitizers, tightening taint sources, excluding safe patterns -- we got to 90, and reviewed every one of those by hand: all 90 were real. So that is a 99.4% cut in finding volume, and a residual FP rate near zero on that corpus. It is not a measured FP rate for the tool in general -- we have no standardized benchmark to claim that.
 
 The remaining false positives are mostly: (a) SSRF rule triggers on URLs built from config rather than user input, (b) path traversal rule triggers on open() where validation exists but isn't recognized as a sanitizer, (c) stdout pollution flags print() in __main__ blocks. These are documented in the README.
 

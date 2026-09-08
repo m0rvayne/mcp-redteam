@@ -19,8 +19,8 @@ Response time: 48 hours for acknowledgment, 7 days for initial assessment.
 
 | Version | Supported |
 |---------|-----------|
-| 0.4.x   | Yes       |
-| < 0.4   | No        |
+| 0.5.x   | Yes       |
+| < 0.5   | No        |
 
 ## Self-Security Audit
 
@@ -28,7 +28,7 @@ mcp-redteam audits itself. We maintain a self-security test suite in
 `tests/test_self_security.py` that documents and tests for every
 vulnerability found in our own code.
 
-### Current Status (v0.4.0)
+### Current Status (v0.5.2)
 
 | ID | Status | Description |
 |----|--------|-------------|
