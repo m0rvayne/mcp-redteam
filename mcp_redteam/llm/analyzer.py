@@ -117,11 +117,16 @@ def _read_source_files(path: Path, max_chars: int = MAX_SOURCE_CHARS) -> str:
     collected: list[str] = []
     total_chars = 0
 
-    if path.is_file():
-        files = [path]
-    elif path.is_dir():
+    try:
+        root = path.resolve()
+    except (OSError, ValueError):
+        return ""
+
+    if root.is_file():
+        files = [root]
+    elif root.is_dir():
         files = sorted(
-            f for f in path.rglob("*")
+            f for f in root.rglob("*")
             if f.is_file()
             and f.suffix in _SOURCE_EXTENSIONS
             and "node_modules" not in f.parts
@@ -132,17 +137,25 @@ def _read_source_files(path: Path, max_chars: int = MAX_SOURCE_CHARS) -> str:
     else:
         return ""
 
+    # This content is about to be sent to a third party, so confine it to the
+    # scan target: rglob() follows symlinked directories, which can otherwise
+    # walk out of the tree the user asked to scan.
+    base = root if root.is_dir() else root.parent
     for file in files:
         try:
-            content = file.read_text(encoding="utf-8", errors="replace")
-        except (OSError, PermissionError):
+            resolved = file.resolve()
+            if not resolved.is_relative_to(base):
+                logger.warning("Skipping file outside scan target: %s", resolved)
+                continue
+            content = resolved.read_text(encoding="utf-8", errors="replace")
+        except (OSError, PermissionError, ValueError):
             continue
 
         # Build header
         try:
-            relative = file.relative_to(path)
+            relative = resolved.relative_to(base)
         except ValueError:
-            relative = file.name
+            relative = resolved.name
         header = f"\n# === FILE: {relative} ===\n"
 
         chunk = header + content
