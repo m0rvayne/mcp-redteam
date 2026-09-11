@@ -1,0 +1,2098 @@
+{
+ "generated": "2026-09-11",
+ "scanner_version": "0.5.2",
+ "method": {
+  "selection": "GitHub repo search, topics mcp-server / mcp-servers; language Python, TypeScript or JavaScript; not archived; repository under 200 MB; MCP SDKs and frameworks themselves excluded.",
+  "verification": "After cloning, a repository counts as an MCP server only if it both declares an MCP SDK dependency in a manifest file and registers a tool or server in source. A topic label alone is not evidence — half the labelled repositories failed this check.",
+  "scan": "mcp-redteam run_semgrep() with the bundled rules, per repository, at the pinned commit.",
+  "note": "The 106-server scan published in docs/research/scan-106-servers.md used a corpus that was never recorded and cannot be reproduced. This manifest exists so these numbers can be."
+ },
+ "totals": {
+  "repositories_cloned": 112,
+  "verified_mcp_servers": 56,
+  "rejected": 56,
+  "lines_of_code": 3863281,
+  "findings": 10894,
+  "severity_as_reported": {
+   "HIGH": 1653,
+   "MEDIUM": 681,
+   "INFO": 8471,
+   "CRITICAL": 89
+  },
+  "severity_before_surface_demotion": {
+   "HIGH": 3780,
+   "MEDIUM": 1190,
+   "CRITICAL": 262,
+   "INFO": 5662
+  },
+  "by_rule": {
+   "MRT006": 5662,
+   "MRT002": 3395,
+   "MRT007": 398,
+   "MRT003": 316,
+   "MRT001": 249,
+   "MRT024": 234,
+   "MRT023": 202,
+   "MRT021": 153,
+   "MRT028": 113,
+   "MRT027": 53,
+   "MRT026": 47,
+   "MRT018": 39,
+   "MRT008": 11,
+   "MRT004": 8,
+   "MRT025": 5,
+   "MRT005": 5,
+   "MRT022": 3,
+   "MRT020": 1
+  }
+ },
+ "servers": [
+  {
+   "repo": "0x4m4/hexstrike-ai",
+   "commit": "d689933ff579d839c676c82b231f8e98326c5f04",
+   "stars": 11660,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 22759,
+   "findings": 162,
+   "on_tool_surface": 150,
+   "off_tool_surface": 12,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 2,
+    "MEDIUM": 148,
+    "INFO": 12
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 10,
+    "MEDIUM": 151,
+    "CRITICAL": 1
+   },
+   "by_rule": {
+    "MRT003": 5,
+    "MRT007": 148,
+    "MRT023": 2,
+    "MRT001": 1,
+    "MRT002": 5,
+    "MRT018": 1
+   }
+  },
+  {
+   "repo": "1Panel-dev/MaxKB",
+   "commit": "0bb81c71156b218fbad2155da2961cfacf9d8e45",
+   "stars": 22739,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "AgentDeskAI/browser-tools-mcp",
+   "commit": "99acee8d02f12f6e64dc7f33608bb34427ce90c7",
+   "stars": 7314,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "Agents365-ai/drawio-skill",
+   "commit": "65f5fa0505f43d8af104d00c6087cb02c8c0e2f3",
+   "stars": 9138,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "ArcadeAI/arcade-mcp",
+   "commit": "f360a9654e9abf7ee062c1aa22c82180a6f17df7",
+   "stars": 1022,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "AuraFriday/Fusion-360-MCP-Server",
+   "commit": "515e9010c2c41b2caf6faafd4ec6721270436691",
+   "stars": 123,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "BrowserMCP/mcp",
+   "commit": "9db12f2b4f61294f0bc11708986abc47db539d6c",
+   "stars": 7062,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 640,
+   "findings": 3,
+   "on_tool_surface": 1,
+   "off_tool_surface": 2,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "MEDIUM": 1,
+    "INFO": 2
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 1,
+    "CRITICAL": 2
+   },
+   "by_rule": {
+    "MRT026": 1,
+    "MRT001": 2
+   }
+  },
+  {
+   "repo": "ChromeDevTools/chrome-devtools-mcp",
+   "commit": "314a5fabfec56f3067c8bd754a945e9e76bea4fb",
+   "stars": 51338,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 106942,
+   "findings": 99,
+   "on_tool_surface": 12,
+   "off_tool_surface": 87,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 87,
+    "HIGH": 11,
+    "MEDIUM": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 40,
+    "INFO": 54,
+    "CRITICAL": 3,
+    "MEDIUM": 2
+   },
+   "by_rule": {
+    "MRT002": 38,
+    "MRT006": 54,
+    "MRT001": 3,
+    "MRT024": 1,
+    "MRT003": 2,
+    "MRT028": 1
+   }
+  },
+  {
+   "repo": "Coolver/home-assistant-vibecode-agent",
+   "commit": "64bf9c06d6deb6e957a7cb33abf54a1f17833ead",
+   "stars": 622,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "D4Vinci/Scrapling",
+   "commit": "28c329671485daaea89a40fb34a7db8622e51468",
+   "stars": 79314,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "FlorianBruniaux/claude-code-ultimate-guide",
+   "commit": "a23f77f0903dc9ecddc26a4f0fb56a033c94f0c6",
+   "stars": 5921,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "HelpCode-ai/anythingmcp",
+   "commit": "c953a12e029ced01965a1f60c57edfb21ec7cbd0",
+   "stars": 195,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "HexSleeves/tailscale-mcp",
+   "commit": "0dc2346fbfeb40cbdcb39d8da4d5d7d1c331cda5",
+   "stars": 127,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 6369,
+   "findings": 12,
+   "on_tool_surface": 6,
+   "off_tool_surface": 6,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 6,
+    "MEDIUM": 3,
+    "HIGH": 2,
+    "CRITICAL": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 3,
+    "INFO": 5,
+    "MEDIUM": 3,
+    "CRITICAL": 1
+   },
+   "by_rule": {
+    "MRT002": 1,
+    "MRT006": 5,
+    "MRT024": 2,
+    "MRT003": 2,
+    "MRT001": 1,
+    "MRT028": 1
+   }
+  },
+  {
+   "repo": "IlyaGusev/academia_mcp",
+   "commit": "8f1fa0497c6a764644b9ec5947fbf06d4669baa9",
+   "stars": 91,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "JoeanAmier/XHS-Downloader",
+   "commit": "ac74fb83b88e62fb53ad4174afadc74ab446a985",
+   "stars": 12633,
+   "language": "JavaScript",
+   "verified_mcp_server": true,
+   "loc": 13811,
+   "findings": 34,
+   "on_tool_surface": 11,
+   "off_tool_surface": 23,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 24,
+    "MEDIUM": 2,
+    "HIGH": 8
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 16,
+    "HIGH": 11,
+    "MEDIUM": 6,
+    "CRITICAL": 1
+   },
+   "by_rule": {
+    "MRT006": 16,
+    "MRT002": 6,
+    "MRT023": 2,
+    "MRT001": 1,
+    "MRT018": 1,
+    "MRT007": 2,
+    "MRT003": 4,
+    "MRT024": 1,
+    "MRT027": 1
+   }
+  },
+  {
+   "repo": "Klavis-AI/klavis",
+   "commit": "45c9f7da83d1cf43f7429b96f9c8e8153542ea1e",
+   "stars": 5800,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "KnockOutEZ/wigolo",
+   "commit": "c6ad4479da7706945b479786df0121e3cce1ece6",
+   "stars": 5186,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 229417,
+   "findings": 279,
+   "on_tool_surface": 89,
+   "off_tool_surface": 190,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 193,
+    "MEDIUM": 10,
+    "HIGH": 62,
+    "CRITICAL": 14
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 20,
+    "HIGH": 167,
+    "INFO": 72,
+    "CRITICAL": 20
+   },
+   "by_rule": {
+    "MRT024": 8,
+    "MRT003": 41,
+    "MRT002": 124,
+    "MRT006": 72,
+    "MRT028": 8,
+    "MRT001": 20,
+    "MRT021": 1,
+    "MRT023": 2,
+    "MRT027": 2,
+    "MRT026": 1
+   }
+  },
+  {
+   "repo": "Lyellr88/marm-memory",
+   "commit": "0b4013de9e854fccd211d7fdb8e35ff6596ec4a1",
+   "stars": 350,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "MCP-Manager/MCP-Checklists",
+   "commit": "0323ce0fc4685320d4ea449d0168ea3555e6d222",
+   "stars": 195,
+   "language": "JavaScript",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "MinishLab/semble",
+   "commit": "a772a37d558c11bffbd99b18141705df3f2982be",
+   "stars": 6025,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 11613,
+   "findings": 74,
+   "on_tool_surface": 14,
+   "off_tool_surface": 60,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 60,
+    "HIGH": 14
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 26,
+    "HIGH": 46,
+    "MEDIUM": 2
+   },
+   "by_rule": {
+    "MRT006": 26,
+    "MRT002": 46,
+    "MRT023": 2
+   }
+  },
+  {
+   "repo": "OpenByteInc/QuantDinger",
+   "commit": "bcbd2a5ac78d6cb872f4cd0b27677bf669d3473e",
+   "stars": 11417,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "Portkey-AI/gateway",
+   "commit": "669825cbe89ee51569918b8f78a9db486fd69dd4",
+   "stars": 12932,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "SecretiveShell/MCP-Bridge",
+   "commit": "df1dcc58cac7bf2a4ead5f5630eb970f42999c57",
+   "stars": 930,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 2379,
+   "findings": 3,
+   "on_tool_surface": 3,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 2,
+    "MEDIUM": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 2,
+    "MEDIUM": 1
+   },
+   "by_rule": {
+    "MRT002": 1,
+    "MRT022": 1,
+    "MRT003": 1
+   }
+  },
+  {
+   "repo": "TabularisDB/tabularis",
+   "commit": "d47069339e29a6e676cc60a25b3d95fc75142213",
+   "stars": 4822,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "TheLunarCompany/lunar",
+   "commit": "1d9006d174f0f4748625a5af20e42319c1680cb1",
+   "stars": 491,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "Vexa-ai/vexa",
+   "commit": "59e2c413a53479125b70b712ade12ab470d55512",
+   "stars": 2761,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "Zipstack/unstract",
+   "commit": "7b9a7a27855551922ab2a0186d2f2b4baf3b4b6b",
+   "stars": 7226,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "antvis/mcp-server-chart",
+   "commit": "e2a8fb7c185e17c75c067817ff1a2acfddf49aa1",
+   "stars": 4352,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 3364,
+   "findings": 2,
+   "on_tool_surface": 1,
+   "off_tool_surface": 1,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 1,
+    "MEDIUM": 1
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 1,
+    "MEDIUM": 1
+   },
+   "by_rule": {
+    "MRT006": 1,
+    "MRT026": 1
+   }
+  },
+  {
+   "repo": "apify/apify-mcp-server",
+   "commit": "351dd274d73b8e436b21b777b3e44b304d9e22a3",
+   "stars": 6356,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 51417,
+   "findings": 73,
+   "on_tool_surface": 12,
+   "off_tool_surface": 61,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 61,
+    "MEDIUM": 8,
+    "HIGH": 4
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 12,
+    "INFO": 50,
+    "CRITICAL": 2,
+    "MEDIUM": 9
+   },
+   "by_rule": {
+    "MRT002": 9,
+    "MRT006": 50,
+    "MRT001": 2,
+    "MRT028": 1,
+    "MRT024": 2,
+    "MRT003": 3,
+    "MRT026": 6
+   }
+  },
+  {
+   "repo": "assafelovic/gpt-researcher",
+   "commit": "6f998577d547b1e54ec662dac63583aa11e3b84b",
+   "stars": 29353,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "atilaahmettaner/tradingview-mcp",
+   "commit": "a1e54b07e5c21b375363607920f297c5adfbeed4",
+   "stars": 4388,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 15351,
+   "findings": 31,
+   "on_tool_surface": 19,
+   "off_tool_surface": 12,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 12,
+    "HIGH": 4,
+    "MEDIUM": 15
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 12,
+    "HIGH": 4,
+    "MEDIUM": 15
+   },
+   "by_rule": {
+    "MRT006": 12,
+    "MRT003": 1,
+    "MRT002": 2,
+    "MRT021": 4,
+    "MRT008": 1,
+    "MRT007": 11
+   }
+  },
+  {
+   "repo": "awslabs/mcp",
+   "commit": "7e198489a04c4ce3b862054a05a32af6df81e4bb",
+   "stars": 9675,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "blazickjp/arxiv-mcp-server",
+   "commit": "42419c18376ef5559a38fa7f1895938ad2b84e38",
+   "stars": 3121,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 18824,
+   "findings": 31,
+   "on_tool_surface": 30,
+   "off_tool_surface": 1,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "MEDIUM": 2,
+    "INFO": 2,
+    "HIGH": 27
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 2,
+    "INFO": 2,
+    "HIGH": 27
+   },
+   "by_rule": {
+    "MRT023": 2,
+    "MRT006": 2,
+    "MRT002": 26,
+    "MRT003": 1
+   }
+  },
+  {
+   "repo": "bsab/france-mcp-servers",
+   "commit": "2b5476b610d8d4bfa5aa7b391b5f21a1d65bc9f3",
+   "stars": 81,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "bytebase/dbhub",
+   "commit": "cca7b67d9eee944855419016243cc46a8f3a7e6d",
+   "stars": 3477,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "bytedance/UI-TARS-desktop",
+   "commit": "c2ad42e3eb9b27830db41a3e6f51ca7179d9b168",
+   "stars": 38901,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "chatmcp/mcpso",
+   "commit": "ddcdb9d54576baec7ab9929af3bf7d5d71497498",
+   "stars": 2105,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "cporter202/agentic-ai-apis",
+   "commit": "c1d8af96a8f6fd278f6072156cba94c805629dac",
+   "stars": 560,
+   "language": "JavaScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "danhilse/notion_mcp",
+   "commit": "fec49b95f9a1eb7d27db9433af0b61bc2354f398",
+   "stars": 209,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 290,
+   "findings": 2,
+   "on_tool_surface": 2,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "MEDIUM": 2
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 2
+   },
+   "by_rule": {
+    "MRT021": 1,
+    "MRT018": 1
+   }
+  },
+  {
+   "repo": "davepoon/buildwithclaude",
+   "commit": "363b4deb3b823a3ac79739d3cbd2955a8e9ee441",
+   "stars": 3429,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "deedy5/ddgs",
+   "commit": "70a5635510fb8d5b15d5ba6ceced6a67e212149b",
+   "stars": 2941,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "dkmaker/mcp-rest-api",
+   "commit": "765ecdfd9d125816686eff2651d3f2631b8c9be1",
+   "stars": 101,
+   "language": "JavaScript",
+   "verified_mcp_server": true,
+   "loc": 601,
+   "findings": 4,
+   "on_tool_surface": 1,
+   "off_tool_surface": 3,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 3,
+    "HIGH": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 2,
+    "INFO": 2
+   },
+   "by_rule": {
+    "MRT002": 2,
+    "MRT006": 2
+   }
+  },
+  {
+   "repo": "drfccv/mcp-server-12306",
+   "commit": "e775873d5bd35f0ba7729eef6d5ef4a333d360ab",
+   "stars": 379,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 1851,
+   "findings": 19,
+   "on_tool_surface": 1,
+   "off_tool_surface": 18,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 18,
+    "HIGH": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 3,
+    "INFO": 15,
+    "MEDIUM": 1
+   },
+   "by_rule": {
+    "MRT003": 1,
+    "MRT002": 2,
+    "MRT006": 15,
+    "MRT018": 1
+   }
+  },
+  {
+   "repo": "ergut/mcp-bigquery-server",
+   "commit": "a298b53cd21da769985be244a491e1412ea47a44",
+   "stars": 148,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 2019,
+   "findings": 7,
+   "on_tool_surface": 5,
+   "off_tool_surface": 2,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 4,
+    "MEDIUM": 1,
+    "INFO": 2
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 6,
+    "MEDIUM": 1
+   },
+   "by_rule": {
+    "MRT002": 6,
+    "MRT026": 1
+   }
+  },
+  {
+   "repo": "erpipe-org/mcp-odoo",
+   "commit": "76ec136e0c89c414811a12629eb2903d2dc27357",
+   "stars": 404,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 29173,
+   "findings": 65,
+   "on_tool_surface": 63,
+   "off_tool_surface": 2,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 49,
+    "HIGH": 7,
+    "MEDIUM": 9
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 48,
+    "HIGH": 8,
+    "MEDIUM": 9
+   },
+   "by_rule": {
+    "MRT006": 48,
+    "MRT002": 7,
+    "MRT008": 1,
+    "MRT021": 3,
+    "MRT007": 6
+   }
+  },
+  {
+   "repo": "eval-sys/mcpmark",
+   "commit": "cd45b7f57923b9b3985467f5139927575f83141c",
+   "stars": 460,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "evalstate/fast-agent",
+   "commit": "866fb536bc41d8987be7a683e8a287a8d88bc302",
+   "stars": 3916,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 471001,
+   "findings": 535,
+   "on_tool_surface": 209,
+   "off_tool_surface": 326,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 350,
+    "MEDIUM": 26,
+    "HIGH": 156,
+    "CRITICAL": 3
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 82,
+    "INFO": 180,
+    "HIGH": 267,
+    "CRITICAL": 6
+   },
+   "by_rule": {
+    "MRT023": 59,
+    "MRT006": 180,
+    "MRT018": 9,
+    "MRT002": 260,
+    "MRT021": 13,
+    "MRT001": 5,
+    "MRT004": 1,
+    "MRT008": 3,
+    "MRT003": 4,
+    "MRT007": 1
+   }
+  },
+  {
+   "repo": "exa-labs/exa-mcp-server",
+   "commit": "15ffb50519e719dc791cdc750ce5ed1934c0a1ed",
+   "stars": 4987,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 8560,
+   "findings": 16,
+   "on_tool_surface": 0,
+   "off_tool_surface": 16,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 16
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 15,
+    "HIGH": 1
+   },
+   "by_rule": {
+    "MRT006": 15,
+    "MRT002": 1
+   }
+  },
+  {
+   "repo": "firecrawl/firecrawl-mcp-server",
+   "commit": "4db752ee00910e17ec73f28b40796f0830fe86da",
+   "stars": 7417,
+   "language": "JavaScript",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "firerpa/lamda",
+   "commit": "fd675997269fc9e6e9e5c52aee6a35db065ce7b6",
+   "stars": 8288,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "getsentry/XcodeBuildMCP",
+   "commit": "e6ef59b49b44012c824f0a0de261c96142e37390",
+   "stars": 6351,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 148099,
+   "findings": 178,
+   "on_tool_surface": 36,
+   "off_tool_surface": 142,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 145,
+    "CRITICAL": 4,
+    "MEDIUM": 5,
+    "HIGH": 24
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 99,
+    "INFO": 52,
+    "MEDIUM": 14,
+    "CRITICAL": 13
+   },
+   "by_rule": {
+    "MRT002": 97,
+    "MRT006": 52,
+    "MRT028": 13,
+    "MRT001": 13,
+    "MRT003": 2,
+    "MRT026": 1
+   }
+  },
+  {
+   "repo": "golf-mcp/golf",
+   "commit": "ac0e02d7171cae609e2964079490c8a1619694c9",
+   "stars": 839,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 19093,
+   "findings": 27,
+   "on_tool_surface": 22,
+   "off_tool_surface": 5,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "MEDIUM": 2,
+    "INFO": 6,
+    "HIGH": 17,
+    "CRITICAL": 2
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 3,
+    "HIGH": 21,
+    "CRITICAL": 2,
+    "INFO": 1
+   },
+   "by_rule": {
+    "MRT021": 2,
+    "MRT002": 21,
+    "MRT023": 1,
+    "MRT004": 2,
+    "MRT006": 1
+   }
+  },
+  {
+   "repo": "google-gemini/gemini-cli",
+   "commit": "85aca163f6c73ac6ce380b5447359146b8adcae4",
+   "stars": 106868,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 681640,
+   "findings": 1111,
+   "on_tool_surface": 188,
+   "off_tool_surface": 923,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 925,
+    "MEDIUM": 24,
+    "HIGH": 146,
+    "CRITICAL": 16
+   },
+   "severity_before_surface_demotion": {
+    "CRITICAL": 101,
+    "INFO": 610,
+    "HIGH": 345,
+    "MEDIUM": 55
+   },
+   "by_rule": {
+    "MRT001": 100,
+    "MRT006": 610,
+    "MRT002": 318,
+    "MRT028": 31,
+    "MRT027": 9,
+    "MRT003": 15,
+    "MRT024": 16,
+    "MRT025": 3,
+    "MRT005": 1,
+    "MRT018": 1,
+    "MRT021": 3,
+    "MRT023": 4
+   }
+  },
+  {
+   "repo": "haris-musa/excel-mcp-server",
+   "commit": "f51340ecd5778952405044b203d3a2d4c8a46833",
+   "stars": 4162,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 3234,
+   "findings": 2,
+   "on_tool_surface": 2,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 2
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 2
+   },
+   "by_rule": {
+    "MRT002": 2
+   }
+  },
+  {
+   "repo": "hashgraph-online/standards-sdk",
+   "commit": "98825d12fd9c41b6547899852cde9f166cb6e08d",
+   "stars": 1193,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "heymrun/heym",
+   "commit": "654ec66d55408569e8fa876c9e274133e1c983f4",
+   "stars": 1126,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "hridaya423/conductor-tasks",
+   "commit": "97055b3e4f7d42ce314cb4e3a5d57ba84c16ad43",
+   "stars": 74,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 11841,
+   "findings": 63,
+   "on_tool_surface": 50,
+   "off_tool_surface": 13,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 31,
+    "HIGH": 29,
+    "MEDIUM": 3
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 30,
+    "HIGH": 30,
+    "MEDIUM": 3
+   },
+   "by_rule": {
+    "MRT006": 30,
+    "MRT002": 27,
+    "MRT024": 3,
+    "MRT003": 3
+   }
+  },
+  {
+   "repo": "huangjunsen0406/py-xiaozhi",
+   "commit": "577e1c9802a899ee558e6fa4f6fed8c4c64cecee",
+   "stars": 3465,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "ihor-sokoliuk/mcp-searxng",
+   "commit": "4ada34fd4e98556743887bdbda1d152673be5481",
+   "stars": 1208,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 31670,
+   "findings": 14,
+   "on_tool_surface": 1,
+   "off_tool_surface": 13,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 13,
+    "HIGH": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 8,
+    "INFO": 4,
+    "CRITICAL": 2
+   },
+   "by_rule": {
+    "MRT002": 8,
+    "MRT006": 4,
+    "MRT001": 2
+   }
+  },
+  {
+   "repo": "ivnvxd/mcp-server-odoo",
+   "commit": "4c287099cedf23f2ad9f4635ee6a7451c89c5997",
+   "stars": 384,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 37200,
+   "findings": 13,
+   "on_tool_surface": 13,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 1,
+    "MEDIUM": 12
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 1,
+    "MEDIUM": 12
+   },
+   "by_rule": {
+    "MRT003": 1,
+    "MRT007": 12
+   }
+  },
+  {
+   "repo": "jgravelle/jcodemunch-mcp",
+   "commit": "9945695129b5f44bd4ab67d13e0e43a7d31ebd42",
+   "stars": 2672,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 287079,
+   "findings": 887,
+   "on_tool_surface": 371,
+   "off_tool_surface": 516,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 688,
+    "HIGH": 154,
+    "MEDIUM": 44,
+    "CRITICAL": 1
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 414,
+    "MEDIUM": 86,
+    "HIGH": 384,
+    "CRITICAL": 3
+   },
+   "by_rule": {
+    "MRT006": 414,
+    "MRT023": 49,
+    "MRT002": 382,
+    "MRT018": 2,
+    "MRT003": 2,
+    "MRT021": 33,
+    "MRT005": 1,
+    "MRT001": 2,
+    "MRT028": 2
+   }
+  },
+  {
+   "repo": "jztan/redmine-mcp-server",
+   "commit": "04c2c412acdbedcc8fd43d2ed4a15fa8da438667",
+   "stars": 76,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 55336,
+   "findings": 265,
+   "on_tool_surface": 27,
+   "off_tool_surface": 238,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 238,
+    "MEDIUM": 25,
+    "HIGH": 2
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 217,
+    "MEDIUM": 29,
+    "HIGH": 19
+   },
+   "by_rule": {
+    "MRT006": 217,
+    "MRT023": 4,
+    "MRT002": 19,
+    "MRT021": 2,
+    "MRT007": 23
+   }
+  },
+  {
+   "repo": "kangise/ecommerce-ai-skills",
+   "commit": "822189de63ad94dc7abde99a085c85e0d7f581fe",
+   "stars": 66,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "mcp-router/mcp-router",
+   "commit": "2df1bf4f264b2e5597f7ea049ce2ad09b0256eb8",
+   "stars": 2137,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 38318,
+   "findings": 141,
+   "on_tool_surface": 25,
+   "off_tool_surface": 116,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 1,
+    "MEDIUM": 10,
+    "INFO": 130
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 28,
+    "MEDIUM": 14,
+    "INFO": 99
+   },
+   "by_rule": {
+    "MRT003": 6,
+    "MRT026": 10,
+    "MRT006": 99,
+    "MRT002": 16,
+    "MRT024": 4,
+    "MRT027": 6
+   }
+  },
+  {
+   "repo": "mcp-use/mcp-use",
+   "commit": "08bbc7a1dcd84bbafbae7f19633ae25fa5e0774b",
+   "stars": 10589,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "metatool-ai/metamcp",
+   "commit": "ff4ff2de9d25453c52dcc7be32680b30700a6012",
+   "stars": 2652,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 51707,
+   "findings": 108,
+   "on_tool_surface": 35,
+   "off_tool_surface": 73,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 85,
+    "MEDIUM": 12,
+    "HIGH": 10,
+    "CRITICAL": 1
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 75,
+    "MEDIUM": 15,
+    "HIGH": 17,
+    "CRITICAL": 1
+   },
+   "by_rule": {
+    "MRT006": 75,
+    "MRT024": 11,
+    "MRT003": 11,
+    "MRT026": 3,
+    "MRT001": 1,
+    "MRT028": 1,
+    "MRT027": 4,
+    "MRT002": 2
+   }
+  },
+  {
+   "repo": "microsoft/flint-chart",
+   "commit": "34ef4516554b323a740a426bd1a1e6ba31ee8245",
+   "stars": 4157,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "milisp/mcp-linker",
+   "commit": "59cd4ebcf614fa3616be5057bf52cb720abe06e6",
+   "stars": 323,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "mims-harvard/ToolUniverse",
+   "commit": "752188d0f4daf9005d96edca0b7c8f0dfc7f10c6",
+   "stars": 1676,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "mksglu/context-mode",
+   "commit": "95b4e08bf07c5e16690d8669643f9d1b825d51be",
+   "stars": 21199,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 143153,
+   "findings": 386,
+   "on_tool_surface": 229,
+   "off_tool_surface": 157,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 181,
+    "HIGH": 178,
+    "MEDIUM": 5,
+    "CRITICAL": 22
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 274,
+    "INFO": 77,
+    "MEDIUM": 10,
+    "CRITICAL": 25
+   },
+   "by_rule": {
+    "MRT002": 270,
+    "MRT006": 77,
+    "MRT026": 3,
+    "MRT001": 25,
+    "MRT027": 1,
+    "MRT003": 1,
+    "MRT025": 2,
+    "MRT028": 6,
+    "MRT024": 1
+   }
+  },
+  {
+   "repo": "modelscope/FunASR",
+   "commit": "130e57a6fdb9661e2b0cc59199fb31ef81f2b9e9",
+   "stars": 20230,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "mrexodia/ida-pro-mcp",
+   "commit": "3c97954d74d70063ba076411570a33118a9d691f",
+   "stars": 11905,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 34932,
+   "findings": 171,
+   "on_tool_surface": 3,
+   "off_tool_surface": 168,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 168,
+    "HIGH": 2,
+    "MEDIUM": 1
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 121,
+    "HIGH": 15,
+    "MEDIUM": 30,
+    "CRITICAL": 5
+   },
+   "by_rule": {
+    "MRT006": 121,
+    "MRT002": 13,
+    "MRT023": 3,
+    "MRT003": 2,
+    "MRT007": 27,
+    "MRT004": 5
+   }
+  },
+  {
+   "repo": "nitrocloudofficial/nitrostack",
+   "commit": "1e3dc9bb1792a354f05aec11a1eb04af75c50728",
+   "stars": 2498,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "node9-ai/node9-proxy",
+   "commit": "ca3539b8941bad843ff12fe5c4a12124702816b0",
+   "stars": 210,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 135401,
+   "findings": 1300,
+   "on_tool_surface": 0,
+   "off_tool_surface": 0,
+   "unclassified": 1300,
+   "severity_as_reported": {
+    "MEDIUM": 17,
+    "HIGH": 220,
+    "INFO": 1047,
+    "CRITICAL": 16
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 17,
+    "HIGH": 220,
+    "INFO": 1047,
+    "CRITICAL": 16
+   },
+   "by_rule": {
+    "MRT024": 3,
+    "MRT003": 10,
+    "MRT002": 202,
+    "MRT006": 1047,
+    "MRT027": 8,
+    "MRT005": 1,
+    "MRT001": 15,
+    "MRT028": 14
+   }
+  },
+  {
+   "repo": "nukeop/nuclear",
+   "commit": "590383262b0c5a86dfcf9c9526d9760b0db7c2bb",
+   "stars": 18410,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "omnuron/omniclaw",
+   "commit": "66826172a3520a28ba414cae274d18f3d6ef0edd",
+   "stars": 576,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 46041,
+   "findings": 106,
+   "on_tool_surface": 81,
+   "off_tool_surface": 25,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 76,
+    "MEDIUM": 14,
+    "HIGH": 16
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 34,
+    "INFO": 53,
+    "HIGH": 19
+   },
+   "by_rule": {
+    "MRT018": 2,
+    "MRT006": 53,
+    "MRT023": 3,
+    "MRT021": 29,
+    "MRT002": 14,
+    "MRT003": 1,
+    "MRT008": 4
+   }
+  },
+  {
+   "repo": "open-webui/mcpo",
+   "commit": "788ff92e5288a899a743a252edd5748f4ad4ab1f",
+   "stars": 4365,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 2774,
+   "findings": 5,
+   "on_tool_surface": 3,
+   "off_tool_surface": 2,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 3,
+    "HIGH": 2
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 3,
+    "HIGH": 2
+   },
+   "by_rule": {
+    "MRT006": 3,
+    "MRT002": 2
+   }
+  },
+  {
+   "repo": "openops-cloud/openops",
+   "commit": "3019428b0c85329da0aacd6ff19231828b5ec3fb",
+   "stars": 1065,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "openstatusHQ/openstatus",
+   "commit": "56811f46eaf2b5f9b483814854acf7494c16f4a1",
+   "stars": 9086,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "oraios/serena",
+   "commit": "701e7c843f46c6a649203a488cece1bf19f1df90",
+   "stars": 29028,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 107263,
+   "findings": 243,
+   "on_tool_surface": 127,
+   "off_tool_surface": 116,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 117,
+    "HIGH": 117,
+    "CRITICAL": 2,
+    "MEDIUM": 7
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 141,
+    "INFO": 80,
+    "MEDIUM": 14,
+    "CRITICAL": 8
+   },
+   "by_rule": {
+    "MRT002": 133,
+    "MRT006": 80,
+    "MRT023": 11,
+    "MRT001": 8,
+    "MRT018": 1,
+    "MRT003": 8,
+    "MRT021": 2
+   }
+  },
+  {
+   "repo": "portel-dev/photon",
+   "commit": "1aff04feecf3fc524b851b9d79eedd5e602f842d",
+   "stars": 99,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 257650,
+   "findings": 625,
+   "on_tool_surface": 130,
+   "off_tool_surface": 495,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "MEDIUM": 22,
+    "HIGH": 82,
+    "INFO": 516,
+    "CRITICAL": 5
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 35,
+    "HIGH": 293,
+    "INFO": 276,
+    "CRITICAL": 21
+   },
+   "by_rule": {
+    "MRT024": 5,
+    "MRT003": 30,
+    "MRT002": 256,
+    "MRT006": 276,
+    "MRT001": 21,
+    "MRT028": 15,
+    "MRT026": 15,
+    "MRT027": 7
+   }
+  },
+  {
+   "repo": "punitarani/fli",
+   "commit": "121d34fea056dc513258958c4262cb5a4cc033c1",
+   "stars": 3144,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 55176,
+   "findings": 24,
+   "on_tool_surface": 6,
+   "off_tool_surface": 18,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 18,
+    "MEDIUM": 4,
+    "HIGH": 2
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 13,
+    "INFO": 7,
+    "MEDIUM": 4
+   },
+   "by_rule": {
+    "MRT002": 11,
+    "MRT006": 7,
+    "MRT007": 4,
+    "MRT003": 2
+   }
+  },
+  {
+   "repo": "ravitemer/mcp-hub",
+   "commit": "9c7670a4c341ed3cf738a6242c0fde1cea40bccf",
+   "stars": 517,
+   "language": "JavaScript",
+   "verified_mcp_server": true,
+   "loc": 8826,
+   "findings": 14,
+   "on_tool_surface": 1,
+   "off_tool_surface": 13,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 13,
+    "HIGH": 1
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 1,
+    "CRITICAL": 1,
+    "MEDIUM": 1,
+    "HIGH": 11
+   },
+   "by_rule": {
+    "MRT006": 1,
+    "MRT001": 1,
+    "MRT024": 1,
+    "MRT003": 1,
+    "MRT002": 10
+   }
+  },
+  {
+   "repo": "rawveg/ollama-mcp",
+   "commit": "c11354c24d68f9e8bd0eb6e36d76ecc77597d392",
+   "stars": 170,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 4170,
+   "findings": 1,
+   "on_tool_surface": 0,
+   "off_tool_surface": 1,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 1
+   },
+   "by_rule": {
+    "MRT003": 1
+   }
+  },
+  {
+   "repo": "ryaker/outlook-mcp",
+   "commit": "95d6ff2d248903c086f17782c2de28e16016e6aa",
+   "stars": 434,
+   "language": "JavaScript",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "sansan0/TrendRadar",
+   "commit": "b6ceb76ad3f8f4b34bc39e8ac73cd3e969f97217",
+   "stars": 62124,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 41062,
+   "findings": 708,
+   "on_tool_surface": 514,
+   "off_tool_surface": 194,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 637,
+    "MEDIUM": 34,
+    "HIGH": 37
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 626,
+    "MEDIUM": 38,
+    "HIGH": 44
+   },
+   "by_rule": {
+    "MRT006": 626,
+    "MRT023": 3,
+    "MRT002": 22,
+    "MRT003": 22,
+    "MRT024": 1,
+    "MRT007": 26,
+    "MRT021": 8
+   }
+  },
+  {
+   "repo": "shadowcz007/mcp_server_exe",
+   "commit": "ad5555bc090813f26bdc9fdf402e7d517102de2b",
+   "stars": 161,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 4360,
+   "findings": 20,
+   "on_tool_surface": 10,
+   "off_tool_surface": 10,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 15,
+    "MEDIUM": 2,
+    "HIGH": 3
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 11,
+    "HIGH": 6,
+    "MEDIUM": 2,
+    "CRITICAL": 1
+   },
+   "by_rule": {
+    "MRT006": 11,
+    "MRT002": 5,
+    "MRT024": 1,
+    "MRT003": 1,
+    "MRT026": 1,
+    "MRT001": 1
+   }
+  },
+  {
+   "repo": "sitbon/magg",
+   "commit": "1fe88cc1ef8762b2bf6aba75def569391bf9d3a1",
+   "stars": 142,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 19274,
+   "findings": 19,
+   "on_tool_surface": 13,
+   "off_tool_surface": 6,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 8,
+    "HIGH": 10,
+    "MEDIUM": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 11,
+    "INFO": 7,
+    "MEDIUM": 1
+   },
+   "by_rule": {
+    "MRT002": 10,
+    "MRT003": 1,
+    "MRT006": 7,
+    "MRT021": 1
+   }
+  },
+  {
+   "repo": "sparfenyuk/mcp-proxy",
+   "commit": "153a96a61fde2bf5a23961c64a3dd96b5e385108",
+   "stars": 2742,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 3477,
+   "findings": 1,
+   "on_tool_surface": 0,
+   "off_tool_surface": 1,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 1
+   },
+   "by_rule": {
+    "MRT002": 1
+   }
+  },
+  {
+   "repo": "sparfenyuk/mcp-telegram",
+   "commit": "c524633eec4e37797a255efaa702af091c9d709a",
+   "stars": 188,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 421,
+   "findings": 4,
+   "on_tool_surface": 4,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 4
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 4
+   },
+   "by_rule": {
+    "MRT006": 4
+   }
+  },
+  {
+   "repo": "srthkdev/omnisql-mcp",
+   "commit": "139b9f934367fa49316e9423f20144508cecc888",
+   "stars": 78,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 8815,
+   "findings": 21,
+   "on_tool_surface": 21,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "CRITICAL": 2,
+    "MEDIUM": 3,
+    "HIGH": 16
+   },
+   "severity_before_surface_demotion": {
+    "CRITICAL": 2,
+    "MEDIUM": 3,
+    "HIGH": 16
+   },
+   "by_rule": {
+    "MRT001": 2,
+    "MRT028": 3,
+    "MRT027": 4,
+    "MRT002": 12
+   }
+  },
+  {
+   "repo": "stickerdaniel/linkedin-mcp-server",
+   "commit": "8aa9f722e8b59fcbd2157d3db8cb9d1491316de1",
+   "stars": 3388,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 109290,
+   "findings": 68,
+   "on_tool_surface": 51,
+   "off_tool_surface": 17,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 45,
+    "INFO": 19,
+    "MEDIUM": 4
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 49,
+    "INFO": 11,
+    "MEDIUM": 8
+   },
+   "by_rule": {
+    "MRT002": 49,
+    "MRT006": 11,
+    "MRT023": 7,
+    "MRT018": 1
+   }
+  },
+  {
+   "repo": "surajrimal07/NepseAPI-Unofficial",
+   "commit": "5771065455a04d4d4218d29b2ddbffe83de74494",
+   "stars": 61,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 3534,
+   "findings": 63,
+   "on_tool_surface": 23,
+   "off_tool_surface": 40,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 2,
+    "MEDIUM": 19,
+    "INFO": 42
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 2,
+    "MEDIUM": 27,
+    "INFO": 34
+   },
+   "by_rule": {
+    "MRT003": 2,
+    "MRT007": 18,
+    "MRT018": 4,
+    "MRT006": 34,
+    "MRT023": 5
+   }
+  },
+  {
+   "repo": "swaruplab/operon",
+   "commit": "77f5361af5a2433e38ecfc652c454c49baec4ac3",
+   "stars": 96,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "synapseorch-ai/synapse-ai",
+   "commit": "9ee485d090689919397fa7f2025c6b2efd2bb170",
+   "stars": 320,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 73117,
+   "findings": 905,
+   "on_tool_surface": 454,
+   "off_tool_surface": 451,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "HIGH": 48,
+    "INFO": 836,
+    "MEDIUM": 21
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 151,
+    "INFO": 506,
+    "MEDIUM": 232,
+    "CRITICAL": 16
+   },
+   "by_rule": {
+    "MRT002": 77,
+    "MRT006": 506,
+    "MRT021": 11,
+    "MRT008": 2,
+    "MRT003": 70,
+    "MRT018": 13,
+    "MRT020": 1,
+    "MRT022": 2,
+    "MRT001": 14,
+    "MRT028": 4,
+    "MRT024": 167,
+    "MRT005": 2,
+    "MRT027": 2,
+    "MRT023": 34
+   }
+  },
+  {
+   "repo": "tadata-org/fastapi_mcp",
+   "commit": "e5cad13cabfc725bbcb047e526816d887d96da62",
+   "stars": 12002,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 6110,
+   "findings": 0,
+   "on_tool_surface": 0,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {},
+   "severity_before_surface_demotion": {},
+   "by_rule": {}
+  },
+  {
+   "repo": "taylorwilsdon/google_workspace_mcp",
+   "commit": "54b1c56f7f9912ce32681460d7ca38f9c2a37564",
+   "stars": 3129,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 87615,
+   "findings": 117,
+   "on_tool_surface": 116,
+   "off_tool_surface": 1,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "MEDIUM": 103,
+    "HIGH": 13,
+    "INFO": 1
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 104,
+    "HIGH": 13
+   },
+   "by_rule": {
+    "MRT021": 16,
+    "MRT002": 13,
+    "MRT007": 88
+   }
+  },
+  {
+   "repo": "trailhq/Graft",
+   "commit": "05760b07abc0e427f5af8ad378889ee402c5afc6",
+   "stars": 6101,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "triggerdotdev/trigger.dev",
+   "commit": "dc3f98fc8c825c3b7875053e3b9053ba96a2f66f",
+   "stars": 16231,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "u14app/deep-research",
+   "commit": "4a211edd9face54d0786ecf73e69ce5257627e20",
+   "stars": 4682,
+   "language": "JavaScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "upstash/context7",
+   "commit": "80e681a507c5287bc12e483367c40754e29461b9",
+   "stars": 61777,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "vitali87/code-graph-rag",
+   "commit": "5e361a4d14fd36ae2cfa26ef1d0a793878219453",
+   "stars": 5104,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "SDK listed but no server/tool registration found"
+  },
+  {
+   "repo": "wanshuiyin/Auto-claude-code-research-in-sleep",
+   "commit": "0472e530251cdbd3364c33b110063c58f819edd7",
+   "stars": 15868,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "wesammustafa/Claude-Code-Everything-You-Need-to-Know",
+   "commit": "d9e93740193aeae2cd661c7ddf6f0c8f8989860b",
+   "stars": 2982,
+   "language": "Python",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "wesammustafa/opencode-primer",
+   "commit": "fe71432a721ea423939193e667d510725477b79a",
+   "stars": 393,
+   "language": "JavaScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "xinnan-tech/xiaozhi-esp32-server",
+   "commit": "5aa46538d5087aaee99a5fc318689a0da0a2a9c7",
+   "stars": 10530,
+   "language": "JavaScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "xpf0000/FlyEnv",
+   "commit": "26da7e709eee4ec77050a20a6d9a05a6abb84631",
+   "stars": 3198,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 138360,
+   "findings": 1377,
+   "on_tool_surface": 28,
+   "off_tool_surface": 1349,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 1370,
+    "HIGH": 4,
+    "MEDIUM": 3
+   },
+   "severity_before_surface_demotion": {
+    "INFO": 746,
+    "HIGH": 601,
+    "MEDIUM": 21,
+    "CRITICAL": 9
+   },
+   "by_rule": {
+    "MRT006": 746,
+    "MRT002": 543,
+    "MRT028": 13,
+    "MRT001": 9,
+    "MRT024": 6,
+    "MRT003": 49,
+    "MRT027": 9,
+    "MRT026": 2
+   }
+  },
+  {
+   "repo": "yusufkaraaslan/Skill_Seekers",
+   "commit": "f3972efa33fa79634b96936acf1fac321cdcf7c1",
+   "stars": 14933,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 187865,
+   "findings": 398,
+   "on_tool_surface": 180,
+   "off_tool_surface": 218,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 224,
+    "HIGH": 155,
+    "MEDIUM": 19
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 321,
+    "MEDIUM": 35,
+    "INFO": 42
+   },
+   "by_rule": {
+    "MRT002": 315,
+    "MRT018": 2,
+    "MRT006": 42,
+    "MRT021": 24,
+    "MRT023": 9,
+    "MRT003": 6
+   }
+  },
+  {
+   "repo": "zcaceres/easy-mcp",
+   "commit": "3b223f21ae8e29d4294792b8b562ba455d8a8eb2",
+   "stars": 196,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 2894,
+   "findings": 2,
+   "on_tool_surface": 2,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "MEDIUM": 2
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 2
+   },
+   "by_rule": {
+    "MRT026": 2
+   }
+  },
+  {
+   "repo": "zhizhuodemao/js-reverse-mcp",
+   "commit": "bf7dc506e8743ba1ec5bd3325c91818b9192e40e",
+   "stars": 2707,
+   "language": "TypeScript",
+   "verified_mcp_server": true,
+   "loc": 18279,
+   "findings": 22,
+   "on_tool_surface": 7,
+   "off_tool_surface": 15,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "INFO": 15,
+    "HIGH": 6,
+    "MEDIUM": 1
+   },
+   "severity_before_surface_demotion": {
+    "HIGH": 11,
+    "INFO": 10,
+    "MEDIUM": 1
+   },
+   "by_rule": {
+    "MRT002": 9,
+    "MRT003": 2,
+    "MRT006": 10,
+    "MRT024": 1
+   }
+  },
+  {
+   "repo": "zhuyansen/agent-skills-hub",
+   "commit": "2197c08a3ac075cf9a0f63dd6e799be5df556503",
+   "stars": 355,
+   "language": "TypeScript",
+   "verified_mcp_server": false,
+   "excluded_because": "no MCP SDK dependency"
+  },
+  {
+   "repo": "zinja-coder/jadx-mcp-server",
+   "commit": "c1152b50265fcc23f79ce353486959c09db0cf79",
+   "stars": 771,
+   "language": "Python",
+   "verified_mcp_server": true,
+   "loc": 1824,
+   "findings": 34,
+   "on_tool_surface": 34,
+   "off_tool_surface": 0,
+   "unclassified": 0,
+   "severity_as_reported": {
+    "MEDIUM": 32,
+    "HIGH": 2
+   },
+   "severity_before_surface_demotion": {
+    "MEDIUM": 32,
+    "HIGH": 2
+   },
+   "by_rule": {
+    "MRT007": 32,
+    "MRT003": 2
+   }
+  }
+ ]
+}
