@@ -18,8 +18,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `Finding` gained `in_tool_surface` / `original_severity` so nothing is silently lost.
   When a target registers no tools at all, nothing is reclassified — demoting everything
   would be worse than saying nothing.
-  Measured on the corpus: CRITICAL+HIGH 4,203 → 2,244, a 46.6% reduction, with both real
-  RCE findings in serena retained.
+- **MRT002 sinks are file access, not path construction.** `Path(name)`,
+  `os.path.join(base, x)` and `base / x` are how every program addresses a file — treating
+  them as sinks made MRT002 responsible for 93% of all HIGH findings. Sinks are now
+  `open()`, `read_text`/`write_text`, `unlink`, `os.remove`/`rename`/`makedirs` and the
+  `shutil` file operations; taint still reaches them through the constructed variable, so
+  real traversal is unaffected and the vulnerable fixture still trips all four of its cases.
+
+  Combined effect on the 56-server corpus: **CRITICAL+HIGH 5,809 → 1,737, a 70.1%
+  reduction**, with both real RCE findings in serena retained as CRITICAL.
 
 ### Fixed
 - **Every finding shipped without evidence.** Semgrep returns matched source only to

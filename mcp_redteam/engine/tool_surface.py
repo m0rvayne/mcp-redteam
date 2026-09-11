@@ -74,11 +74,19 @@ def _iter_source_files(root: Path):
                 yield Path(dirpath) / name
 
 
-def _read(path: Path) -> str:
+def _read(path: Path, root: Path) -> str:
+    """Read a source file, confined to the scan target.
+
+    Same resolve() + containment check the scanner asks of every server it
+    audits: a path reaching an open() without one is a finding, including here.
+    """
     try:
-        with path.open(encoding="utf-8", errors="replace") as fh:
+        resolved = path.resolve()
+        if not resolved.is_relative_to(root):
+            return ""
+        with resolved.open(encoding="utf-8", errors="replace") as fh:
             return fh.read(MAX_READ_BYTES)
-    except OSError:
+    except (OSError, ValueError):
         return ""
 
 
@@ -167,7 +175,7 @@ def compute_tool_surface(target: Path) -> Optional[set[Path]]:
             resolved = path.resolve()
         except (OSError, ValueError):
             continue
-        text = _read(resolved)
+        text = _read(resolved, root)
         if not text:
             continue
         contents[resolved] = text
