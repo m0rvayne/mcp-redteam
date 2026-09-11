@@ -13,8 +13,15 @@ jobs:
           python-version: '3.12'
       - name: Install
         run: pip install -e . && pip install semgrep
+      # The demo server is deliberately vulnerable and the research scripts are
+      # standalone CLIs, so both are fixtures rather than product code. Their
+      # findings are asserted by the test suite; uploading them here would fill
+      # the Security tab with alerts that are supposed to be there.
       - name: Run audit
-        run: mcp-redteam scan . --no-llm --format sarif -o results.sarif
+        run: |
+          mkdir -p audit-target
+          cp -R mcp_redteam audit-target/
+          mcp-redteam scan audit-target --no-llm --format sarif -o results.sarif
         continue-on-error: true
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
