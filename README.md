@@ -51,7 +51,7 @@ Two modes of operation:
 | Self-security audit | Working | 10 vulnerabilities audited — 8 fixed, 1 mitigated, 1 accepted |
 | Claude Code plugin | Working | AI-driven deep audit with HTML report |
 | HTML report output | Working | `--format html` generates self-contained terminal-styled report |
-| 240 tests | Passing | Unit, security, stress, edge cases, packaging, Hypothesis fuzzing |
+| 244 tests | Passing | Unit, security, stress, edge cases, packaging, Hypothesis fuzzing |
 | Audit history | Working | JSONL baseline storage, cross-run comparison (new/confirmed/fixed) |
 
 ## What doesn't work yet
@@ -194,7 +194,7 @@ Based on 48+ CVEs, OWASP MCP Top 10, and research from Invariant Labs, Trail of 
 | Behavioral mismatch | No | No | **Yes (LLM layer)** |
 | SARIF output | No | No | **Yes** |
 | CI exit codes | Yes | No | **Yes** |
-| Self-tested | Unknown | Unknown | **240 tests, self-security audit** |
+| Self-tested | Unknown | Unknown | **244 tests, self-security audit** |
 | Cloud dependency | Invariant Labs API | Cisco API (optional) | **No — fully local in deterministic mode. LLM mode uses Anthropic API** |
 
 ### Why not just use mcp-scan?
@@ -250,7 +250,7 @@ Each scan saves a JSONL baseline to `~/.mcp-redteam/baselines/`. Subsequent runs
 
 ## Tests
 
-240 tests across 15 test files:
+244 tests across 15 test files:
 
 - **test_semgrep.py** — each vulnerable fixture detected, each benign fixture clean
 - **test_self_security.py** — 24 tests: our own code audited for vulnerabilities

@@ -9,7 +9,10 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from mcp_redteam.constants import SEMGREP_TIMEOUT_SECONDS
+from mcp_redteam.constants import (
+    SEMGREP_FILE_TIMEOUT_SECONDS,
+    SEMGREP_TIMEOUT_SECONDS,
+)
 from mcp_redteam.models import Finding, Severity, FindingCategory, Location, RULE_REGISTRY
 
 logger = logging.getLogger(__name__)
@@ -80,6 +83,10 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
             "--quiet",  # suppress progress bar
             "--no-git-ignore",  # scan everything
             "--max-target-bytes", "1000000",  # skip files >1MB (binaries, minified JS)
+            # Explicit per-file budget: semgrep's 5s default silently drops
+            # files under load, so the same target scanned twice gives
+            # different answers.
+            "--timeout", str(SEMGREP_FILE_TIMEOUT_SECONDS),
             "--exclude", "*test*",
             "--exclude", "*__tests__*",
             "--exclude", "*spec*",
@@ -128,6 +135,7 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
             logger.error("Failed to parse semgrep JSON output")
             return []
 
+        _report_skipped(data, target_path)
         findings = _map_semgrep_results(data, target_root=target_path)
         return _classify_by_tool_surface(findings, target_path)
     except Exception as e:
@@ -221,6 +229,25 @@ def _evidence_for(match: dict, target_root: Optional[Path] = None) -> str:
         match.get("end", {}).get("line"),
         target_root,
     )
+
+
+def _report_skipped(data: dict, target_path: Path) -> None:
+    """Warn when semgrep could not analyse part of the target.
+
+    A partial scan otherwise looks exactly like a clean one — the caller sees
+    fewer findings and no indication that files were dropped.
+    """
+    skipped = data.get("paths", {}).get("skipped", []) or []
+    timed_out = [s for s in skipped if "timeout" in str(s.get("reason", "")).lower()]
+    if timed_out:
+        logger.warning(
+            "Semgrep timed out on %d file(s) in %s — results are partial. "
+            "Raise SEMGREP_FILE_TIMEOUT_SECONDS or scan a smaller target.",
+            len(timed_out), target_path,
+        )
+    errors = data.get("errors", []) or []
+    if errors:
+        logger.warning("Semgrep reported %d error(s) while scanning %s", len(errors), target_path)
 
 
 def _map_semgrep_results(data: dict, target_root: Optional[Path] = None) -> list[Finding]:

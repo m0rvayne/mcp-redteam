@@ -165,3 +165,62 @@ def test_traversal_path_from_semgrep_output_is_contained(tmp_path):
 
     assert findings[0].evidence == ""
     assert "leaked" not in findings[0].evidence
+
+
+# ---------------------------------------------------------------------------
+# Partial scans must announce themselves
+# ---------------------------------------------------------------------------
+
+
+def test_timed_out_files_are_reported(caplog):
+    """A partial scan otherwise looks exactly like a clean one.
+
+    Semgrep's default per-file budget is 5s, so under load it silently drops
+    files — the same target scanned twice gave 738 and 887 findings before this
+    was surfaced.
+    """
+    import logging
+    from mcp_redteam.engine.semgrep_runner import _report_skipped
+    from pathlib import Path
+
+    data = {"paths": {"skipped": [
+        {"path": "a.py", "reason": "timeout"},
+        {"path": "b.py", "reason": "excluded_by_config"},
+    ]}}
+
+    with caplog.at_level(logging.WARNING):
+        _report_skipped(data, Path("/target"))
+
+    assert "timed out on 1 file" in caplog.text
+    assert "partial" in caplog.text
+
+
+def test_semgrep_errors_are_reported(caplog):
+    import logging
+    from mcp_redteam.engine.semgrep_runner import _report_skipped
+    from pathlib import Path
+
+    with caplog.at_level(logging.WARNING):
+        _report_skipped({"errors": [{"type": "x"}, {"type": "y"}]}, Path("/t"))
+
+    assert "2 error(s)" in caplog.text
+
+
+def test_clean_scan_reports_nothing(caplog):
+    import logging
+    from mcp_redteam.engine.semgrep_runner import _report_skipped
+    from pathlib import Path
+
+    with caplog.at_level(logging.WARNING):
+        _report_skipped({"paths": {"skipped": []}, "errors": []}, Path("/t"))
+
+    assert caplog.text == ""
+
+
+def test_per_file_timeout_is_explicit():
+    """Relying on semgrep's default makes results depend on machine load."""
+    import inspect
+    from mcp_redteam.engine import semgrep_runner
+
+    src = inspect.getsource(semgrep_runner.run_semgrep)
+    assert '"--timeout"' in src, "per-file timeout must be passed explicitly"

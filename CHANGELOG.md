@@ -7,6 +7,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **The corpus is now recorded, so the numbers can be checked.** `research/corpus-manifest.json`
+  pins all 112 repositories to exact commits with their per-rule and per-severity results, and
+  `research/reproduce.py` clones them at those commits and diffs a fresh scan against it. The
+  106-server scan in `docs/research/scan-106-servers.md` cannot be reproduced — its corpus was
+  never recorded — and that gap is stated in `research/README.md` rather than left implicit.
+  Selection is mechanical and documented; notably, **56 of 112 repositories labelled
+  `mcp-server` on GitHub do not depend on an MCP SDK at all.**
 - **MCP tool surface classification.** A scanner for MCP servers only has something to
   say about code an MCP client can reach. Every function parameter in the repository was
   treated as attacker-controlled, so findings landed in release scripts, build tooling and
@@ -29,6 +36,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   reduction**, with both real RCE findings in serena retained as CRITICAL.
 
 ### Fixed
+- **Partial scans looked exactly like clean ones.** Semgrep's default per-file budget is 5
+  seconds, so under load it silently skips files — the same target scanned twice produced 738
+  and 887 findings. The budget is now passed explicitly (30s), and timed-out files and semgrep
+  errors are reported instead of vanishing. Residual drift remains: semgrep is not
+  bit-deterministic (887/885/884 on the largest corpus repository even with timeouts disabled),
+  which `research/reproduce.py` tolerates at 2% per repository and `research/README.md` states
+  outright rather than hiding behind an exact-match claim.
 - **Every finding shipped without evidence.** Semgrep returns matched source only to
   authenticated users; for everyone else `extra.lines` is the literal string
   `requires login`. That value was mapped straight into `Finding.evidence` and
