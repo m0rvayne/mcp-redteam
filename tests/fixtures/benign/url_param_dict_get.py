@@ -13,7 +13,16 @@ Nothing here makes a request with a caller-controlled URL.
 
 import logging
 
+from mcp.server.fastmcp import FastMCP
+
 logger = logging.getLogger(__name__)
+server = FastMCP("scan-reporter")
+
+
+@server.tool("summarize")
+async def summarize(url: str, metadata: dict) -> dict:
+    """Exposed as a real tool so this fixture sits on the MCP tool surface."""
+    return summarize_scan(url, metadata)
 
 
 def summarize_scan(url: str, metadata: dict) -> dict:

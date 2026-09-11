@@ -51,6 +51,15 @@ class Finding(BaseModel):
     # SARIF-required fields
     rule_id: Optional[str] = Field(None, description="SARIF rule identifier")
 
+    # MCP tool surface. None = not determined (target is not a recognisable MCP
+    # server, or classification was skipped).
+    in_tool_surface: Optional[bool] = Field(
+        None, description="Is this file reachable from an MCP tool handler?"
+    )
+    original_severity: Optional[Severity] = Field(
+        None, description="Severity before demotion for being off the tool surface"
+    )
+
     @property
     def risk_score(self) -> int:
         """Calculate risk score points for this finding."""

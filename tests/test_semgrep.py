@@ -46,10 +46,18 @@ def test_vulnerable_detected(fixture_file, expected_rules):
     "benign/url_param_dict_get.py",
 ])
 def test_benign_no_critical(fixture_file):
-    """Benign fixtures must not trigger CRITICAL or HIGH findings."""
+    """Benign fixtures must not trigger CRITICAL or HIGH findings.
+
+    Judged on the severity the RULE produced, before any tool-surface demotion.
+    A fixture that sits off the surface would otherwise have its findings
+    lowered to INFO and pass this test while the false positive is still there.
+    """
     path = FIXTURES_DIR / fixture_file
     findings = run_semgrep(path, RULES_DIR)
-    critical_high = [f for f in findings if f.severity.value in ("CRITICAL", "HIGH")]
+    critical_high = [
+        f for f in findings
+        if (f.original_severity or f.severity).value in ("CRITICAL", "HIGH")
+    ]
     assert len(critical_high) == 0, f"False positive in {fixture_file}: {[f.id for f in critical_high]}"
 
 
@@ -80,6 +88,7 @@ def test_ssrf_detected_regardless_of_client_variable_name():
     path = FIXTURES_DIR / "vulnerable" / "ssrf_client_names.py"
     findings = run_semgrep(path, RULES_DIR)
     ssrf_lines = {f.location.line for f in findings if f.id == "MRT003"}
+    # detection is what is under test here, not severity after demotion
 
     expected = len([
         line for line in path.read_text(encoding="utf-8").splitlines()

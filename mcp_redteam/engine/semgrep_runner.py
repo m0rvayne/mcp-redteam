@@ -128,7 +128,8 @@ def run_semgrep(target_path: Path, rules_dir: Optional[Path] = None) -> list[Fin
             logger.error("Failed to parse semgrep JSON output")
             return []
 
-        return _map_semgrep_results(data, target_root=target_path)
+        findings = _map_semgrep_results(data, target_root=target_path)
+        return _classify_by_tool_surface(findings, target_path)
     except Exception as e:
         logger.error("Semgrep scan failed: %s", e)
         return []
@@ -348,3 +349,60 @@ def _deduplicate(findings: list[Finding]) -> list[Finding]:
             seen.add(key)
             unique.append(f)
     return unique
+
+
+# ---------------------------------------------------------------------------
+# MCP tool surface classification
+# ---------------------------------------------------------------------------
+
+# Security findings in code an MCP client cannot reach are not MCP findings.
+# They stay in the report — a real bug is worth knowing about — but they must
+# not outrank the ones that are actually reachable.
+_OFF_SURFACE_SEVERITY = Severity.INFO
+
+_OFF_SURFACE_NOTE = (
+    "This file is not reachable from any MCP tool handler (no tool registration, "
+    "and not imported by a file that has one), so it is not part of the server's "
+    "attack surface. Severity lowered from {original}."
+)
+
+
+def _classify_by_tool_surface(findings: list[Finding], target_path: Path) -> list[Finding]:
+    """Mark findings on/off the MCP tool surface and demote the ones off it.
+
+    Left untouched when the target has no tool registrations at all: the target
+    is then not a recognisable MCP server, and demoting everything would be
+    worse than saying nothing.
+    """
+    if not findings:
+        return findings
+
+    try:
+        from mcp_redteam.engine.tool_surface import compute_tool_surface
+        surface = compute_tool_surface(target_path)
+    except Exception as e:  # never let classification break a scan
+        logger.warning("Tool surface detection failed: %s", e)
+        return findings
+
+    if surface is None:
+        logger.info("No MCP tool registration found — severities left as-is")
+        return findings
+
+    for f in findings:
+        if not f.location or not f.location.file:
+            continue
+        try:
+            path = Path(f.location.file).resolve()
+        except (OSError, ValueError):
+            continue
+
+        f.in_tool_surface = path in surface
+        if f.in_tool_surface or f.severity == _OFF_SURFACE_SEVERITY:
+            continue
+
+        f.original_severity = f.severity
+        f.severity = _OFF_SURFACE_SEVERITY
+        note = _OFF_SURFACE_NOTE.format(original=f.original_severity.value)
+        f.description = f"{f.description}\n\n{note}" if f.description else note
+
+    return findings
