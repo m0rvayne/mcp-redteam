@@ -4,6 +4,30 @@ All notable changes to mcp-redteam are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Every finding shipped without evidence.** Semgrep returns matched source only to
+  authenticated users; for everyone else `extra.lines` is the literal string
+  `requires login`. That value was mapped straight into `Finding.evidence` and
+  `Location.snippet`, so the terminal, JSON, SARIF, HTML report and the GitHub Security
+  tab all showed `requires login` where the vulnerable code belongs — against a stated
+  philosophy of "every finding must be proven through source code evidence".
+  Evidence is now read from the file at the location semgrep reports, bounded to 12
+  lines / 2000 chars, with a graceful empty result if the file cannot be read.
+- Credential values are masked in source-derived evidence (`sk-…`, `ghp_…`, `AKIA…`,
+  and `key/token/password/secret = "…"` assignments). MRT005 flags hardcoded secrets,
+  so its evidence line contains one by definition, and SARIF frequently lands in a
+  shared Security tab. The prefix is kept so the credential type stays identifiable.
+
+- Evidence paths come from semgrep's output rather than from us, so they are canonicalized
+  and confined to the scan target — the same `resolve()` + containment check this scanner
+  recommends to every server it audits. Caught by running the scanner on its own diff.
+
+### Added
+- `tests/test_evidence.py` — deliberately independent of whether semgrep is installed,
+  because the bug is only visible to users who are *not* logged into semgrep.
+
 ## [0.5.2] - 2026-09-08
 
 ### Fixed
