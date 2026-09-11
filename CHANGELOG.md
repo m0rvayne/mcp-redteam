@@ -6,6 +6,22 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **MRT005 missed uppercase constants — the usual convention for secrets.**
+  `API_KEY = "sk-..."` and `TOKEN = "ghp_..."` produced nothing: the rule matched
+  lowercase identifiers only, and its value-prefix branches (`$VAR = "sk-..."`) never
+  fired at all. Both now match by regex, adding Slack, Google and GitHub PAT prefixes.
+  Verified against six real forms and three non-secrets.
+- **Single-file scans walked the whole parent directory.** Tool surface detection took the
+  file's parent as its root, so scanning one file in `/tmp` enumerated all of `/tmp` and hit
+  the 20,000-file cap. A single-file target is now judged on that file alone.
+- `llm/analyzer._read_source_files` reached `read_text()` through a parameter with no
+  containment check, and `rglob()` follows symlinked directories — so a symlink could walk
+  out of the scan target and into content sent to a third-party API. Confined to the target.
+- MRT021 lowered from MEDIUM to INFO and reframed. Reading a secret from an environment
+  variable is the recommended practice — the rule was rating correct behaviour as a defect.
+  It is now inventory: which credentials the process holds. Hardcoding remains MRT005.
+
 ### Added
 - **The corpus is now recorded, so the numbers can be checked.** `research/corpus-manifest.json`
   pins all 112 repositories to exact commits with their per-rule and per-severity results, and

@@ -46,3 +46,11 @@ async def authenticate(username: str) -> dict:
 
 if __name__ == "__main__":
     server.run()
+
+
+# Uppercase constants — the usual convention for configuration secrets, and the
+# form MRT005 used to miss entirely because it matched lowercase names only.
+API_KEY = "sk-proj-1234567890abcdefghijklmnopqrstuvwxyz"
+GITHUB_TOKEN = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ab"
+AWS_ACCESS_KEY = "AKIAIOSFODNN7EXAMPLE"
+SLACK_BOT_TOKEN = "xoxb-EXAMPLE-NOT-A-REAL-TOKEN-DO-NOT-USE"

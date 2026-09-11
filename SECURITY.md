@@ -43,6 +43,43 @@ vulnerability found in our own code.
 | VULN-09 | Fixed | Unbounded find subprocess results -- capped at 100 |
 | VULN-10 | Accepted | Floor-pinned dependencies (`>=`, no upper bound) -- no known critical CVEs |
 
+## Scanning Ourselves
+
+`mcp-redteam scan .` on this repository, with the current rules:
+
+```
+41 findings — 2 CRITICAL, 3 HIGH, 7 MEDIUM, 29 INFO
+```
+
+**All 12 findings above INFO are in `assets/demo-server/server.py`**, an
+intentionally vulnerable MCP server that exists to demonstrate detection. If
+they ever stop being reported, the scanner has regressed. Nothing in the
+product code is rated above INFO.
+
+Reproduce it yourself:
+
+```bash
+pip install semgrep
+mcp-redteam scan . --no-llm --no-config
+```
+
+### What the INFO findings are
+
+They are reported rather than suppressed, because suppression hides the ones
+that later turn out to matter:
+
+| Finding | Why it stays INFO |
+|---|---|
+| MRT002 in `audit_history`, `config_scanner`, the formatters | Writing to a path the user passed on the command line. Off the MCP tool surface, and the paths are the user's own. |
+| MRT003 in `remote_scanner` | `requests.post(url, ...)` where `url` is the scan target the user explicitly asked to scan. Fetching it is the command's purpose. |
+| MRT006 in `research/reproduce.py` | `print()` in a standalone CLI script, which is not an MCP stdio server. |
+| MRT021 in `llm/analyzer` | Reading `ANTHROPIC_API_KEY` from the environment — the recommended practice, reported as inventory of what the process holds. |
+
+Three findings were fixed rather than accepted during this triage: the evidence
+reader, the tool-surface reader and the LLM source reader each reached a file
+open through a parameter with no `resolve()` + containment check — the same
+check this scanner asks of every server it audits.
+
 ## Scope
 
 The following are **in scope** for security reports:

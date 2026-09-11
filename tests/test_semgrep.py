@@ -98,3 +98,34 @@ def test_ssrf_detected_regardless_of_client_variable_name():
         f"detected {len(ssrf_lines)} of {expected} SSRF sinks — a client variable "
         f"name must not determine whether SSRF is found. Found at lines: {sorted(ssrf_lines)}"
     )
+
+
+def test_hardcoded_secrets_detected_regardless_of_name_case():
+    """Uppercase constants are the usual convention — and were all missed.
+
+    MRT005 matched lowercase identifiers only, so `API_KEY = "sk-..."` and
+    `TOKEN = "ghp_..."` produced nothing, and the value-prefix branches did not
+    fire at all. Each assignment is checked by name rather than by a heuristic.
+    """
+    path = FIXTURES_DIR / "vulnerable" / "secrets_in_code.py"
+    findings = run_semgrep(path, RULES_DIR)
+    flagged_lines = {f.location.line for f in findings if f.id == "MRT005"}
+
+    source = path.read_text(encoding="utf-8").splitlines()
+    must_flag = [
+        "api_key", "password", "access_token",            # lowercase, already worked
+        "API_KEY", "GITHUB_TOKEN",                         # uppercase name match
+        "AWS_ACCESS_KEY", "SLACK_BOT_TOKEN",               # uppercase, value-prefix match
+    ]
+
+    missed = []
+    for name in must_flag:
+        line_no = next(
+            (n for n, line in enumerate(source, 1)
+             if line.startswith(f"{name} = \"")), None,
+        )
+        assert line_no, f"fixture no longer assigns {name}"
+        if line_no not in flagged_lines:
+            missed.append(f"{name} (line {line_no})")
+
+    assert not missed, f"MRT005 missed hardcoded secrets: {missed}"

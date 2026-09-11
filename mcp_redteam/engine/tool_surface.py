@@ -164,13 +164,20 @@ def compute_tool_surface(target: Path) -> Optional[set[Path]]:
         root = target.resolve()
     except (OSError, ValueError):
         return None
-    if root.is_file():
+    # A single-file target is judged on that file alone. Walking its parent
+    # would scan an unrelated tree — scanning /tmp/x.py used to enumerate all
+    # of /tmp and hit the file cap.
+    single_file = root.is_file()
+    if single_file:
+        candidates = [root]
         root = root.parent
+    else:
+        candidates = None
 
     contents: dict[Path, str] = {}
     entry_points: set[Path] = set()
 
-    for path in _iter_source_files(root):
+    for path in (candidates if candidates is not None else _iter_source_files(root)):
         try:
             resolved = path.resolve()
         except (OSError, ValueError):

@@ -169,7 +169,7 @@ RULE_REGISTRY: dict[str, Rule] = {
     "MRT018": Rule(id="MRT018", name="Missing Signal Handler", description="MCP server lacks SIGTERM/SIGINT signal handlers for graceful shutdown", severity=Severity.MEDIUM, category=FindingCategory.health),
     "MRT019": Rule(id="MRT019", name="Blocking Sync Call", description="Synchronous HTTP call inside async function blocks the event loop", severity=Severity.HIGH, category=FindingCategory.health),
     "MRT020": Rule(id="MRT020", name="OAuth Overprivilege", description="OAuth scopes request dangerous permissions (gmail.modify, drive.file, admin.*)", severity=Severity.MEDIUM, category=FindingCategory.security),
-    "MRT021": Rule(id="MRT021", name="Env Secret No Rotation", description="Secret loaded from env var without expiry/rotation check", severity=Severity.MEDIUM, category=FindingCategory.security),
+    "MRT021": Rule(id="MRT021", name="Env Credential Inventory", description="Credential enters the process from an environment variable — reported as inventory of what the server holds, not as a defect", severity=Severity.INFO, category=FindingCategory.security),
     "MRT022": Rule(id="MRT022", name="No Timeout HTTP", description="HTTP request without timeout parameter", severity=Severity.MEDIUM, category=FindingCategory.health),
     "MRT023": Rule(id="MRT023", name="No Timeout Subprocess", description="subprocess.run()/Popen() without timeout parameter", severity=Severity.MEDIUM, category=FindingCategory.health),
     "MRT024": Rule(id="MRT024", name="No Timeout Fetch", description="fetch() without AbortSignal timeout", severity=Severity.MEDIUM, category=FindingCategory.health),
