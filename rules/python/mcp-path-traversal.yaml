@@ -35,20 +35,45 @@ rules:
               async def $FUNC(..., $ARG, ...):
                   ...
           - focus-metavariable: $ARG
+    # Sinks are file ACCESS, not path construction. Building a path is not a
+    # vulnerability — `Path(name)`, `os.path.join(base, x)` and `base / x` are
+    # how every program addresses a file. Taint still reaches these sinks
+    # through the constructed variable, so real traversal is unaffected, while
+    # the construction-only matches that dominated HIGH findings are gone.
     pattern-sinks:
       - pattern: open($PATH, ...)
         focus-metavariable: $PATH
-      - pattern: Path($PATH)
-        focus-metavariable: $PATH
-      - pattern: os.path.join(..., $PATH, ...)
-        focus-metavariable: $PATH
-      # Path / operator (division builds paths)
-      - pattern: $BASE / $PATH
-        focus-metavariable: $PATH
-      # f-string path construction
       - pattern: open(f"...{$PATH}...", ...)
         focus-metavariable: $PATH
-      - pattern: Path(f"...{$PATH}...")
+      # pathlib access
+      - pattern: $PATH.open(...)
+        focus-metavariable: $PATH
+      - pattern: $PATH.read_text(...)
+        focus-metavariable: $PATH
+      - pattern: $PATH.read_bytes(...)
+        focus-metavariable: $PATH
+      - pattern: $PATH.write_text(...)
+        focus-metavariable: $PATH
+      - pattern: $PATH.write_bytes(...)
+        focus-metavariable: $PATH
+      - pattern: $PATH.unlink(...)
+        focus-metavariable: $PATH
+      # os / shutil access
+      - pattern: os.remove($PATH)
+        focus-metavariable: $PATH
+      - pattern: os.unlink($PATH)
+        focus-metavariable: $PATH
+      - pattern: os.rename($PATH, ...)
+        focus-metavariable: $PATH
+      - pattern: os.makedirs($PATH, ...)
+        focus-metavariable: $PATH
+      - pattern: shutil.copy($PATH, ...)
+        focus-metavariable: $PATH
+      - pattern: shutil.copyfile($PATH, ...)
+        focus-metavariable: $PATH
+      - pattern: shutil.move($PATH, ...)
+        focus-metavariable: $PATH
+      - pattern: shutil.rmtree($PATH, ...)
         focus-metavariable: $PATH
     pattern-sanitizers:
       - pattern: os.path.realpath(...)

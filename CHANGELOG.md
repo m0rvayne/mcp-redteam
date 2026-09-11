@@ -6,6 +6,28 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **MCP tool surface classification.** A scanner for MCP servers only has something to
+  say about code an MCP client can reach. Every function parameter in the repository was
+  treated as attacker-controlled, so findings landed in release scripts, build tooling and
+  examples — measured at 96% of all findings across a 56-server corpus.
+  `engine/tool_surface.py` computes the surface as files registering MCP tools plus every
+  local file reachable from them through imports. Reachability matters: a traversal in a
+  helper called from a tool handler is real, and a file-level filter would discard it.
+  Findings off the surface are kept but lowered to INFO with the reason stated, and
+  `Finding` gained `in_tool_surface` / `original_severity` so nothing is silently lost.
+  When a target registers no tools at all, nothing is reclassified — demoting everything
+  would be worse than saying nothing.
+- **MRT002 sinks are file access, not path construction.** `Path(name)`,
+  `os.path.join(base, x)` and `base / x` are how every program addresses a file — treating
+  them as sinks made MRT002 responsible for 93% of all HIGH findings. Sinks are now
+  `open()`, `read_text`/`write_text`, `unlink`, `os.remove`/`rename`/`makedirs` and the
+  `shutil` file operations; taint still reaches them through the constructed variable, so
+  real traversal is unaffected and the vulnerable fixture still trips all four of its cases.
+
+  Combined effect on the 56-server corpus: **CRITICAL+HIGH 5,809 → 1,737, a 70.1%
+  reduction**, with both real RCE findings in serena retained as CRITICAL.
+
 ### Fixed
 - **Every finding shipped without evidence.** Semgrep returns matched source only to
   authenticated users; for everyone else `extra.lines` is the literal string
@@ -23,6 +45,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Evidence paths come from semgrep's output rather than from us, so they are canonicalized
   and confined to the scan target — the same `resolve()` + containment check this scanner
   recommends to every server it audits. Caught by running the scanner on its own diff.
+
+- Benign false-positive fixtures are now judged on the severity the rule produced, before
+  tool-surface demotion. A fixture sitting off the surface would otherwise have its
+  findings lowered to INFO and pass the test while the false positive was still there —
+  the classification would have quietly neutered the FP regression suite.
 
 ### Added
 - `tests/test_evidence.py` — deliberately independent of whether semgrep is installed,
