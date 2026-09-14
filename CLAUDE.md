@@ -586,6 +586,25 @@ RIGHT:
 | HIGH | Confirmed: credential leak in error handlers, plaintext tokens (644), blocking event loop, no error handling (crashes), over-scoped OAuth, no .gitignore with credentials |
 | MEDIUM | Verified: verbose error leaks in code, missing input validation, floating deps, unbounded downloads, dead code, PII in responses |
 | LOW | Missing: unpinned deps, no rate limiting, missing types, style issues |
+| INFO | Anything **off the MCP tool surface**, plus inventory (which credentials the server holds). Reported, never rated higher. |
+
+### Scope before severity — check this first
+
+Rate a finding on the MCP tool surface only. A file is on the surface if it
+registers MCP tools, **or** is reachable from such a file through imports.
+
+This is not a detail. Measured across 56 real servers: **96% of findings sat in
+files registering no MCP tools** — release scripts, build tooling, examples. A
+`shell=True` in `scripts/bump_version.py` is not an MCP vulnerability; the input
+is the maintainer's own version string, and no MCP client can reach it.
+
+- On the surface → rate by the table above.
+- Off the surface → **INFO**, and say why: "not reachable from any MCP tool
+  handler". Keep it in the report; do not delete it.
+- Helpers matter: a path traversal in `utils/files.py` called from a handler is
+  a real finding. Reachability, not just the file that registers the tool.
+- Target registers no tools at all → rate normally. It is not a recognisable MCP
+  server, and demoting everything would say less than saying nothing.
 
 ---
 

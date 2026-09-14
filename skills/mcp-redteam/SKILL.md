@@ -45,39 +45,34 @@ Immediately after determining the mode and language, output the following banner
 
 Output this banner BEFORE reading CLAUDE.md or any other files. Then proceed to Step 1.
 
-## Step 0.9 — Results Directory & History
+## Step 0.9 — Audit History
 
-Before reading instructions, set up persistent results:
+The CLI already keeps a baseline; the plugin uses the same one, so a finding
+first seen by `mcp-redteam scan` is recognised here and vice versa. Two separate
+histories in one project mean neither is trustworthy.
 
-1. Check if `~/Desktop/redteam-results/` exists. If not, ask user:
-   "I need a folder to store audit history between runs. Create `~/Desktop/redteam-results/`?"
-   Wait for confirmation. Create the directory.
+1. Baselines live in `~/.mcp-redteam/baselines/`, one JSONL file per target,
+   named by the first 16 hex characters of the SHA-256 of the target path.
+   The directory is created on demand — do not ask the user to make one, and do
+   not write to the Desktop.
 
-2. Check for previous audit files: `~/Desktop/redteam-results/*.jsonl`
-   Files are named `audit-YYYY-MM-DD-HHMMSS.jsonl`.
-
-3. If previous audits exist, read the MOST RECENT one. This is a compact machine log — one JSON object per line:
+2. Read the most recent entry for this target, if any. Each line is one run:
    ```
-   {"r":"MRT001","f":"server.py","l":42,"s":"C","x":"fixed"}
+   {"timestamp": "...", "target": "...", "mode": "plugin",
+    "findings": [{"id": "MRT001", "rule_id": "MRT001", "file": "server.py",
+                  "line": 42, "severity": "CRITICAL"}],
+    "total": 1, "risk_score": 25}
    ```
-   Fields: `r`=rule_id, `f`=file, `l`=line, `s`=severity(C/H/M/L), `x`=status(new/confirmed/fixed)
 
-4. Keep this history in memory. During the audit, compare each finding against history:
-   - Found before AND found again → status `confirmed` (higher confidence)
-   - Found before but NOT found now → status `fixed` (mention in report: "previously found, now resolved")
-   - NOT found before but found now → status `new`
+3. Compare each finding of this audit against that entry, keyed on
+   `(rule_id, file, line)`:
+   - in both → **confirmed** (higher confidence, it survived a fix round)
+   - in the baseline only → **fixed** (say so in the report)
+   - in this audit only → **new**
 
-5. After the audit completes, write a new `.jsonl` file to `~/Desktop/redteam-results/`:
-   One line per finding, minimal format:
-   ```
-   {"r":"MRT001","f":"server.py","l":42,"s":"C","x":"new","t":"shell injection in tool handler"}
-   ```
-   Fields: `r`=rule, `f`=file, `l`=line, `s`=severity (C/H/M/L/I), `x`=status, `t`=title (short)
-
-   Also write one summary line at the end:
-   ```
-   {"_":"summary","total":37,"C":5,"H":12,"M":14,"L":6,"new":3,"confirmed":30,"fixed":4,"date":"2026-06-11T22:00:00"}
-   ```
+4. Append one line for this run in the same shape, with `"mode": "plugin"`.
+   Keep `severity` as the full word (`CRITICAL`, not `C`) — the CLI reads these
+   files too, and a private abbreviation would break it.
 
 **This log is for AI consumption only.** Minimal tokens, no descriptions, no evidence. The human reads the HTML report.
 
@@ -122,5 +117,5 @@ Without this: source-code-only audit (still valuable)."
 6. Generate HTML report DIRECTLY in the selected language
 7. **All `<details>` blocks CLOSED by default — no `open` attribute**
 8. Present findings, offer to fix
-9. **Write audit log** to `~/Desktop/redteam-results/audit-YYYY-MM-DD-HHMMSS.jsonl` (compact JSONL, one line per finding — see Step 0.9 format)
+9. **Append the run** to the shared baseline in `~/.mcp-redteam/baselines/` (see Step 0.9 — same format the CLI uses)
 10. If previous audit existed, mention in report summary: "X findings confirmed from previous audit, Y new, Z fixed since last run"

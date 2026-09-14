@@ -7,6 +7,18 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Fixed
+- **The plugin and the CLI kept two incompatible audit histories.** The CLI wrote to
+  `~/.mcp-redteam/baselines/`; the plugin asked the user to create
+  `~/Desktop/redteam-results/` and wrote a different format there, with severities
+  abbreviated to single letters. Neither could read the other, so a finding fixed via one
+  looked new to the other. The plugin now appends to the CLI's baseline in the CLI's shape.
+- **Plugin severity guidance had no INFO tier and no notion of the MCP tool surface**, so it
+  would have reproduced exactly the noise the CLI had just stopped producing — 96% of
+  findings in files registering no MCP tools. CLAUDE.md now tells the agent to scope by
+  reachability before rating, keep off-surface findings at INFO with the reason, and leave a
+  target alone when it registers no tools at all.
+
+### Fixed
 - **MRT005 missed uppercase constants — the usual convention for secrets.**
   `API_KEY = "sk-..."` and `TOKEN = "ghp_..."` produced nothing: the rule matched
   lowercase identifiers only, and its value-prefix branches (`$VAR = "sk-..."`) never
@@ -23,6 +35,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   It is now inventory: which credentials the process holds. Hardcoding remains MRT005.
 
 ### Added
+- `tests/test_plugin_docs.py` — the plugin had no tests of any kind. These do not test its
+  behaviour, which is an LLM following prose and not unit-testable; they check that the
+  instructions do not contradict the code: referenced paths exist, risk weights and severity
+  levels match `models.py`, documented CLI commands are real, the baseline location is shared,
+  Safe Mode is still the default and Active Mode still requires consent.
 - **The corpus is now recorded, so the numbers can be checked.** `research/corpus-manifest.json`
   pins all 112 repositories to exact commits with their per-rule and per-severity results, and
   `research/reproduce.py` clones them at those commits and diffs a fresh scan against it. The
