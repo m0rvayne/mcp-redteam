@@ -6,6 +6,19 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **New research writeup: `docs/research/scan-56-servers.md`.** 56 verified servers, 3.86M
+  lines, on the pinned reproducible corpus. Leads with the methodological finding — 96% of
+  an MCP scanner's output describes code no MCP client can reach — and carries a "what we
+  got wrong" section listing this project's own defects: evidence reading `requires login`,
+  the published package finding nothing, MRT005 missing uppercase constants, results varying
+  with machine load, and the 7-vs-4 RCE overstatement.
+  The four RCE findings were re-verified against each project's current `main`; both
+  disclosures are recorded as closed `not_planned`.
+- `docs/research/scan-106-servers.md` now opens with a banner stating it is superseded and
+  unreproducible, and pointing at the new post. It stays published: deleting a post whose
+  numbers you have improved on is its own kind of dishonesty.
+
 ### Fixed
 - **The plugin and the CLI kept two incompatible audit histories.** The CLI wrote to
   `~/.mcp-redteam/baselines/`; the plugin asked the user to create

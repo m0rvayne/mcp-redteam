@@ -1,5 +1,19 @@
 # We Scanned 106 MCP Servers. exec() Is Everywhere.
 
+> **Superseded, and kept for the record.**
+>
+> This scan ran in June 2026 with mcp-redteam v0.2.0. **Its corpus was never
+> recorded, so it cannot be reproduced** — only about a dozen of the 106 servers
+> are named below, and the rest are lost. The `~40%` false positive figure
+> describes v0.2.0's rules, which have since changed substantially.
+>
+> The current scan is [scan-56-servers.md](scan-56-servers.md): a smaller corpus,
+> pinned to exact commits, re-runnable with one command. The four confirmed RCE
+> findings below were re-verified there against current code and still stand.
+>
+> It stays published because deleting a post whose numbers you have improved on
+> is its own kind of dishonesty.
+
 MCP (Model Context Protocol) lets AI agents call external tools — file systems, databases, browsers, smart homes, even reverse engineering tools. We ran automated static analysis on 106 MCP servers: Anthropic's official implementations plus the most popular community servers. Combined: 300K+ GitHub stars.
 
 **Tool:** [mcp-redteam](https://github.com/m0rvayne/mcp-redteam) (`pip install redteam-mcp`)

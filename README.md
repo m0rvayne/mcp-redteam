@@ -281,7 +281,7 @@ The `docs/` folder is useful independently:
 - **[best-practices.md](docs/best-practices.md)** — MCP server security checklist
 - **[reference-server.md](docs/reference-server.md)** — secure server templates (Python + Node.js)
 - **[troubleshooting.md](docs/troubleshooting.md)** — common issues and fixes
-- **[research/scan-106-servers.md](docs/research/scan-106-servers.md)** — results of scanning 106 public MCP servers: 4 confirmed RCE, disclosure outcomes, what static analysis misses
+- **[research/scan-56-servers.md](docs/research/scan-56-servers.md)** — current scan: 56 verified servers on a reproducible corpus, 4 confirmed RCE re-verified, and why 96% of an MCP scanner's findings are about unreachable code
 
 ## References
 
